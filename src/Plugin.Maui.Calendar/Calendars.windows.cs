@@ -53,8 +53,8 @@ partial class FeatureImplementation : ICalendars
 			options.CalendarIds.Add(calendarId);
 
 		// dates
-		var sDate = startDate ?? DateTimeOffset.Now.Add(defaultStartTimeFromNow);
-		var eDate = endDate ?? sDate.Add(defaultEndTimeFromStartTime);
+		var sDate = startDate ?? DateTimeOffset.Now.Add(Calendars.defaultStartTimeFromNow);
+		var eDate = endDate ?? sDate.Add(Calendars.defaultEndTimeFromStartTime);
 		if (eDate < sDate)
 			eDate = sDate;
 
@@ -63,8 +63,8 @@ partial class FeatureImplementation : ICalendars
 		var events = await instance.FindAppointmentsAsync(sDate, eDate.Subtract(sDate), options).AsTask().ConfigureAwait(false);
 
 		// confirm the calendar exists if no events were found
-		// the PlatformGetCalendarAsync wll throw if not
-		if ((events == null || events.Count == 0) && !string.IsNullOrEmpty(calendarId))
+		// the PlatformGetCalendarAsync will throw if not
+		if ((events == null || events.Count() == 0) && !string.IsNullOrEmpty(calendarId))
 		{
 			await GetCalendarAsync(calendarId).ConfigureAwait(false);
 		}
