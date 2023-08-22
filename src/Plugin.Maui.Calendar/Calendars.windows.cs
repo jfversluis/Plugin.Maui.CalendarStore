@@ -35,7 +35,7 @@ partial class FeatureImplementation : ICalendars
 		return ToCalendar(calendar);
 	}
 
-	async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
+	public async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
 		var options = new FindAppointmentsOptions();
 
@@ -72,7 +72,7 @@ partial class FeatureImplementation : ICalendars
 		return ToEvents(events.OrderBy(e => e.StartTime)).ToList();
 	}
 
-	async Task<CalendarEvent> GetEventAsync(string eventId)
+	public async Task<CalendarEvent> GetEventAsync(string eventId)
 	{
 		var instance = await GetInstanceAsync().ConfigureAwait(false);
 
