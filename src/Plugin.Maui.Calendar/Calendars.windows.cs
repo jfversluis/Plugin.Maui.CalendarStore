@@ -22,7 +22,7 @@ partial class FeatureImplementation : ICalendars
 		return ToCalendars(calendars).ToList();
 	}
 
-	async Task<Calendar> GetCalendarAsync(string calendarId)
+	public async Task<Calendar> GetCalendarAsync(string calendarId)
 	{
 		var instance = await GetInstanceAsync().ConfigureAwait(false);
 
