@@ -1,6 +1,6 @@
 # Plugin.Maui.Calendar
 
-`Plugin.Maui.Calendar` provides the ability to do this amazing thing in your .NET MAUI application.
+`Plugin.Maui.Calendar` provides the ability to access the device calendar information in your .NET MAUI application.
 
 ## Getting Started
 
@@ -108,3 +108,7 @@ Stop monitoring for changes to the feature.
 # Acknowledgements
 
 This project could not have came to be without these projects and people, thank you! <3
+
+## Xamarin.Essentials PR
+
+There are a couple of people involved in bringing this funtionality to Xamarin.Essentials. Unfortunately the [PR](https://github.com/xamarin/Essentials/pull/1384) was never merged. In an attempt not to let this code go to waste, I transformed it into this library. Thank you @mattleibow, @nickrandolph, @ScottBTR and @mkieres for the initial work here!
