@@ -1,18 +1,14 @@
-<!-- 
-Everything in here is of course optional. If you want to add/remove something, absolutely do so as you see fit.
-This example README has some dummy APIs you'll need to replace and only acts as a placeholder for some inspiration that you can fill in with your own functionalities.
--->
-# Plugin.Maui.Feature
+# Plugin.Maui.Calendar
 
-`Plugin.Maui.Feature` provides the ability to do this amazing thing in your .NET MAUI application.
+`Plugin.Maui.Calendar` provides the ability to do this amazing thing in your .NET MAUI application.
 
 ## Getting Started
 
-* Available on NuGet: <http://www.nuget.org/packages/Plugin.Maui.Feature> [![NuGet](https://img.shields.io/nuget/v/Plugin.Maui.Feature.svg?label=NuGet)](https://www.nuget.org/packages/Plugin.Maui.Feature/)
+* Available on NuGet: <http://www.nuget.org/packages/Plugin.Maui.Calendar> [![NuGet](https://img.shields.io/nuget/v/Plugin.Maui.Calendar.svg?label=NuGet)](https://www.nuget.org/packages/Plugin.Maui.Calendar/)
 
 ## API Usage
 
-`Plugin.Maui.Feature` provides the `Feature` class that has a single property `Property` that you can get or set.
+`Plugin.Maui.Calendar` provides the `Feature` class that has a single property `Property` that you can get or set.
 
 You can either use it as a static class, e.g.: `Feature.Default.Property = 1` or with dependency injection: `builder.Services.AddSingleton<IFeature>(Feature.Default);`
 
@@ -22,11 +18,11 @@ Before you can start using Feature, you will need to request the proper permissi
 
 #### iOS
 
-No permissions are needed for iOS.
+The `NSCalendarsUsageDescription` is needed in the `info.plist`
 
 #### Android
 
-No permissions are needed for Android.
+`READ_CALENDAR` in `AndroidManifest.xml`
 
 ### Dependency Injection
 
