@@ -9,6 +9,7 @@ partial class FeatureImplementation : ICalendars
 	Task<AppointmentStore> GetInstanceAsync() =>
 		uwpAppointmentStore ??= AppointmentManager.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
 
+	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendarsAsync()
 	{
 		var instance = await GetInstanceAsync().ConfigureAwait(false);
@@ -18,20 +19,18 @@ partial class FeatureImplementation : ICalendars
 		return ToCalendars(calendars).ToList();
 	}
 
+	/// <inheritdoc/>
 	public async Task<Calendar> GetCalendarAsync(string calendarId)
 	{
 		var instance = await GetInstanceAsync().ConfigureAwait(false);
 
 		var calendar = await instance.GetAppointmentCalendarAsync(calendarId).AsTask().ConfigureAwait(false);
-		if (calendar == null)
-		{
-			throw Calendars.InvalidCalendar(calendarId);
-		}
 
-		return ToCalendar(calendar);
+		return calendar == null ? throw Calendars.InvalidCalendar(calendarId) : ToCalendar(calendar);
 	}
 
-	public async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
+	/// <inheritdoc/>
+	public async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
 		var options = new FindAppointmentsOptions();
 
@@ -73,18 +72,14 @@ partial class FeatureImplementation : ICalendars
 		return ToEvents(events.OrderBy(e => e.StartTime)).ToList();
 	}
 
+	/// <inheritdoc/>
 	public async Task<CalendarEvent> GetEventAsync(string eventId)
 	{
 		var instance = await GetInstanceAsync().ConfigureAwait(false);
 
 		var e = await instance.GetAppointmentAsync(eventId).AsTask().ConfigureAwait(false);
-		
-		if (e == null)
-		{
-			throw Calendars.InvalidEvent(eventId);
-		}
 
-		return ToEvent(e);
+		return e == null ? throw Calendars.InvalidEvent(eventId) : ToEvent(e);
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> native)

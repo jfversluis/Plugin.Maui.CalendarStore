@@ -1,32 +1,70 @@
 namespace Plugin.Maui.Calendar;
 
+/// <summary>
+/// Represents an event that is part of a calendar from the device's calendar store.
+/// </summary>
 public class CalendarEvent
 {
-    public CalendarEvent(string id, string calendarId, string title)
+	/// <summary>
+	/// Initializes a new instance of the <see cref="CalendarEvent"/> class.
+	/// </summary>
+	/// <param name="id">The unique identifier for this event.</param>
+	/// <param name="calendarId">The unique identifier for the calendar this event is part of.</param>
+	/// <param name="title">The title for this event.</param>
+	public CalendarEvent(string id, string calendarId, string title)
     {
         Id = id;
         CalendarId = calendarId;
         Title = title;
     }
 
-    public string Id { get; set; }
+	/// <summary>
+	/// Gets the unique identifier for this event.
+	/// </summary>
+	public string Id { get; }
 
-    public string CalendarId { get; set; }
+	/// <summary>
+	/// Gets the unique identifier for the calendar this event is part of.
+	/// </summary>
+	public string CalendarId { get; }
 
-    public string Title { get; set; }
+	/// <summary>
+	/// Gets the title for this event.
+	/// </summary>
+	public string Title { get; }
 
-	public string Description { get; set; } = string.Empty;
+	/// <summary>
+	/// Gets the description for this event.
+	/// </summary>
+	public string Description { get; internal set; } = string.Empty;
 
-	public string Location { get; set; } = string.Empty;
+	/// <summary>
+	/// Gets the location for this event.
+	/// </summary>
+	public string Location { get; internal set; } = string.Empty;
 
-    public bool AllDay { get; set; }
+	/// <summary>
+	/// Gets whether this event is marked as an all-day event.
+	/// </summary>
+    public bool AllDay { get; internal set; }
 
-    public DateTimeOffset StartDate { get; set; }
+	/// <summary>
+	/// Gets the start date and time for this event.
+	/// </summary>
+    public DateTimeOffset StartDate { get; internal set; }
 
-    public DateTimeOffset EndDate { get; set; }
+	/// <summary>
+	/// Gets the end date and time for this event.
+	/// </summary>
+    public DateTimeOffset EndDate { get; internal set; }
 
-    public TimeSpan Duration =>
-        AllDay ? TimeSpan.FromDays(1) : EndDate - StartDate;
+	/// <summary>
+	/// Gets the total duration for this event.
+	/// </summary>
+    public TimeSpan Duration => EndDate - StartDate;
 
-	public IEnumerable<CalendarEventAttendee> Attendees { get; set; } = new List<CalendarEventAttendee>();
+	/// <summary>
+	/// Gets the list of attendees for this event.
+	/// </summary>
+	public IEnumerable<CalendarEventAttendee> Attendees { get; internal set; } = new List<CalendarEventAttendee>();
 }

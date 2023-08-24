@@ -1,13 +1,28 @@
 namespace Plugin.Maui.Calendar;
 
+/// <summary>
+/// Represents a calendar from the device's calendar store.
+/// </summary>
 public class Calendar
-{public Calendar(string id, string name)
+{
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Calendar"/> class.
+	/// </summary>
+	/// <param name="id">The unique identifier for this calendar.</param>
+	/// <param name="name">The (display) name for this calendar.</param>
+	public Calendar(string id, string name)
     {
         Id = id;
         Name = name;
     }
 
-    public string Id { get; set; }
+	/// <summary>
+	/// Gets unique identifier for this calendar.
+	/// </summary>
+	public string Id { get; }
 
-    public string Name { get; set; }
+	/// <summary>
+	/// Gets the (display) name for this calendar.
+	/// </summary>
+	public string Name { get; }
 }

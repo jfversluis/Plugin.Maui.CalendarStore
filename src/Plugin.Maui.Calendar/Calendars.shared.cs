@@ -1,5 +1,8 @@
 ﻿namespace Plugin.Maui.Calendar;
 
+/// <summary>
+/// The Calendars API lets a user read information about the device's calendar and associated data.
+/// </summary>
 public static class Calendars
 {
 	static ICalendars? defaultImplementation;
@@ -16,17 +19,41 @@ public static class Calendars
 	internal static readonly TimeSpan defaultStartTimeFromNow = TimeSpan.Zero;
 	internal static readonly TimeSpan defaultEndTimeFromStartTime = TimeSpan.FromDays(14);
 
-    public static async Task<IEnumerable<Calendar>> GetCalendarsAsync() =>
+	/// <summary>
+	/// Retrieves all available calendars from the device.
+	/// </summary>
+	/// <returns>A list of <see cref="Calendar"/> objects that each represent a calendar on the user's device.</returns>
+	public static async Task<IEnumerable<Calendar>> GetCalendarsAsync() =>
         await Default.GetCalendarsAsync();
 
-    public static async Task<Calendar> GetCalendarAsync(string calendarId) =>
+	/// <summary>
+	/// Retrieves a specific calendar from the device.
+	/// </summary>
+	/// <param name="calendarId">The unique identifier of a calendar.</param>
+	/// <returns>A <see cref="Calendar"/> object that represents the requested calendar from the user's device.</returns>
+	/// <remarks>The ID format differentiates between platforms. For example, on Android it is an integer, on other platforms it can be a string or GUID.</remarks>
+	public static async Task<Calendar> GetCalendarAsync(string calendarId) =>
         await Default.GetCalendarAsync(calendarId);
 
-    public static async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string calendarId = null,
+	/// <summary>
+	/// Retrieves events from a specific calendar or all calendars from the device.
+	/// </summary>
+	/// <param name="calendarId">The calendar identifier to retrieve events for. If not provided, events will be retrieved for all calendars on the device.</param>
+	/// <param name="startDate">The start date of the range to retrieve events for.</param>
+	/// <param name="endDate">The end date of the range to retrieve events for.</param>
+	/// <returns>A list of events from the calendars on the device.</returns>
+	/// <exception cref="ArgumentException">Thrown when a calendar with the value specified in <paramref name="calendarId"/> could not be found.</exception>
+	public static async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string? calendarId = null,
         DateTimeOffset? startDate = null, DateTimeOffset? endDate = null) =>
         await Default.GetEventsAsync(calendarId, startDate, endDate);
 
-    public static async Task<CalendarEvent> GetEventAsync(string eventId) =>
+	/// <summary>
+	/// Retrieves a specific event from the calendar store on the device.
+	/// </summary>
+	/// <param name="eventId">The unique identifier of the event to retrieve.</param>
+	/// <returns>A <see cref="CalendarEvent"/> object that represents the requested event from the user's device.</returns>
+	/// <exception cref="ArgumentException">Thrown when an event with the value specified in <paramref name="eventId"/> could not be found.</exception>
+	public static async Task<CalendarEvent> GetEventAsync(string eventId) =>
         await Default.GetEventAsync(eventId);
 
     internal static ArgumentException InvalidCalendar(string calendarId) =>

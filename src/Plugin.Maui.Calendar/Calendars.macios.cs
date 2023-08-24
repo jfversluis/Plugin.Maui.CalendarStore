@@ -10,6 +10,7 @@ partial class FeatureImplementation : ICalendars
 	static EKEventStore EventStore =>
 		eventStore ??= new EKEventStore();
 
+	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendarsAsync()
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
@@ -19,6 +20,7 @@ partial class FeatureImplementation : ICalendars
 		return ToCalendars(calendars).ToList();
 	}
 
+	/// <inheritdoc/>
 	public async Task<Calendar> GetCalendarAsync(string calendarId)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(calendarId);
@@ -29,15 +31,11 @@ partial class FeatureImplementation : ICalendars
 
 		var calendar = calendars.FirstOrDefault(c => c.CalendarIdentifier == calendarId);
 
-		if (calendar is null)
-		{
-			throw Calendars.InvalidCalendar(calendarId);
-		}
-
-		return ToCalendar(calendar);
+		return calendar is null ? throw Calendars.InvalidCalendar(calendarId) : ToCalendar(calendar);
 	}
 
-	public async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
+	/// <inheritdoc/>
+	public async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
 
@@ -67,6 +65,7 @@ partial class FeatureImplementation : ICalendars
 		return ToEvents(events).OrderBy(e => e.StartDate).ToList();
 	}
 
+	/// <inheritdoc/>
 	public Task<CalendarEvent> GetEventAsync(string eventId)
 	{
 		if (!(EventStore.GetCalendarItem(eventId) is EKEvent calendarEvent))
@@ -77,7 +76,7 @@ partial class FeatureImplementation : ICalendars
 		return Task.FromResult(ToEvent(calendarEvent));
 	}
 
-	public IEnumerable<Calendar> ToCalendars(IEnumerable<EKCalendar> native)
+	static IEnumerable<Calendar> ToCalendars(IEnumerable<EKCalendar> native)
 	{
 		foreach (var calendar in native)
 		{
@@ -88,7 +87,7 @@ partial class FeatureImplementation : ICalendars
 	static Calendar ToCalendar(EKCalendar calendar) =>
     	new(calendar.CalendarIdentifier, calendar.Title);
 
-	IEnumerable<CalendarEvent> ToEvents(IEnumerable<EKEvent> native)
+	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<EKEvent> native)
 	{
 		foreach (var e in native)
 		{
@@ -97,7 +96,8 @@ partial class FeatureImplementation : ICalendars
 	}
 
 	static CalendarEvent ToEvent(EKEvent platform) =>
-		new(platform.CalendarItemIdentifier, platform.Calendar.CalendarIdentifier,
+		new(platform.CalendarItemIdentifier,
+			platform.Calendar.CalendarIdentifier,
 			platform.Title)
 		{
 			Description = platform.Notes,

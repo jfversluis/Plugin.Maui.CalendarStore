@@ -6,6 +6,7 @@ namespace Plugin.Maui.Calendar;
 
 partial class FeatureImplementation : ICalendars
 {
+	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendarsAsync()
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
@@ -26,6 +27,7 @@ partial class FeatureImplementation : ICalendars
 		return ToCalendars(cur, calendarsProjection).ToList();
 	}
 
+	/// <inheritdoc/>
 	public async Task<Calendar> GetCalendarAsync(string calendarId)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(calendarId);
@@ -61,7 +63,8 @@ partial class FeatureImplementation : ICalendars
 		return ToCalendar(cur, calendarsProjection);
 	}
 
-	public async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
+	/// <inheritdoc/>
+	public async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
 
@@ -112,6 +115,7 @@ partial class FeatureImplementation : ICalendars
 		return ToEvents(cur, eventsProjection).ToList();
 	}
 
+	/// <inheritdoc/>
 	public async Task<CalendarEvent> GetEventAsync(string eventId)
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
@@ -172,7 +176,7 @@ partial class FeatureImplementation : ICalendars
 		return ToAttendees(cur, attendeesProjection).ToList();
 	}
 
-	IEnumerable<Calendar> ToCalendars(ICursor cur, List<string> projection)
+	static IEnumerable<Calendar> ToCalendars(ICursor cur, List<string> projection)
 	{
 		while (cur.MoveToNext())
 		{
@@ -211,7 +215,7 @@ partial class FeatureImplementation : ICalendars
 		};
 	}
 
-	IEnumerable<CalendarEventAttendee> ToAttendees(ICursor cur, List<string> projection)
+	static IEnumerable<CalendarEventAttendee> ToAttendees(ICursor cur, List<string> projection)
 	{
 		while (cur.MoveToNext())
 		{
