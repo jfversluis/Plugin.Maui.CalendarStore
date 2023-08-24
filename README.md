@@ -1,20 +1,20 @@
 ![](nuget.png)
 
-# Plugin.Maui.Calendar
+# Plugin.Maui.CalendarStore
 
-`Plugin.Maui.Calendar` provides the ability to access the device calendar information in your .NET MAUI application.
+`Plugin.Maui.CalendarStore` provides the ability to access the device calendar information in your .NET MAUI application.
 
 ## Install Plugin
 
-[![NuGet](https://img.shields.io/nuget/v/Plugin.Maui.Calendar.svg?label=NuGet)](https://www.nuget.org/packages/Plugin.Maui.Calendar/)
+[![NuGet](https://img.shields.io/nuget/v/Plugin.Maui.CalendarStore.svg?label=NuGet)](https://www.nuget.org/packages/Plugin.Maui.CalendarStore/)
 
-Available on [NuGet](http://www.nuget.org/packages/Plugin.Maui.Calendar).
+Available on [NuGet](http://www.nuget.org/packages/Plugin.Maui.CalendarStore).
 
-Install with the dotnet CLI: `dotnet add package Plugin.Maui.Calendar`, or through the NuGet Package Manager in Visual Studio.
+Install with the dotnet CLI: `dotnet add package Plugin.Maui.CalendarStore`, or through the NuGet Package Manager in Visual Studio.
 
 ## API Usage
 
-`Plugin.Maui.Calendar` provides the `Calendars` class that has methods to retrieve calendars, events and attendee information from the device's calendar store.
+`Plugin.Maui.CalendarStore` provides the `Calendars` class that has methods to retrieve calendars, events and attendee information from the device's calendar store.
 
 You can either use it as a static class, e.g.: `Calendars.Default.GetCalendars()` or with dependency injection: `builder.Services.AddSingleton<ICalendars>(Calendars.Default);`
 
