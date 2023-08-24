@@ -11,7 +11,7 @@ partial class FeatureImplementation : ICalendars
 		eventStore ??= new EKEventStore();
 
 	/// <inheritdoc/>
-	public async Task<IEnumerable<Calendar>> GetCalendarsAsync()
+	public async Task<IEnumerable<Calendar>> GetCalendars()
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
 
@@ -21,7 +21,7 @@ partial class FeatureImplementation : ICalendars
 	}
 
 	/// <inheritdoc/>
-	public async Task<Calendar> GetCalendarAsync(string calendarId)
+	public async Task<Calendar> GetCalendar(string calendarId)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(calendarId);
 
@@ -35,7 +35,7 @@ partial class FeatureImplementation : ICalendars
 	}
 
 	/// <inheritdoc/>
-	public async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
+	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
 
@@ -66,7 +66,7 @@ partial class FeatureImplementation : ICalendars
 	}
 
 	/// <inheritdoc/>
-	public Task<CalendarEvent> GetEventAsync(string eventId)
+	public Task<CalendarEvent> GetEvent(string eventId)
 	{
 		if (!(EventStore.GetCalendarItem(eventId) is EKEvent calendarEvent))
 		{

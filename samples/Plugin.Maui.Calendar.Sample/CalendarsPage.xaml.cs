@@ -15,7 +15,7 @@ public partial class CalendarsPage : ContentPage
 
 	async void Button_Clicked_Calendars(object sender, EventArgs e)
 	{
-		Calendars = (await calendars.GetCalendarsAsync()).ToArray();
+		Calendars = (await calendars.GetCalendars()).ToArray();
 
 		BindingContext = this;
 	}

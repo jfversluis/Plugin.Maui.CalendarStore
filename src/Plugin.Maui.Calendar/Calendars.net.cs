@@ -2,22 +2,22 @@
 
 partial class FeatureImplementation : ICalendars
 {
-	public Task<Calendar> GetCalendarAsync(string calendarId)
+	public Task<Calendar> GetCalendar(string calendarId)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task<IEnumerable<Calendar>> GetCalendarsAsync()
+	public Task<IEnumerable<Calendar>> GetCalendars()
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task<CalendarEvent> GetEventAsync(string eventId)
+	public Task<CalendarEvent> GetEvent(string eventId)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task<IEnumerable<CalendarEvent>> GetEventsAsync(string? calendarId = null,
+	public Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
 		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
 		throw new NotImplementedException();

@@ -17,19 +17,19 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 
 		<!-- NuGet -->
-		<Authors>author</Authors>
-		<Copyright>Copyright © author and contributors</Copyright>
+		<Authors>jfversluis</Authors>
+		<Copyright>Copyright © jfversluis and contributors</Copyright>
 		<IsPackable>True</IsPackable>
 		<PackageProjectUrl>https://github.com/jfversluis/Plugin.Maui.Calendar</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/jfversluis/Plugin.Maui.Calendar</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageTags>dotnet-maui;maui;plugin;</PackageTags>
+		<PackageTags>dotnet-maui;maui;plugin;calendar;event;attendee;ios;android;macos;windows;</PackageTags>
 		<IncludeSymbols>True</IncludeSymbols>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<Title>.NET MAUI Feature Plugin</Title>
-		<Description>Plugin.Maui.Calendar provides the ability to do this amazing thing in your .NET MAUI application.</Description>
+		<Title>.NET MAUI Calendar Plugin</Title>
+		<Description>Plugin.Maui.Calendar provides the ability to access the device calendar information in your .NET MAUI application.</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<DebugType>portable</DebugType>

@@ -1,52 +1,142 @@
-# Plugin.Maui.Calendar Template
+![](nuget.png)
 
-The `Plugin.Maui.Calendar` repository is a template repository that can be used to bootstrap your own .NET MAUI plugin project. You can use this project structure as a blueprint for your own work.
+# Plugin.Maui.Calendar
 
-This template contains:
+`Plugin.Maui.Calendar` provides the ability to access the device calendar information in your .NET MAUI application.
 
-- A [sample .NET MAUI app](samples) where you can demonstrate how your plugin works and test your plugin with while developing
-- The [source](src) of the plugin
-- A boilerplate [README file](README_Feature.md) you can use (don't forget to rename to `README.md` and remove this one!)
-- [GitHub Actions for CI](.github/workflows) of the library and the sample app
-- [GitHub Action for releasing](.github/workflows) your package to NuGet
-- A [generic icon](nuget.png) for your project, feel free to adapt and be creative!
-- A [.editorconfig](.editorconfig) file to standardize the code syntax. Feel free to adapt or remove.
-- The [LICENSE](LICENSE) file with the MIT license. If you want this to be different, please change it. At the very least add your name in there!
+## Install Plugin
 
-## Getting Started
+[![NuGet](https://img.shields.io/nuget/v/Plugin.Maui.Calendar.svg?label=NuGet)](https://www.nuget.org/packages/Plugin.Maui.Calendar/)
 
-1. Create your own GitHub repository from this one by clicking the "Use this template" button and then "Create a new repository". More information in the [documentation](https://docs.github.com/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template). After that, clone the repo to your local machine.
+Available on [NuGet](http://www.nuget.org/packages/Plugin.Maui.Calendar).
 
-2. Replace all occurrences of `Plugin.Maui.Calendar` with whatever your feature or functionality will be. For instance: `Plugin.Maui.ScreenBrightness` or `Plugin.Maui.Audio`. Of course the name can be anything, but to make it more discoverable it could be a great choice to stick to this naming scheme. You can easily do this with your favorite text-editor and do a replace all on all files.
+Install with the dotnet CLI: `dotnet add package Plugin.Maui.Calendar`, or through the NuGet Package Manager in Visual Studio.
 
-   2.1 Don't forget to also rename the files and folders on your filesystem.
+## API Usage
 
-3. In the csproj file of the plugin project (under `src`), make sure that you replace all relevant values to your project. This means the author of this project, the description of the project, the target framework (.NET 7, 8 or something else). If you don't want to or can't support a certain platform, remove that target platform altogether.
+`Plugin.Maui.Calendar` provides the `Calendars` class that has methods to retrieve calendars, events and attendee information from the device's calendar store.
 
-4. Delete this `README.md` file and rename `README_Feature.md` to `README.md`. Fill that README file with all the relevant details of your project.
+You can either use it as a static class, e.g.: `Calendars.Default.GetCalendars()` or with dependency injection: `builder.Services.AddSingleton<ICalendars>(Calendars.Default);`
 
-5. Check the LICENSE file if this reflects the license that you want to distribute your project under. At the very least add your name there and the current year we live in.
+### Permissions
 
-6. Create a nice icon in the `nuget.png` file that will show up on nuget.org and in the NuGet manager in Visual Studio.
+Before you can start using Calendar, you will need to request the proper permissions on each platform.
 
-7. Write your plugin code (under `src`) and add samples to the .NET MAUI sample app (under `samples` folder)
+#### iOS/macOS
 
-8. Make super sure that your package won't show up as `Plugin.Maui.Calendar` on NuGet! If one does, you owe me a drink!
+On iOS and macOS, add the `NSCalendarsUsageDescription` key to your `info.plist` file. When declared, the permission will be requested automatically at runtime.
 
-9. Publish your package to NuGet, a nice guide to do that can be found [here](https://learn.microsoft.com/nuget/nuget-org/publish-a-package). Also see [Publish to NuGet](#publish-to-nuget) below.
+```xml
+<key>NSCalendarsUsageDescription</key>
+<string>This app wants to read from your calendar</string>
+```
 
-10. Enjoy life as a .NET MAUI plugin author! ✨
+For macOS additionally you will have to add an entry to the `Entitlements.plist`, you will need to add the `com.apple.security.personal-information.calendar` key with a value of `true`.
 
-As an example of all of this you can have a look at:
+See an example of a complete Entitlements file below.
 
-- [Plugin.Maui.Audio](https://github.com/jfversluis/Plugin.Maui.Audio)
-- [Plugin.Maui.Pedometer](https://github.com/jfversluis/Plugin.Maui.Pedometer)
-- [Plugin.Maui.ScreenBrightness](https://github.com/jfversluis/Plugin.Maui.ScreenBrightness)
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <key>com.apple.security.personal-information.calendar</key>
+    <true/>
+</dict>
+</plist>
+```
 
-## Publish to NuGet
+#### Android
 
-If you want to publish your package to NuGet, you totally can! Included in this template are a couple of GitHub Actions. One of them goes of when you create a new tag with this pattern: `v1.0.0` or `v1.0.0-preview1`. Obviously the `1.0.0` part can be determined by you as you see fit, as long as you follow the pattern of 3 integers separated by dots.
+`READ_CALENDAR` in `AndroidManifest.xml`
 
-You will also want to set a secret for this repository which contains your NuGet API key. Follow the documentation on that [here](https://docs.github.com/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository), and add a secret with the key `NUGET_API_KEY` and value of your NuGet API key. The API key should be authorized to push a NuGet package with the given identifier. 
+On Android declare the `READ_CALENDAR` permissions in your `AndroidManifest.xml` file. This should be placed in the `manifest` node. You can also add this through the visual editor in Visual Studio.
 
-From there, after [creating a GitHub release](https://docs.github.com/repositories/releasing-projects-on-github/managing-releases-in-a-repository) your plugin will be automatically released on NuGet!
+The runtime permission is automatically requested by the plugin when any of the methods is called.
+
+```xml
+<uses-permission android:name="android.permission.READ_CALENDAR" />
+```
+
+### Dependency Injection
+
+You will first need to register the `Calendars` with the `MauiAppBuilder` following the same pattern that the .NET MAUI Essentials libraries follow.
+
+```csharp
+builder.Services.AddSingleton(Calendars.Default);
+```
+
+You can then enable your classes to depend on `ICalendars` as per the following example.
+
+```csharp
+public class CalendarsViewModel
+{
+    readonly ICalendars calendarStore;
+
+    public CalendarsViewModel(ICalendars calendarStore)
+    {
+        this.calendarStore = calendarStore;
+    }
+
+    public async Task ReadCalendars()
+    {
+        var calendars = await calendarStore.GetCalendars();
+
+        foreach (var c in calendars)
+        {
+            Console.WriteLine(c.Name);
+        }
+    }
+}
+```
+
+### Straight usage
+
+Alternatively if you want to skip using the dependency injection approach you can use the `Calendars.Default` property.
+
+```csharp
+public class CalendarsViewModel
+{
+    public async Task ReadCalendars()
+    {
+        var calendars = await Calendars.Default.GetCalendars();
+
+        foreach (var c in calendars)
+        {
+            Console.WriteLine(c.Name);
+        }
+    }
+}
+```
+
+### Calendars
+
+Once you have created a `Calendars` you can interact with it in the following ways:
+
+#### Methods
+
+##### `GetCalendars()`
+
+Retrieves all available calendars from the device.
+
+##### `GetCalendarAsync(string calendarId)`
+
+Retrieves a specific calendar from the device.
+
+##### `GetEventsAsync(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)`
+
+Retrieves events from a specific calendar or all calendars from the device.
+
+##### `GetEventAsync(string eventId)`
+
+Retrieves a specific event from the calendar store on the device.
+
+# Acknowledgements
+
+This project could not have came to be without these projects and people, thank you! <3
+
+## Xamarin.Essentials PR
+
+There are a couple of people involved in bringing this functionality to Xamarin.Essentials. Unfortunately the [PR](https://github.com/xamarin/Essentials/pull/1384) was never merged. In an attempt not to let this code go to waste, I transformed it into this library. Thank you @mattleibow, @nickrandolph, @ScottBTR and @mkieres for the initial work here!
