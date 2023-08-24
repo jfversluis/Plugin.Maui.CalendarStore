@@ -2,11 +2,11 @@
 
 public partial class CalendarsPage : ContentPage
 {
-	readonly ICalendars calendars;
+	readonly ICalendarStore calendars;
 
 	public Calendar[] Calendars { get; set; }
 
-	public CalendarsPage(ICalendars calendars)
+	public CalendarsPage(ICalendarStore calendars)
 	{
 		InitializeComponent();
 		

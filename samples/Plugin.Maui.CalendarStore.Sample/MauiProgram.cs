@@ -14,7 +14,7 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddTransient<CalendarsPage>();
-		builder.Services.AddSingleton<ICalendars>(Calendars.Default);
+		builder.Services.AddSingleton<ICalendarStore>(CalendarStore.Default);
 
 		return builder.Build();
 	}

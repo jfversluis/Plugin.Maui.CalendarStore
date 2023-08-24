@@ -3,7 +3,7 @@ using Microsoft.Maui.ApplicationModel;
 
 namespace Plugin.Maui.CalendarStore;
 
-partial class FeatureImplementation : ICalendars
+partial class FeatureImplementation : ICalendarStore
 {
 	static EKEventStore? eventStore;
 
@@ -31,7 +31,7 @@ partial class FeatureImplementation : ICalendars
 
 		var calendar = calendars.FirstOrDefault(c => c.CalendarIdentifier == calendarId);
 
-		return calendar is null ? throw Calendars.InvalidCalendar(calendarId) : ToCalendar(calendar);
+		return calendar is null ? throw CalendarStore.InvalidCalendar(calendarId) : ToCalendar(calendar);
 	}
 
 	/// <inheritdoc/>
@@ -39,8 +39,8 @@ partial class FeatureImplementation : ICalendars
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
 
-		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(Calendars.defaultStartTimeFromNow);
-		var endDateToConvert = endDate ?? startDateToConvert.Add(Calendars.defaultEndTimeFromStartTime); // NOTE: 4 years is the maximum period that a iOS calendar events can search
+		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(CalendarStore.defaultStartTimeFromNow);
+		var endDateToConvert = endDate ?? startDateToConvert.Add(CalendarStore.defaultEndTimeFromStartTime); // NOTE: 4 years is the maximum period that a iOS calendar events can search
 
 		var sDate = NSDate.FromTimeIntervalSince1970(TimeSpan.FromMilliseconds(startDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
 		var eDate = NSDate.FromTimeIntervalSince1970(TimeSpan.FromMilliseconds(endDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
@@ -53,7 +53,7 @@ partial class FeatureImplementation : ICalendars
 
 			if (calendar is null)
 			{
-				throw Calendars.InvalidCalendar(calendarId);
+				throw CalendarStore.InvalidCalendar(calendarId);
 			}
 
 			calendars = new[] { calendar };
@@ -70,7 +70,7 @@ partial class FeatureImplementation : ICalendars
 	{
 		if (!(EventStore.GetCalendarItem(eventId) is EKEvent calendarEvent))
 		{
-			throw Calendars.InvalidEvent(eventId);
+			throw CalendarStore.InvalidEvent(eventId);
 		}
 
 		return Task.FromResult(ToEvent(calendarEvent));

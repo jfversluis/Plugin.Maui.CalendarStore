@@ -1,6 +1,6 @@
 ﻿namespace Plugin.Maui.CalendarStore;
 
-partial class FeatureImplementation : ICalendars
+partial class FeatureImplementation : ICalendarStore
 {
 	public Task<Calendar> GetCalendar(string calendarId)
 	{

@@ -4,7 +4,7 @@ using Microsoft.Maui.ApplicationModel;
 
 namespace Plugin.Maui.CalendarStore;
 
-partial class FeatureImplementation : ICalendars
+partial class FeatureImplementation : ICalendarStore
 {
 	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendars()
@@ -37,7 +37,7 @@ partial class FeatureImplementation : ICalendars
 		// Android ids are always integers
 		if (!int.TryParse(calendarId, out _))
 		{
-			throw Calendars.InvalidCalendar(calendarId);
+			throw CalendarStore.InvalidCalendar(calendarId);
 		}
 
 		var calendarsUri = CalendarContract.Calendars.ContentUri;
@@ -55,7 +55,7 @@ partial class FeatureImplementation : ICalendars
 
 		if (cur.Count <= 0)
 		{
-			throw Calendars.InvalidCalendar(calendarId);
+			throw CalendarStore.InvalidCalendar(calendarId);
 		}
 
 		cur.MoveToNext();
@@ -71,11 +71,11 @@ partial class FeatureImplementation : ICalendars
 		// Android ids are always integers
 		if (!string.IsNullOrEmpty(calendarId) && !int.TryParse(calendarId, out _))
 		{
-			throw Calendars.InvalidCalendar(calendarId);
+			throw CalendarStore.InvalidCalendar(calendarId);
 		}
 
-		var sDate = startDate ?? DateTimeOffset.Now.Add(Calendars.defaultStartTimeFromNow);
-		var eDate = endDate ?? sDate.Add(Calendars.defaultEndTimeFromStartTime);
+		var sDate = startDate ?? DateTimeOffset.Now.Add(CalendarStore.defaultStartTimeFromNow);
+		var eDate = endDate ?? sDate.Add(CalendarStore.defaultEndTimeFromStartTime);
 
 		var eventsUri = CalendarContract.Events.ContentUri;
 		var eventsProjection = new List<string>
@@ -123,7 +123,7 @@ partial class FeatureImplementation : ICalendars
 		// Android ids are always integers
 		if (!string.IsNullOrEmpty(eventId) && !int.TryParse(eventId, out _))
 		{
-			throw Calendars.InvalidCalendar(eventId);
+			throw CalendarStore.InvalidCalendar(eventId);
 		}
 
 		var eventsUri = CalendarContract.Events.ContentUri;
@@ -145,7 +145,7 @@ partial class FeatureImplementation : ICalendars
 
 		if (cur.Count <= 0)
 		{
-			throw Calendars.InvalidEvent(eventId);
+			throw CalendarStore.InvalidEvent(eventId);
 		}
 
 		cur.MoveToNext();
@@ -158,7 +158,7 @@ partial class FeatureImplementation : ICalendars
 		// Android ids are always integers
 		if (!string.IsNullOrEmpty(eventId) && !int.TryParse(eventId, out _))
 		{
-			throw Calendars.InvalidCalendar(eventId);
+			throw CalendarStore.InvalidCalendar(eventId);
 		}
 
 		var attendeesUri = CalendarContract.Attendees.ContentUri;

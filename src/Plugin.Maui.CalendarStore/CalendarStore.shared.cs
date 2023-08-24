@@ -1,19 +1,19 @@
 ﻿namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
-/// The Calendars API lets a user read information about the device's calendar and associated data.
+/// The CalendarStore API lets a user read information about the device's calendar and associated data.
 /// </summary>
-public static class Calendars
+public static class CalendarStore
 {
-	static ICalendars? defaultImplementation;
+	static ICalendarStore? defaultImplementation;
 
 	/// <summary>
 	/// Provides the default implementation for static usage of this API.
 	/// </summary>
-	public static ICalendars Default =>
+	public static ICalendarStore Default =>
 		defaultImplementation ??= new FeatureImplementation();
 
-	internal static void SetDefault(ICalendars? implementation) =>
+	internal static void SetDefault(ICalendarStore? implementation) =>
 		defaultImplementation = implementation;
 
 	internal static readonly TimeSpan defaultStartTimeFromNow = TimeSpan.Zero;

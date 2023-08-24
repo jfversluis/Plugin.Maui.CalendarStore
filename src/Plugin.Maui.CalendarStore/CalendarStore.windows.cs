@@ -2,7 +2,7 @@
 
 namespace Plugin.Maui.CalendarStore;
 
-partial class FeatureImplementation : ICalendars
+partial class FeatureImplementation : ICalendarStore
 {
 	Task<AppointmentStore>? uwpAppointmentStore;
 
@@ -26,7 +26,7 @@ partial class FeatureImplementation : ICalendars
 
 		var calendar = await instance.GetAppointmentCalendarAsync(calendarId).AsTask().ConfigureAwait(false);
 
-		return calendar == null ? throw Calendars.InvalidCalendar(calendarId) : ToCalendar(calendar);
+		return calendar == null ? throw CalendarStore.InvalidCalendar(calendarId) : ToCalendar(calendar);
 	}
 
 	/// <inheritdoc/>
@@ -50,8 +50,8 @@ partial class FeatureImplementation : ICalendars
 		}
 
 		// dates
-		var sDate = startDate ?? DateTimeOffset.Now.Add(Calendars.defaultStartTimeFromNow);
-		var eDate = endDate ?? sDate.Add(Calendars.defaultEndTimeFromStartTime);
+		var sDate = startDate ?? DateTimeOffset.Now.Add(CalendarStore.defaultStartTimeFromNow);
+		var eDate = endDate ?? sDate.Add(CalendarStore.defaultEndTimeFromStartTime);
 		
 		if (eDate < sDate)
 		{
@@ -79,7 +79,7 @@ partial class FeatureImplementation : ICalendars
 
 		var e = await instance.GetAppointmentAsync(eventId).AsTask().ConfigureAwait(false);
 
-		return e == null ? throw Calendars.InvalidEvent(eventId) : ToEvent(e);
+		return e == null ? throw CalendarStore.InvalidEvent(eventId) : ToEvent(e);
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> native)

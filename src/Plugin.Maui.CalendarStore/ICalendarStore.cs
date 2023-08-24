@@ -1,9 +1,9 @@
 ﻿namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
-/// The Calendars API lets a user read information about the device's calendar and associated data.
+/// The CalendarStore API lets a user read information about the device's calendar and associated data.
 /// </summary>
-public interface ICalendars
+public interface ICalendarStore
 {
 	/// <summary>
 	/// Retrieves all available calendars from the device.
