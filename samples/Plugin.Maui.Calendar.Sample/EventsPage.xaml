@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Plugin.Maui.Calendar.Sample.EventsPage">
+	
+	<VerticalStackLayout Spacing="10" Margin="10">
+		<Button Text="Load Events" Clicked="Button_Clicked_Events" />
+
+		<VerticalStackLayout BindableLayout.ItemsSource="{Binding Events}" Spacing="5">
+			<BindableLayout.ItemTemplate>
+				<DataTemplate>
+					<VerticalStackLayout>
+						<Label Text="{Binding Title, StringFormat='Title: {0}'}" FontSize="25" />
+						<Label Text="{Binding Id, StringFormat='ID: {0}'}" />
+						<Label Text="{Binding CalendarId, StringFormat='Calendar ID: {0}'}" />
+						<Label Text="{Binding Location, StringFormat='Location: {0}'}" />
+						<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
+					</VerticalStackLayout>
+				</DataTemplate>
+			</BindableLayout.ItemTemplate>
+		</VerticalStackLayout>
+	</VerticalStackLayout>
+</ContentPage>

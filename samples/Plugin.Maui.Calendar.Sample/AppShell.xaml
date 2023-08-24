@@ -6,8 +6,13 @@
     xmlns:pages="clr-namespace:Plugin.Maui.Calendar.Sample"
     Shell.FlyoutBehavior="Disabled">
 
-    <ShellContent
-        Title="Feature Plugin"
-        ContentTemplate="{DataTemplate pages:MainPage}" />
+	<TabBar>
+		<ShellContent
+			Title="Calendars"
+			ContentTemplate="{DataTemplate pages:CalendarsPage}" />
 
+		<ShellContent
+			Title="Events"
+			ContentTemplate="{DataTemplate pages:EventsPage}" />
+	</TabBar>
 </Shell>

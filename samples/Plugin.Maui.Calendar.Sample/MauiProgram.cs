@@ -13,7 +13,7 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddTransient<CalendarsPage>();
 		builder.Services.AddSingleton<ICalendars>(Calendars.Default);
 
 		return builder.Build();
