@@ -14,13 +14,13 @@ Install with the dotnet CLI: `dotnet add package Plugin.Maui.CalendarStore`, or 
 
 ## API Usage
 
-`Plugin.Maui.CalendarStore` provides the `Calendars` class that has methods to retrieve calendars, events and attendee information from the device's calendar store.
+`Plugin.Maui.CalendarStore` provides the `CalendarStore` class that has methods to retrieve calendars, events and attendee information from the device's calendar store.
 
-You can either use it as a static class, e.g.: `Calendars.Default.GetCalendars()` or with dependency injection: `builder.Services.AddSingleton<ICalendars>(Calendars.Default);`
+You can either use it as a static class, e.g.: `CalendarStore.Default.GetCalendars()` or with dependency injection: `builder.Services.AddSingleton<ICalendarStore>(CalendarStore.Default);`
 
 ### Permissions
 
-Before you can start using Calendar, you will need to request the proper permissions on each platform.
+Before you can start using `CalendarStore`, you will need to request the proper permissions on each platform.
 
 #### iOS/macOS
 
@@ -68,14 +68,14 @@ You will first need to register the `Calendars` with the `MauiAppBuilder` follow
 builder.Services.AddSingleton(Calendars.Default);
 ```
 
-You can then enable your classes to depend on `ICalendars` as per the following example.
+You can then enable your classes to depend on `ICalendarStore` as per the following example.
 
 ```csharp
 public class CalendarsViewModel
 {
-    readonly ICalendars calendarStore;
+    readonly ICalendarStore calendarStore;
 
-    public CalendarsViewModel(ICalendars calendarStore)
+    public CalendarsViewModel(ICalendarStore calendarStore)
     {
         this.calendarStore = calendarStore;
     }
@@ -101,7 +101,7 @@ public class CalendarsViewModel
 {
     public async Task ReadCalendars()
     {
-        var calendars = await Calendars.Default.GetCalendars();
+        var calendars = await CalendarStore.Default.GetCalendars();
 
         foreach (var c in calendars)
         {
@@ -113,7 +113,7 @@ public class CalendarsViewModel
 
 ### Calendars
 
-Once you have created a `Calendars` you can interact with it in the following ways:
+Once you have created a `CalendarStore` instance you can interact with it in the following ways:
 
 #### Methods
 
@@ -121,15 +121,15 @@ Once you have created a `Calendars` you can interact with it in the following wa
 
 Retrieves all available calendars from the device.
 
-##### `GetCalendarAsync(string calendarId)`
+##### `GetCalendar(string calendarId)`
 
 Retrieves a specific calendar from the device.
 
-##### `GetEventsAsync(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)`
+##### `GetEvents(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)`
 
 Retrieves events from a specific calendar or all calendars from the device.
 
-##### `GetEventAsync(string eventId)`
+##### `GetEvent(string eventId)`
 
 Retrieves a specific event from the calendar store on the device.
 
