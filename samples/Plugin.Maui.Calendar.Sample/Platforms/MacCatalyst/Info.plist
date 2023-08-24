@@ -26,5 +26,7 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>This app wants to read your calendar data.</string>
 </dict>
 </plist>
