@@ -180,12 +180,9 @@ partial class FeatureImplementation : ICalendars
 		}
 	}
 
-	Calendar ToCalendar(ICursor cur, List<string> projection) =>
-		new()
-		{
-			Id = cur.GetString(projection.IndexOf(CalendarContract.Calendars.InterfaceConsts.Id)),
-			Name = cur.GetString(projection.IndexOf(CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName)),
-		};
+	static Calendar ToCalendar(ICursor cur, List<string> projection) =>
+		new(cur.GetString(projection.IndexOf(CalendarContract.Calendars.InterfaceConsts.Id)),
+			cur.GetString(projection.IndexOf(CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName)));
 
 	IEnumerable<CalendarEvent> ToEvents(ICursor cur, List<string> projection)
 	{
@@ -201,11 +198,10 @@ partial class FeatureImplementation : ICalendars
 		var start = DateTimeOffset.FromUnixTimeMilliseconds(cur.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtstart)));
 		var end = DateTimeOffset.FromUnixTimeMilliseconds(cur.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtend)));
 
-		return new()
+		return new(cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id)),
+			cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.CalendarId)),
+			cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Title)))
 		{
-			Id = cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id)),
-			CalendarId = cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.CalendarId)),
-			Title = cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Title)),
 			Description = cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Description)),
 			Location = cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventLocation)),
 			AllDay = allDay,
@@ -223,10 +219,7 @@ partial class FeatureImplementation : ICalendars
 		}
 	}
 
-	CalendarEventAttendee ToAttendee(ICursor cur, List<string> attendeesProjection) =>
-		new()
-		{
-			Name = cur.GetString(attendeesProjection.IndexOf(CalendarContract.Attendees.InterfaceConsts.AttendeeName)),
-			Email = cur.GetString(attendeesProjection.IndexOf(CalendarContract.Attendees.InterfaceConsts.AttendeeEmail)),
-		};
+	static CalendarEventAttendee ToAttendee(ICursor cur, List<string> attendeesProjection) =>
+		new(cur.GetString(attendeesProjection.IndexOf(CalendarContract.Attendees.InterfaceConsts.AttendeeName)),
+			cur.GetString(attendeesProjection.IndexOf(CalendarContract.Attendees.InterfaceConsts.AttendeeEmail)));
 }

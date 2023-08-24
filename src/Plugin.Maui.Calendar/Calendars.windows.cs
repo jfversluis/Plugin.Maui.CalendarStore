@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Windows.ApplicationModel.Appointments;
+﻿using Windows.ApplicationModel.Appointments;
 
 namespace Plugin.Maui.Calendar;
 
 partial class FeatureImplementation : ICalendars
 {
-	Task<AppointmentStore> uwpAppointmentStore;
+	Task<AppointmentStore>? uwpAppointmentStore;
 
 	Task<AppointmentStore> GetInstanceAsync() =>
 		uwpAppointmentStore ??= AppointmentManager.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
@@ -50,13 +46,18 @@ partial class FeatureImplementation : ICalendars
 
 		// calendar
 		if (!string.IsNullOrEmpty(calendarId))
+		{
 			options.CalendarIds.Add(calendarId);
+		}
 
 		// dates
 		var sDate = startDate ?? DateTimeOffset.Now.Add(Calendars.defaultStartTimeFromNow);
 		var eDate = endDate ?? sDate.Add(Calendars.defaultEndTimeFromStartTime);
+		
 		if (eDate < sDate)
+		{
 			eDate = sDate;
+		}
 
 		var instance = await GetInstanceAsync().ConfigureAwait(false);
 
@@ -95,11 +96,7 @@ partial class FeatureImplementation : ICalendars
 	}
 
 	static Calendar ToCalendar(AppointmentCalendar calendar) =>
-		new Calendar
-		{
-			Id = calendar.LocalId,
-			Name = calendar.DisplayName
-		};
+		new(calendar.LocalId, calendar.DisplayName);
 
 	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<Appointment> native)
 	{
@@ -110,11 +107,8 @@ partial class FeatureImplementation : ICalendars
 	}
 
 	static CalendarEvent ToEvent(Appointment e) =>
-		new CalendarEvent
+		new(e.LocalId, e.CalendarId, e.Subject)
 		{
-			Id = e.LocalId,
-			CalendarId = e.CalendarId,
-			Title = e.Subject,
 			Description = e.Details,
 			Location = e.Location,
 			StartDate = e.StartTime,
@@ -129,11 +123,7 @@ partial class FeatureImplementation : ICalendars
 	{
 		foreach (var attendee in native)
 		{
-			yield return new CalendarEventAttendee
-			{
-				Name = attendee.DisplayName,
-				Email = attendee.Address
-			};
+			yield return new(attendee.DisplayName, attendee.Address);
 		}
 	}
 }

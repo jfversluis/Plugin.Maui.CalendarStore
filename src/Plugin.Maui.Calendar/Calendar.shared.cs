@@ -1,15 +1,7 @@
-using System;
-using System.Collections.Generic;
-
 namespace Plugin.Maui.Calendar;
 
 public class Calendar
-{
-    public Calendar()
-    {
-    }
-
-    public Calendar(string id, string name)
+{public Calendar(string id, string name)
     {
         Id = id;
         Name = name;

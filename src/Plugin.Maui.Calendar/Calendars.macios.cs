@@ -85,12 +85,8 @@ partial class FeatureImplementation : ICalendars
 		}
 	}
 
-	Calendar ToCalendar(EKCalendar calendar) =>
-    	new()
-		{
-			Id = calendar.CalendarIdentifier,
-			Name = calendar.Title
-		};
+	static Calendar ToCalendar(EKCalendar calendar) =>
+    	new(calendar.CalendarIdentifier, calendar.Title);
 
 	IEnumerable<CalendarEvent> ToEvents(IEnumerable<EKEvent> native)
 	{
@@ -100,31 +96,26 @@ partial class FeatureImplementation : ICalendars
 		}
 	}
 
-	CalendarEvent ToEvent(EKEvent native) =>
-		new()
+	static CalendarEvent ToEvent(EKEvent platform) =>
+		new(platform.CalendarItemIdentifier, platform.Calendar.CalendarIdentifier,
+			platform.Title)
 		{
-			Id = native.CalendarItemIdentifier,
-			CalendarId = native.Calendar.CalendarIdentifier,
-			Title = native.Title,
-			Description = native.Notes,
-			Location = native.Location,
-			AllDay = native.AllDay,
-			StartDate = DateTimeOffset.UnixEpoch + TimeSpan.FromSeconds(native.StartDate.SecondsSince1970),
-			EndDate = DateTimeOffset.UnixEpoch + TimeSpan.FromSeconds(native.EndDate.SecondsSince1970),
-			Attendees = native.Attendees != null
-				? ToAttendees(native.Attendees).ToList()
+			Description = platform.Notes,
+			Location = platform.Location,
+			AllDay = platform.AllDay,
+			StartDate = DateTimeOffset.UnixEpoch + TimeSpan.FromSeconds(platform.StartDate.SecondsSince1970),
+			EndDate = DateTimeOffset.UnixEpoch + TimeSpan.FromSeconds(platform.EndDate.SecondsSince1970),
+			Attendees = platform.Attendees != null
+				? ToAttendees(platform.Attendees).ToList()
 				: new List<CalendarEventAttendee>()
 		};
 
-	IEnumerable<CalendarEventAttendee> ToAttendees(IEnumerable<EKParticipant> inviteList)
+	static IEnumerable<CalendarEventAttendee> ToAttendees(IEnumerable<EKParticipant> inviteList)
 	{
 		foreach (var attendee in inviteList)
 		{
-			yield return new CalendarEventAttendee
-			{
-				Name = attendee.Name,
-				Email = attendee.Name
-			};
+			// There is no obvious way to get the attendees email address on iOS?
+			yield return new(attendee.Name, attendee.Name);
 		}
 	}
 }
