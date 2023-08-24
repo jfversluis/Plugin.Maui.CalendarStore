@@ -65,7 +65,7 @@ The runtime permission is automatically requested by the plugin when any of the 
 You will first need to register the `Calendars` with the `MauiAppBuilder` following the same pattern that the .NET MAUI Essentials libraries follow.
 
 ```csharp
-builder.Services.AddSingleton(Calendars.Default);
+builder.Services.AddSingleton(CalendarStore.Default);
 ```
 
 You can then enable your classes to depend on `ICalendarStore` as per the following example.
