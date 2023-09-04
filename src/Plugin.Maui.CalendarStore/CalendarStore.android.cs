@@ -88,7 +88,8 @@ partial class FeatureImplementation : ICalendarStore
 			CalendarContract.Events.InterfaceConsts.AllDay,
 			CalendarContract.Events.InterfaceConsts.Dtstart,
 			CalendarContract.Events.InterfaceConsts.Dtend,
-			CalendarContract.Events.InterfaceConsts.Deleted
+			CalendarContract.Events.InterfaceConsts.Deleted,
+			CalendarContract.Events.InterfaceConsts.EventTimezone,
 		};
 
 		var calendarSpecificEvent =
@@ -136,7 +137,8 @@ partial class FeatureImplementation : ICalendarStore
 			CalendarContract.Events.InterfaceConsts.EventLocation,
 			CalendarContract.Events.InterfaceConsts.AllDay,
 			CalendarContract.Events.InterfaceConsts.Dtstart,
-			CalendarContract.Events.InterfaceConsts.Dtend
+			CalendarContract.Events.InterfaceConsts.Dtend,
+			CalendarContract.Events.InterfaceConsts.EventTimezone,
 		};
 
 		var calendarSpecificEvent = $"{CalendarContract.Events.InterfaceConsts.Id} = {eventId}";
@@ -198,6 +200,7 @@ partial class FeatureImplementation : ICalendarStore
 
 	CalendarEvent ToEvent(ICursor cur, List<string> projection)
 	{
+		var timezone = cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventTimezone));
 		var allDay = cur.GetInt(projection.IndexOf(CalendarContract.Events.InterfaceConsts.AllDay)) != 0;
 		var start = DateTimeOffset.FromUnixTimeMilliseconds(cur.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtstart)));
 		var end = DateTimeOffset.FromUnixTimeMilliseconds(cur.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtend)));
@@ -209,8 +212,8 @@ partial class FeatureImplementation : ICalendarStore
 			Description = cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Description)),
 			Location = cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventLocation)),
 			AllDay = allDay,
-			StartDate = start,
-			EndDate = end,
+			StartDate = timezone is null ? start : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(start, timezone),
+			EndDate = timezone is null ? end : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(end, timezone),
 			Attendees = GetAttendees(cur.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id))).ToList()
 		};
 	}
