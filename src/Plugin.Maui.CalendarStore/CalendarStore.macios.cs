@@ -103,8 +103,8 @@ partial class FeatureImplementation : ICalendarStore
 			Description = platform.Notes,
 			Location = platform.Location,
 			AllDay = platform.AllDay,
-			StartDate = platform.TimeZone == null ? (DateTime)platform.StartDate : TimeZoneInfo.ConvertTimeBySystemTimeZoneId((DateTime)platform.StartDate, platform.TimeZone.Name),
-			EndDate = platform.TimeZone == null ? (DateTime)platform.EndDate : TimeZoneInfo.ConvertTimeBySystemTimeZoneId((DateTime)platform.EndDate, platform.TimeZone.Name),
+			StartDate = ToDateTimeOffsetWithTimezone(platform.StartDate, platform.TimeZone),
+			EndDate = ToDateTimeOffsetWithTimezone(platform.EndDate, platform.TimeZone),
 			Attendees = platform.Attendees != null
 				? ToAttendees(platform.Attendees).ToList()
 				: new List<CalendarEventAttendee>()
@@ -117,5 +117,18 @@ partial class FeatureImplementation : ICalendarStore
 			// There is no obvious way to get the attendees email address on iOS?
 			yield return new(attendee.Name, attendee.Name);
 		}
+	}
+
+	static DateTimeOffset ToDateTimeOffsetWithTimezone(NSDate platformDate, NSTimeZone? timezone)
+	{
+		var timezoneToApply = NSTimeZone.DefaultTimeZone;
+
+		if (timezone is not null)
+		{
+			timezoneToApply = timezone;
+		}
+
+		return TimeZoneInfo.ConvertTimeBySystemTimeZoneId(
+			(DateTime)platformDate, timezoneToApply.Name);
 	}
 }
