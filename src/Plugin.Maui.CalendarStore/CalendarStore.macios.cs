@@ -103,8 +103,8 @@ partial class FeatureImplementation : ICalendarStore
 			Description = platform.Notes,
 			Location = platform.Location,
 			AllDay = platform.AllDay,
-			StartDate = DateTimeOffset.UnixEpoch + TimeSpan.FromSeconds(platform.StartDate.SecondsSince1970),
-			EndDate = DateTimeOffset.UnixEpoch + TimeSpan.FromSeconds(platform.EndDate.SecondsSince1970),
+			StartDate = platform.TimeZone == null ? (DateTime)platform.StartDate : TimeZoneInfo.ConvertTimeBySystemTimeZoneId((DateTime)platform.StartDate, platform.TimeZone.Name),
+			EndDate = platform.TimeZone == null ? (DateTime)platform.EndDate : TimeZoneInfo.ConvertTimeBySystemTimeZoneId((DateTime)platform.EndDate, platform.TimeZone.Name),
 			Attendees = platform.Attendees != null
 				? ToAttendees(platform.Attendees).ToList()
 				: new List<CalendarEventAttendee>()
