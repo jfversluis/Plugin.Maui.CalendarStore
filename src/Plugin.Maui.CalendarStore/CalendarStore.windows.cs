@@ -87,20 +87,20 @@ partial class FeatureImplementation : ICalendarStore
 	public Task CreateAllDayEvent(string calendarId, string title, string description,
 		DateTimeOffset startDate, DateTimeOffset endDate)
 	{
-		return InternalSaveEvent(calendarId, title, description, startDate, endDate, true);
+		return CreateEvent(calendarId, title, description, startDate, endDate, true);
 	}
 
 	/// <inheritdoc/>
 	public Task CreateEvent(string calendarId, string title, string description,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime)
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
 	{
-		return InternalSaveEvent(calendarId, title, description, startDateTime, endDateTime);
+		return InternalSaveEvent(calendarId, title, description, startDateTime, endDateTime, isAllDay);
 	}
 
 	/// <inheritdoc/>
 	public Task CreateEvent(CalendarEvent calendarEvent)
 	{
-		return InternalSaveEvent(calendarEvent.CalendarId, calendarEvent.Title,
+		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title,
 			calendarEvent.Description, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
 	}
 

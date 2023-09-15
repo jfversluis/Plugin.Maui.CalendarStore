@@ -9,7 +9,7 @@ partial class FeatureImplementation : ICalendarStore
 	}
 
 	public Task CreateEvent(string calendarId, string title, string description,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime)
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
 	{
 		throw new NotImplementedException();
 	}

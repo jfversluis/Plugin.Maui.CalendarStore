@@ -68,7 +68,7 @@ partial class FeatureImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public Task<CalendarEvent> GetEvent(string eventId)
 	{
-		if (!(EventStore.GetCalendarItem(eventId) is EKEvent calendarEvent))
+		if (EventStore.GetCalendarItem(eventId) is not EKEvent calendarEvent)
 		{
 			throw CalendarStore.InvalidEvent(eventId);
 		}
@@ -77,22 +77,16 @@ partial class FeatureImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task CreateEvent(string calendarId, string title, string description, DateTimeOffset startDateTime, DateTimeOffset endDateTime)
+	public Task CreateEvent(string calendarId, string title, string description, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
 	{
-		return InternalSaveEvent(calendarId, title, description, startDateTime, endDateTime);
+		return InternalSaveEvent(calendarId, title, description, startDateTime, endDateTime, isAllDay);
 	}
 
 	/// <inheritdoc/>
 	public Task CreateEvent(CalendarEvent calendarEvent)
 	{
-		if (calendarEvent.AllDay)
-		{
-			return CreateAllDayEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
-				calendarEvent.StartDate, calendarEvent.EndDate);
-		}
-
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
-			calendarEvent.StartDate, calendarEvent.EndDate);
+			calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
 	}
 
 	/// <inheritdoc/>

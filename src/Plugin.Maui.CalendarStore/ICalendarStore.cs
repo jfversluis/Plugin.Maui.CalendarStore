@@ -45,8 +45,10 @@ public interface ICalendarStore
 	/// <param name="description">The description of the event.</param>
 	/// <param name="startDateTime">The start date and time for the event.</param>
 	/// <param name="endDateTime">The end date and time for the event.</param>
+	/// <param name="isAllDay">Indicates whether or not this event should be marked as an all-day event.</param>
 	/// <returns></returns>
-	Task CreateEvent(string calendarId, string title, string description, DateTimeOffset startDateTime, DateTimeOffset endDateTime);
+	/// <remarks>When <paramref name="isAllDay"/> is set to <see langword="true"/>, any time information in <paramref name="startDateTime"/> and <paramref name="endDateTime"/> is omitted.</remarks>
+	Task CreateEvent(string calendarId, string title, string description, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false);
 
 	/// <summary>
 	/// Creates a new event based on the provided <paramref name="calendarEvent"/> object. 

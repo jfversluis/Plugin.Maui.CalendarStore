@@ -231,19 +231,20 @@ partial class FeatureImplementation : ICalendarStore
 			cur.GetString(attendeesProjection.IndexOf(CalendarContract.Attendees.InterfaceConsts.AttendeeEmail)));
 
 	public Task CreateEvent(string calendarId, string title, string description,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime)
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
 	{
 		throw new NotImplementedException();
 	}
 
 	public Task CreateEvent(CalendarEvent calendarEvent)
 	{
-		throw new NotImplementedException();
+		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title,
+			calendarEvent.Description, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
 	}
 
 	public Task CreateAllDayEvent(string calendarId, string title, string description,
 		DateTimeOffset startDate, DateTimeOffset endDate)
 	{
-		throw new NotImplementedException();
+		return CreateEvent(calendarId, title, description, startDate, endDate, true);
 	}
 }
