@@ -4,7 +4,7 @@ public partial class CalendarsPage : ContentPage
 {
 	readonly ICalendarStore calendars;
 
-	public Calendar[] Calendars { get; set; }
+	public Calendar[]? Calendars { get; set; }
 
 	public CalendarsPage(ICalendarStore calendars)
 	{

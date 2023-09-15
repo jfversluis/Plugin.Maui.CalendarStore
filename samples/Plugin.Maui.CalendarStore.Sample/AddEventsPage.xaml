@@ -3,11 +3,58 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Plugin.Maui.CalendarStore.Sample.AddEventsPage"
              Title="AddEventsPage">
-    <VerticalStackLayout>
-        <Button 
-            Text="Save"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center"
-            Clicked="Button_Clicked"/>
-    </VerticalStackLayout>
+	<ScrollView>
+		<Grid HorizontalOptions="Center" ColumnDefinitions="100, 300"
+			  RowDefinitions="50,50,100,50,50,50,50,50,50,*" RowSpacing="5">
+
+			<Label Grid.Column="0" Grid.Row="0"
+				   Text="Select Calendar:" />
+
+			<Picker Grid.Column="1" Grid.Row="0" WidthRequest="200"
+					ItemsSource="{Binding Calendars}"
+					ItemDisplayBinding="{Binding Name}"
+					SelectedItem="{Binding SelectedCalendar}"/>
+
+			<Label Grid.Column="0" Grid.Row="1"
+				   Text="Event Title:" />
+			<Entry Grid.Column="1" Grid.Row="1"
+				   Text="{Binding EventTitle}" VerticalOptions="Start" />
+
+			<Label Grid.Column="0" Grid.Row="2"
+				   Text="Event Description:" />
+			<Editor Grid.Column="1" Grid.Row="2"
+					Text="{Binding EventDescription}" />
+
+			<Label Grid.Column="0" Grid.Row="3"
+				Text="Start Date:" />
+			<DatePicker Grid.Column="1" Grid.Row="3"
+						Date="{Binding EventStartDate}" />
+
+			<Label Grid.Column="0" Grid.Row="4"
+				Text="Start Time:" />
+			<TimePicker Grid.Column="1" Grid.Row="4"
+				Time="{Binding EventStartTime}" />
+
+			<Label Grid.Column="0" Grid.Row="5"
+				   Text="End Date:" />
+			<DatePicker Grid.Column="1" Grid.Row="5"
+						Date="{Binding EventEndDate}" />
+
+			<Label Grid.Column="0" Grid.Row="6"
+				   Text="End Time:" />
+			<TimePicker Grid.Column="1" Grid.Row="6"
+						Time="{Binding EventEndTime}" />
+
+			<Label Grid.Column="0" Grid.Row="7"
+				Text="All day:" />
+			<CheckBox Grid.Column="1" Grid.Row="7"
+				 IsChecked="{Binding EventIsAllDay}" />
+
+			<Button Grid.Column="0" Grid.Row="8" Grid.ColumnSpan="2"
+				Text="Save"
+				VerticalOptions="Center" 
+				HorizontalOptions="Center"
+				Clicked="Button_Clicked"/>
+		</Grid>
+	</ScrollView>
 </ContentPage>
