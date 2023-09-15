@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using Microsoft.Maui.ApplicationModel;
 using Windows.ApplicationModel.Appointments;
 
 namespace Plugin.Maui.CalendarStore;
@@ -28,7 +27,7 @@ partial class FeatureImplementation : ICalendarStore
 
 		var calendar = await instance.GetAppointmentCalendarAsync(calendarId).AsTask().ConfigureAwait(false);
 
-		return calendar == null ? throw CalendarStore.InvalidCalendar(calendarId) : ToCalendar(calendar);
+		return calendar is null ? throw CalendarStore.InvalidCalendar(calendarId) : ToCalendar(calendar);
 	}
 
 	/// <inheritdoc/>
@@ -66,7 +65,7 @@ partial class FeatureImplementation : ICalendarStore
 
 		// confirm the calendar exists if no events were found
 		// the PlatformGetCalendarAsync will throw if not
-		if ((events == null || events.Count() == 0) && !string.IsNullOrEmpty(calendarId))
+		if ((events is null || events.Count == 0) && !string.IsNullOrEmpty(calendarId))
 		{
 			await GetCalendar(calendarId).ConfigureAwait(false);
 		}
@@ -81,24 +80,56 @@ partial class FeatureImplementation : ICalendarStore
 
 		var e = await instance.GetAppointmentAsync(eventId).AsTask().ConfigureAwait(false);
 
-		return e == null ? throw CalendarStore.InvalidEvent(eventId) : ToEvent(e);
+		return e is null ? throw CalendarStore.InvalidEvent(eventId) : ToEvent(e);
 	}
 
+	/// <inheritdoc/>
 	public Task CreateAllDayEvent(string calendarId, string title, string description,
 		DateTimeOffset startDate, DateTimeOffset endDate)
 	{
-		throw new NotImplementedException();
+		return InternalSaveEvent(calendarId, title, description, startDate, endDate, true);
 	}
 
+	/// <inheritdoc/>
 	public Task CreateEvent(string calendarId, string title, string description,
 		DateTimeOffset startDateTime, DateTimeOffset endDateTime)
 	{
-		throw new NotImplementedException();
+		return InternalSaveEvent(calendarId, title, description, startDateTime, endDateTime);
 	}
 
+	/// <inheritdoc/>
 	public Task CreateEvent(CalendarEvent calendarEvent)
 	{
-		throw new NotImplementedException();
+		return InternalSaveEvent(calendarEvent.CalendarId, calendarEvent.Title,
+			calendarEvent.Description, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
+	}
+
+	static async Task InternalSaveEvent(string calendarId, string title, string description,
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDayEvent = false)
+	{
+		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
+
+		if (permissionResult != PermissionStatus.Granted)
+		{
+			throw new PermissionException("Permission for writing to calendar store is not granted.");
+		}
+
+		var platformCalendarManager = await AppointmentManager
+			.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadWrite);
+
+		var platformCalendar = await platformCalendarManager
+			.GetAppointmentCalendarAsync(calendarId);
+
+		var eventToSave = new Appointment
+		{
+			Subject = title,
+			Details = description,
+			StartTime = startDateTime.LocalDateTime,
+			Duration = endDateTime.Subtract(startDateTime),
+			AllDay = isAllDayEvent,
+		};
+
+		await platformCalendar.SaveAppointmentAsync(eventToSave);
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> native)
