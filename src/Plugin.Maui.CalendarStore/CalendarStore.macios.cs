@@ -76,6 +76,85 @@ partial class FeatureImplementation : ICalendarStore
 		return Task.FromResult(ToEvent(calendarEvent));
 	}
 
+	/// <inheritdoc/>
+	public Task CreateEvent(string calendarId, string title, string description, DateTimeOffset startDateTime, DateTimeOffset endDateTime)
+	{
+		return InternalSaveEvent(calendarId, title, description, startDateTime, endDateTime);
+	}
+
+	/// <inheritdoc/>
+	public Task CreateEvent(CalendarEvent calendarEvent)
+	{
+		if (calendarEvent.AllDay)
+		{
+			return CreateAllDayEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
+				calendarEvent.StartDate, calendarEvent.EndDate);
+		}
+
+		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
+			calendarEvent.StartDate, calendarEvent.EndDate);
+	}
+
+	/// <inheritdoc/>
+	public Task CreateAllDayEvent(string calendarId, string title, string description, DateTimeOffset startDate, DateTimeOffset endDate)
+	{
+		return InternalSaveEvent(calendarId, title, description, startDate, endDate, true);
+	}
+
+	static async Task InternalSaveEvent(string calendarId, string title, string description,
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDayEvent = false)
+	{
+		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
+
+		if (permissionResult != PermissionStatus.Granted)
+		{
+			throw new PermissionException("Permission for writing to calendar store is not granted.");
+		}
+
+		var platformCalendar = EventStore.GetCalendar(calendarId) ?? throw CalendarStore.InvalidCalendar(calendarId);
+
+		if (!platformCalendar.AllowsContentModifications)
+		{
+			throw new Exception($"Selected calendar (id: {calendarId}) is read-only.");
+		}
+
+		var accessRequest = await EventStore.RequestAccessAsync(EKEntityType.Event);
+
+		// An error occurred on the platform level
+		if (accessRequest.Item2 is not null)
+		{
+			throw new Exception($"Error occurred while accessing platform calendar store: " +
+				$"{accessRequest.Item2.Description}");
+		}
+
+		// Permission was not granted
+		if (!accessRequest.Item1)
+		{
+			throw new Exception("Could not access platform calendar store.");
+		}
+
+		var eventToSave = EKEvent.FromStore(EventStore);
+		eventToSave.Calendar = platformCalendar;
+		eventToSave.Title = title;
+		eventToSave.Notes = description;
+		eventToSave.StartDate = (NSDate)startDateTime.LocalDateTime;
+		eventToSave.EndDate = (NSDate)endDateTime.LocalDateTime;
+		eventToSave.AllDay = isAllDayEvent;
+		
+		var saveResult = EventStore.SaveEvent(eventToSave, EKSpan.ThisEvent, true, out var error);
+
+		if (!saveResult || error is not null)
+		{
+			if (error is not null)
+			{
+				throw new Exception($"Error occurred while saving event: " +
+					$"{error.LocalizedDescription}");
+			}
+
+			throw new Exception("Saving the event was unsuccessful.");
+		}
+	}
+
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<EKCalendar> native)
 	{
 		foreach (var calendar in native)
@@ -85,7 +164,7 @@ partial class FeatureImplementation : ICalendarStore
 	}
 
 	static Calendar ToCalendar(EKCalendar calendar) =>
-    	new(calendar.CalendarIdentifier, calendar.Title);
+		new(calendar.CalendarIdentifier, calendar.Title);
 
 	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<EKEvent> native)
 	{

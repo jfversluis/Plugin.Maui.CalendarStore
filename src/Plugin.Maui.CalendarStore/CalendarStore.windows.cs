@@ -1,4 +1,6 @@
-﻿using Windows.ApplicationModel.Appointments;
+﻿using System;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.Appointments;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -80,6 +82,23 @@ partial class FeatureImplementation : ICalendarStore
 		var e = await instance.GetAppointmentAsync(eventId).AsTask().ConfigureAwait(false);
 
 		return e == null ? throw CalendarStore.InvalidEvent(eventId) : ToEvent(e);
+	}
+
+	public Task CreateAllDayEvent(string calendarId, string title, string description,
+		DateTimeOffset startDate, DateTimeOffset endDate)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task CreateEvent(string calendarId, string title, string description,
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task CreateEvent(CalendarEvent calendarEvent)
+	{
+		throw new NotImplementedException();
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> native)

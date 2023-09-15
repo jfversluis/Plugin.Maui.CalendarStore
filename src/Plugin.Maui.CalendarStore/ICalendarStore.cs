@@ -37,4 +37,33 @@ public interface ICalendarStore
 	/// <returns>A <see cref="CalendarEvent"/> object that represents the requested event from the user's device.</returns>
 	/// <exception cref="ArgumentException">Thrown when an event with the value specified in <paramref name="eventId"/> could not be found.</exception>
 	Task<CalendarEvent> GetEvent(string eventId);
+
+	/// <summary>
+	/// Creates a new event with the provided information in the specified calendar.
+	/// </summary>
+	/// <param name="title">The title of the event.</param>
+	/// <param name="description">The description of the event.</param>
+	/// <param name="startDateTime">The start date and time for the event.</param>
+	/// <param name="endDateTime">The end date and time for the event.</param>
+	/// <returns></returns>
+	Task CreateEvent(string calendarId, string title, string description, DateTimeOffset startDateTime, DateTimeOffset endDateTime);
+
+	/// <summary>
+	/// Creates a new event based on the provided <paramref name="calendarEvent"/> object. 
+	/// </summary>
+	/// <param name="calendarEvent">The event object with the details to save to the calendar specified in this object.</param>
+	/// <returns></returns>
+	Task CreateEvent(CalendarEvent calendarEvent);
+
+	/// <summary>
+	/// Creates a new all day event with the provided information in the specified calendar.
+	/// </summary>
+	/// <param name="calendarId">The unique identifier of the calendar to save the event in.</param>
+	/// <param name="title">The title of the event.</param>
+	/// <param name="description">The description of the event.</param>
+	/// <param name="startDate">The start date for the event.</param>
+	/// <param name="endDate">The end date for the event.</param>
+	/// <returns></returns>
+	/// <remarks>Any time information in <paramref name="startDate"/> and <paramref name="endDate"/> is omitted.</remarks>
+	Task CreateAllDayEvent(string calendarId, string title, string description, DateTimeOffset startDate, DateTimeOffset endDate);
 }
