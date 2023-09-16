@@ -22,6 +22,8 @@ You can either use it as a static class, e.g.: `CalendarStore.Default.GetCalenda
 
 Before you can start using `CalendarStore`, you will need to request the proper permissions on each platform.
 
+The permissions will automatically be requested by this library when needed.
+
 #### iOS/macOS
 
 On iOS and macOS, add the `NSCalendarsUsageDescription` key to your `info.plist` file. When declared, the permission will be requested automatically at runtime.
@@ -50,15 +52,20 @@ See an example of a complete Entitlements file below.
 
 #### Android
 
-`READ_CALENDAR` in `AndroidManifest.xml`
+On Android declare the `READ_CALENDAR` permissions in your `AndroidManifest.xml` file for reading calendar information. If you also want to write information, also add the `WRITE_CALENDAR` permission. 
 
-On Android declare the `READ_CALENDAR` permissions in your `AndroidManifest.xml` file. This should be placed in the `manifest` node. You can also add this through the visual editor in Visual Studio.
+This should be placed in the `manifest` node. You can also add this through the visual editor in Visual Studio.
 
 The runtime permission is automatically requested by the plugin when any of the methods is called.
 
 ```xml
 <uses-permission android:name="android.permission.READ_CALENDAR" />
+<uses-permission android:name="android.permission.WRITE_CALENDAR" />
 ```
+
+#### Windows
+
+On Windows no permissions are required.
 
 ### Dependency Injection
 
@@ -111,27 +118,39 @@ public class CalendarsViewModel
 }
 ```
 
-### Calendars
+### CalendarStore
 
 Once you have created a `CalendarStore` instance you can interact with it in the following ways:
 
 #### Methods
 
-##### `GetCalendars()`
+##### `IEnumerable<Calendars> GetCalendars()`
 
 Retrieves all available calendars from the device.
 
-##### `GetCalendar(string calendarId)`
+##### `Calendar GetCalendar(string calendarId)`
 
 Retrieves a specific calendar from the device.
 
-##### `GetEvents(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)`
+##### `IEnumerable<CalendarEvent> GetEvents(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)`
 
 Retrieves events from a specific calendar or all calendars from the device.
 
-##### `GetEvent(string eventId)`
+##### `CalendarEvent GetEvent(string eventId)`
 
 Retrieves a specific event from the calendar store on the device.
+
+##### `CreateEvent(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false);`
+
+Creates an event in the specified calendar with the provided information.
+
+##### `CreateEvent(CalendarEvent calendarEvent)`
+
+Creates an event based on the information in the `CalendarEvent` object. This is basically just a convenience method that calls `CreateEvent` with all the unpacked information from `calendarEvent`.
+
+##### `CreateAllDayEvent(string calendarId, string title, string description, string location, DateTimeOffset startDate, DateTimeOffset endDate)`
+
+Creates an all-day event in the specified calendar with the provided information. This is basically just a convenience method that calls `CreateEvent` with `isAllDay` set to true.
 
 # Acknowledgements
 

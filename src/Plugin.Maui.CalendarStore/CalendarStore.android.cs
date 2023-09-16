@@ -43,16 +43,20 @@ partial class CalendarStoreImplementation : ICalendarStore
 	public CalendarStoreImplementation()
 	{
 		calendarsTableUri = CalendarContract.Calendars.ContentUri
-			?? throw new Exception("Could not determine Android calendars table URI.");
+			?? throw new CalendarStore.CalendarStoreException(
+				"Could not determine Android calendars table URI.");
 
 		eventsTableUri = CalendarContract.Events.ContentUri
-			?? throw new Exception("Could not determine Android events table URI.");
+			?? throw new CalendarStore.CalendarStoreException(
+				"Could not determine Android events table URI.");
 
 		attendeesTableUri = CalendarContract.Attendees.ContentUri
-			?? throw new Exception("Could not determine Android attendees table URI.");
+			?? throw new CalendarStore.CalendarStoreException(
+				"Could not determine Android attendees table URI.");
 
 		platformContentResolver = Platform.AppContext.ApplicationContext?.ContentResolver
-			?? throw new Exception("Could not determine Android events table URI.");
+			?? throw new CalendarStore.CalendarStoreException(
+				"Could not determine Android events table URI.");
 	}
 
 	/// <inheritdoc/>
@@ -65,7 +69,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver?.Query(calendarsTableUri,
 			calendarColumns.ToArray(), queryConditions, null, null)
-			?? throw new Exception("Error while querying calendars");
+			?? throw new CalendarStore.CalendarStoreException("Error while querying calendars");
 
 		return ToCalendars(cursor, calendarColumns).ToList();
 	}
@@ -89,7 +93,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver.Query(calendarsTableUri,
 			calendarColumns.ToArray(), queryConditions, null, null)
-			?? throw new Exception("Error while querying calendars");
+			?? throw new CalendarStore.CalendarStoreException("Error while querying calendars");
 
 		if (cursor.Count <= 0)
 		{
@@ -134,7 +138,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver.Query(eventsTableUri,
 			eventsColumns.ToArray(), calendarSpecificEvent, null, sortOrder)
-			?? throw new Exception("Error while querying events");
+			?? throw new CalendarStore.CalendarStoreException("Error while querying events");
 
 		// Confirm the calendar exists if no events were found
 		if (cursor.Count == 0 && !string.IsNullOrEmpty(calendarId))
@@ -161,7 +165,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver.Query(eventsTableUri,
 			eventsColumns.ToArray(), calendarSpecificEvent, null, null)
-			?? throw new Exception("Error while querying events");
+			?? throw new CalendarStore.CalendarStoreException("Error while querying events");
 
 		if (cursor.Count <= 0)
 		{
@@ -241,7 +245,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 				if (!long.TryParse(idUrl?.LastPathSegment, out _))
 				{
-					throw new Exception("There was an error saving the event.");
+					throw new CalendarStore.CalendarStoreException("There was an error saving the event.");
 				}
 			}
 		}
@@ -276,7 +280,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver.Query(attendeesTableUri,
 			attendeesColumns.ToArray(), attendeeFilter, null, null)
-			?? throw new Exception("Error while querying attendees");
+			?? throw new CalendarStore.CalendarStoreException("Error while querying attendees");
 
 		return ToAttendees(cursor, attendeesColumns).ToList();
 	}

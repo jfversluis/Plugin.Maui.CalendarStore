@@ -1,5 +1,6 @@
 ﻿using EventKit;
 using Microsoft.Maui.ApplicationModel;
+using static Plugin.Maui.CalendarStore.CalendarStore;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -98,7 +99,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (!platformCalendar.AllowsContentModifications)
 		{
-			throw new Exception($"Selected calendar (id: {calendarId}) is read-only.");
+			throw new CalendarStoreException($"Selected calendar (id: {calendarId}) is read-only.");
 		}
 
 		var accessRequest = await EventStore.RequestAccessAsync(EKEntityType.Event);
@@ -106,14 +107,14 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// An error occurred on the platform level
 		if (accessRequest.Item2 is not null)
 		{
-			throw new Exception($"Error occurred while accessing platform calendar store: " +
+			throw new CalendarStoreException($"Error occurred while accessing platform calendar store: " +
 				$"{accessRequest.Item2.Description}");
 		}
 
 		// Permission was not granted
 		if (!accessRequest.Item1)
 		{
-			throw new Exception("Could not access platform calendar store.");
+			throw new CalendarStoreException("Could not access platform calendar store.");
 		}
 
 		var eventToSave = EKEvent.FromStore(EventStore);
@@ -131,11 +132,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			if (error is not null)
 			{
-				throw new Exception($"Error occurred while saving event: " +
+				throw new CalendarStoreException($"Error occurred while saving event: " +
 					$"{error.LocalizedDescription}");
 			}
 
-			throw new Exception("Saving the event was unsuccessful.");
+			throw new CalendarStoreException("Saving the event was unsuccessful.");
 		}
 	}
 

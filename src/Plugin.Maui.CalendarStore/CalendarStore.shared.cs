@@ -61,4 +61,10 @@ public static class CalendarStore
 
     internal static ArgumentException InvalidEvent(string eventId) =>
         new($"No event exists with ID '{eventId}'.", nameof(eventId));
+
+	public class CalendarStoreException : Exception
+	{
+		public CalendarStoreException(string message)
+			: base(message) { }
+	}
 }

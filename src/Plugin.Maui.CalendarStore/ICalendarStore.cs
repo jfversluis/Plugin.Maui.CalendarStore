@@ -1,4 +1,6 @@
-﻿namespace Plugin.Maui.CalendarStore;
+﻿using Microsoft.Maui.ApplicationModel;
+
+namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
 /// The CalendarStore API lets a user read information about the device's calendar and associated data.
@@ -44,12 +46,14 @@ public interface ICalendarStore
 	/// </summary>
 	/// <param name="title">The title of the event.</param>
 	/// <param name="description">The description of the event.</param>
-	/// <param name="description">The location of the event.</param>
+	/// <param name="location">The location of the event.</param>
 	/// <param name="startDateTime">The start date and time for the event.</param>
 	/// <param name="endDateTime">The end date and time for the event.</param>
 	/// <param name="isAllDay">Indicates whether or not this event should be marked as an all-day event.</param>
-	/// <returns></returns>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
 	/// <remarks>When <paramref name="isAllDay"/> is set to <see langword="true"/>, any time information in <paramref name="startDateTime"/> and <paramref name="endDateTime"/> is omitted.</remarks>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task CreateEvent(string calendarId, string title, string description, string location,
 		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false);
 
@@ -57,7 +61,9 @@ public interface ICalendarStore
 	/// Creates a new event based on the provided <paramref name="calendarEvent"/> object. 
 	/// </summary>
 	/// <param name="calendarEvent">The event object with the details to save to the calendar specified in this object.</param>
-	/// <returns></returns>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task CreateEvent(CalendarEvent calendarEvent);
 
 	/// <summary>
@@ -69,8 +75,10 @@ public interface ICalendarStore
 	/// <param name="location">The location of the event.</param>
 	/// <param name="startDate">The start date for the event.</param>
 	/// <param name="endDate">The end date for the event.</param>
-	/// <returns></returns>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
 	/// <remarks>Any time information in <paramref name="startDate"/> and <paramref name="endDate"/> is omitted.</remarks>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate);
 }
