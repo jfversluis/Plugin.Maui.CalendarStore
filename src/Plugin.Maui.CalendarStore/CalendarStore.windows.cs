@@ -120,7 +120,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Location = location,
 			StartTime = startDateTime.LocalDateTime,
 			Duration = endDateTime.Subtract(startDateTime),
-			AllDay = isAllDayEvent,
+			AllDay = isAllDay,
 		};
 
 		await platformCalendar.SaveAppointmentAsync(eventToSave);
