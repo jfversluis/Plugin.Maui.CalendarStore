@@ -3,7 +3,7 @@
 /// <summary>
 /// The CalendarStore API lets a user read information about the device's calendar and associated data.
 /// </summary>
-public static class CalendarStore
+public static partial class CalendarStore
 {
 	static ICalendarStore? defaultImplementation;
 
@@ -56,15 +56,55 @@ public static class CalendarStore
 	public static async Task<CalendarEvent> GetEventAsync(string eventId) =>
         await Default.GetEvent(eventId);
 
-    internal static ArgumentException InvalidCalendar(string calendarId) =>
+	/// <summary>
+	/// Creates a new event with the provided information in the specified calendar.
+	/// </summary>
+	/// <param name="title">The title of the event.</param>
+	/// <param name="description">The description of the event.</param>
+	/// <param name="location">The location of the event.</param>
+	/// <param name="startDateTime">The start date and time for the event.</param>
+	/// <param name="endDateTime">The end date and time for the event.</param>
+	/// <param name="isAllDay">Indicates whether or not this event should be marked as an all-day event.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <remarks>When <paramref name="isAllDay"/> is set to <see langword="true"/>, any time information in <paramref name="startDateTime"/> and <paramref name="endDateTime"/> is omitted.</remarks>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	public static async Task CreateEvent(string calendarId, string title, string description, string location,
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false) =>
+		await Default.CreateEvent(calendarId, title, description, location, startDateTime,
+			endDateTime, isAllDay);
+
+	/// <summary>
+	/// Creates a new event based on the provided <paramref name="calendarEvent"/> object. 
+	/// </summary>
+	/// <param name="calendarEvent">The event object with the details to save to the calendar specified in this object.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	public static async Task CreateEvent(CalendarEvent calendarEvent) =>
+		await Default.CreateEvent(calendarEvent);
+
+	/// <summary>
+	/// Creates a new all day event with the provided information in the specified calendar.
+	/// </summary>
+	/// <param name="calendarId">The unique identifier of the calendar to save the event in.</param>
+	/// <param name="title">The title of the event.</param>
+	/// <param name="description">The description of the event.</param>
+	/// <param name="location">The location of the event.</param>
+	/// <param name="startDate">The start date for the event.</param>
+	/// <param name="endDate">The end date for the event.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <remarks>Any time information in <paramref name="startDate"/> and <paramref name="endDate"/> is omitted.</remarks>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	public static async Task CreateAllDayEvent(string calendarId, string title, string description,
+		string location, DateTimeOffset startDate, DateTimeOffset endDate) =>
+		await Default.CreateAllDayEvent(calendarId, title, description, location,
+			startDate, endDate);
+
+	internal static ArgumentException InvalidCalendar(string calendarId) =>
         new($"No calendar exists with ID '{calendarId}'.", nameof(calendarId));
 
     internal static ArgumentException InvalidEvent(string eventId) =>
         new($"No event exists with ID '{eventId}'.", nameof(eventId));
-
-	public class CalendarStoreException : Exception
-	{
-		public CalendarStoreException(string message)
-			: base(message) { }
-	}
 }
