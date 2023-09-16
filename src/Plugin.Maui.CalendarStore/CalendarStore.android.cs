@@ -63,10 +63,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var queryConditions =
 			$"{CalendarContract.Calendars.InterfaceConsts.Deleted} != 1";
 
-		using var cur = platformContentResolver?.Query(calendarsTableUri,
-			calendarColumns.ToArray(), queryConditions, null, null);
+		using var cursor = platformContentResolver?.Query(calendarsTableUri,
+			calendarColumns.ToArray(), queryConditions, null, null)
+			?? throw new Exception("Error while querying calendars");
 
-		return ToCalendars(cur, calendarColumns).ToList();
+		return ToCalendars(cursor, calendarColumns).ToList();
 	}
 
 	/// <inheritdoc/>
@@ -87,9 +88,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 			$"{CalendarContract.Calendars.InterfaceConsts.Id} = {calendarId}";
 
 		using var cursor = platformContentResolver.Query(calendarsTableUri,
-			calendarColumns.ToArray(), queryConditions, null, null);
+			calendarColumns.ToArray(), queryConditions, null, null)
+			?? throw new Exception("Error while querying calendars");
 
-		if (cursor is null || cursor?.Count <= 0)
+		if (cursor.Count <= 0)
 		{
 			throw CalendarStore.InvalidCalendar(calendarId);
 		}
@@ -116,22 +118,25 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var eDate = endDate ?? sDate.Add(CalendarStore.defaultEndTimeFromStartTime);		
 
 		var calendarSpecificEvent =
-			$"{CalendarContract.Events.InterfaceConsts.Dtend} >= {sDate.AddMilliseconds(sDate.Offset.TotalMilliseconds).ToUnixTimeMilliseconds()} AND " +
-			$"{CalendarContract.Events.InterfaceConsts.Dtstart} <= {eDate.AddMilliseconds(sDate.Offset.TotalMilliseconds).ToUnixTimeMilliseconds()} AND " +
+			$"{CalendarContract.Events.InterfaceConsts.Dtend} >= " +
+			$"{sDate.AddMilliseconds(sDate.Offset.TotalMilliseconds).ToUnixTimeMilliseconds()} AND " +
+			$"{CalendarContract.Events.InterfaceConsts.Dtstart} <= " +
+			$"{eDate.AddMilliseconds(sDate.Offset.TotalMilliseconds).ToUnixTimeMilliseconds()} AND " +
 			$"{CalendarContract.Events.InterfaceConsts.Deleted} != 1 ";
 
 		if (!string.IsNullOrEmpty(calendarId))
 		{
-			calendarSpecificEvent += $" AND {CalendarContract.Events.InterfaceConsts.CalendarId} = {calendarId}";
+			calendarSpecificEvent += $" AND {CalendarContract.Events.InterfaceConsts.CalendarId}" +
+				$" = {calendarId}";
 		}
 
 		var sortOrder = $"{CalendarContract.Events.InterfaceConsts.Dtstart} ASC";
 
 		using var cursor = platformContentResolver.Query(eventsTableUri,
-			eventsColumns.ToArray(), calendarSpecificEvent, null, sortOrder);
+			eventsColumns.ToArray(), calendarSpecificEvent, null, sortOrder)
+			?? throw new Exception("Error while querying events");
 
-		// confirm the calendar exists if no events were found
-		// the PlatformGetCalendarAsync wll throw if not
+		// Confirm the calendar exists if no events were found
 		if (cursor.Count == 0 && !string.IsNullOrEmpty(calendarId))
 		{
 			await GetCalendar(calendarId).ConfigureAwait(false);
@@ -155,9 +160,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 			$"{CalendarContract.Events.InterfaceConsts.Id} = {eventId}";
 
 		using var cursor = platformContentResolver.Query(eventsTableUri,
-			eventsColumns.ToArray(), calendarSpecificEvent, null, null);
+			eventsColumns.ToArray(), calendarSpecificEvent, null, null)
+			?? throw new Exception("Error while querying events");
 
-		if (cursor?.Count <= 0)
+		if (cursor.Count <= 0)
 		{
 			throw CalendarStore.InvalidEvent(eventId);
 		}
@@ -196,7 +202,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 				if (id == virtualCalendarId)
 				{
-					platformCalendarId = cursor.GetLong(cursor.GetColumnIndex(calendarColumns[0]));
+					platformCalendarId = cursor.GetLong(
+						cursor.GetColumnIndex(calendarColumns[0]));
+
 					break;
 				}
 			}
@@ -262,7 +270,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 			$"{CalendarContract.Attendees.InterfaceConsts.EventId}={eventId}";
 
 		using var cursor = platformContentResolver.Query(attendeesTableUri,
-			attendeesColumns.ToArray(), attendeeFilter, null, null);
+			attendeesColumns.ToArray(), attendeeFilter, null, null)
+			?? throw new Exception("Error while querying attendees");
 
 		return ToAttendees(cursor, attendeesColumns).ToList();
 	}
@@ -276,8 +285,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	static Calendar ToCalendar(ICursor cur, List<string> projection) =>
-		new(cur.GetString(projection.IndexOf(CalendarContract.Calendars.InterfaceConsts.Id)),
-			cur.GetString(projection.IndexOf(CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName)));
+		new(cur.GetString(projection.IndexOf(
+			CalendarContract.Calendars.InterfaceConsts.Id)) ?? string.Empty,
+			cur.GetString(projection.IndexOf(
+				CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName)) ?? string.Empty);
 
 	IEnumerable<CalendarEvent> ToEvents(ICursor cur, List<string> projection)
 	{
@@ -294,16 +305,19 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var start = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtstart)));
 		var end = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtend)));
 
-		return new(cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id)),
-			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.CalendarId)),
-			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Title)))
+		return new(cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty,
+			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.CalendarId)) ?? string.Empty,
+			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Title)) ?? string.Empty)
 		{
-			Description = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Description)),
-			Location = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventLocation)),
+			Description = cursor.GetString(projection.IndexOf(
+				CalendarContract.Events.InterfaceConsts.Description)) ?? string.Empty,
+			Location = cursor.GetString(projection.IndexOf(
+				CalendarContract.Events.InterfaceConsts.EventLocation)) ?? string.Empty,
 			AllDay = allDay,
 			StartDate = timezone is null ? start : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(start, timezone),
 			EndDate = timezone is null ? end : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(end, timezone),
-			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id))).ToList()
+			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(
+				CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty).ToList()
 		};
 	}
 
@@ -316,6 +330,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	static CalendarEventAttendee ToAttendee(ICursor cur, List<string> attendeesProjection) =>
-		new(cur.GetString(attendeesProjection.IndexOf(CalendarContract.Attendees.InterfaceConsts.AttendeeName)),
-			cur.GetString(attendeesProjection.IndexOf(CalendarContract.Attendees.InterfaceConsts.AttendeeEmail)));
+		new(cur.GetString(attendeesProjection.IndexOf(
+			CalendarContract.Attendees.InterfaceConsts.AttendeeName)) ?? string.Empty,
+			cur.GetString(attendeesProjection.IndexOf(
+				CalendarContract.Attendees.InterfaceConsts.AttendeeEmail)) ?? string.Empty);
 }

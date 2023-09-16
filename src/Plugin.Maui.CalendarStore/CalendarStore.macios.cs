@@ -170,11 +170,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	static CalendarEvent ToEvent(EKEvent platform) =>
 		new(platform.CalendarItemIdentifier,
-			platform.Calendar.CalendarIdentifier,
-			platform.Title)
+			platform.Calendar?.CalendarIdentifier ?? string.Empty,
+			platform.Title ?? string.Empty)
 		{
-			Description = platform.Notes,
-			Location = platform.Location,
+			Description = platform.Notes ?? string.Empty,
+			Location = platform.Location ?? string.Empty,
 			AllDay = platform.AllDay,
 			StartDate = ToDateTimeOffsetWithTimezone(platform.StartDate, platform.TimeZone),
 			EndDate = ToDateTimeOffsetWithTimezone(platform.EndDate, platform.TimeZone),
@@ -188,7 +188,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		foreach (var attendee in inviteList)
 		{
 			// There is no obvious way to get the attendees email address on iOS?
-			yield return new(attendee.Name, attendee.Name);
+			yield return new(attendee.Name ?? string.Empty,
+				attendee.Name ?? string.Empty);
 		}
 	}
 
