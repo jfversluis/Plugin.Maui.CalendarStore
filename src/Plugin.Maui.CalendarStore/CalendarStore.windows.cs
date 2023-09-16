@@ -96,7 +96,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task CreateEvent(string calendarId, string title, string description,
+	public async Task CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
 		bool isAllDay = false)
 	{
@@ -117,7 +117,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			Subject = title,
 			Details = description,
-			location = location,
+			Location = location,
 			StartTime = startDateTime.LocalDateTime,
 			Duration = endDateTime.Subtract(startDateTime),
 			AllDay = isAllDayEvent,
