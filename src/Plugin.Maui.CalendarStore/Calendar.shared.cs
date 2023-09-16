@@ -1,3 +1,5 @@
+using Microsoft.Maui.Graphics;
+
 namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
@@ -10,10 +12,12 @@ public class Calendar
 	/// </summary>
 	/// <param name="id">The unique identifier for this calendar.</param>
 	/// <param name="name">The (display) name for this calendar.</param>
-	public Calendar(string id, string name)
+	/// <param name="name">The color associated with this calendar.</param>
+	public Calendar(string id, string name, Color color)
     {
         Id = id;
         Name = name;
+		Color = color;
     }
 
 	/// <summary>
@@ -25,4 +29,9 @@ public class Calendar
 	/// Gets the (display) name for this calendar.
 	/// </summary>
 	public string Name { get; }
+
+	/// <summary>
+	/// Gets the color associated with this calendar.
+	/// </summary>
+	public Color Color { get; }
 }

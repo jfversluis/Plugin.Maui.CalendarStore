@@ -1,7 +1,10 @@
-﻿using Android.Content;
+﻿using System;
+using Android.Content;
 using Android.Database;
 using Android.Provider;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Graphics.Platform;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -17,6 +20,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			CalendarContract.Calendars.InterfaceConsts.Id,
 			CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName,
+			CalendarContract.Calendars.InterfaceConsts.CalendarColor,
 		};
 
 	readonly List<string> eventsColumns = new()
@@ -293,11 +297,38 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 	}
 
-	static Calendar ToCalendar(ICursor cur, List<string> projection) =>
-		new(cur.GetString(projection.IndexOf(
+	static Calendar ToCalendar(ICursor cursor, List<string> projection)
+	{
+		var calendarColor = cursor.GetInt(projection.IndexOf(
+			CalendarContract.Calendars.InterfaceConsts.CalendarColor));
+
+		var virtualColor = GetDisplayColorFromColor(
+			new Android.Graphics.Color(calendarColor)).AsColor();
+
+		return new(cursor.GetString(projection.IndexOf(
 			CalendarContract.Calendars.InterfaceConsts.Id)) ?? string.Empty,
-			cur.GetString(projection.IndexOf(
-				CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName)) ?? string.Empty);
+			cursor.GetString(projection.IndexOf(
+				CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName)) ?? string.Empty,
+			virtualColor);
+	}
+
+	// Android calendar does some magic on the actual calendar colors
+	// See: https://github.com/aosp-mirror/platform_packages_apps_calendar/blob/66d2a697bb910421d4958073be16a0237faf3531/src/com/android/calendar/Utils.kt#L730
+	static Android.Graphics.Color GetDisplayColorFromColor(Android.Graphics.Color color)
+	{
+        if (!OperatingSystem.IsAndroidVersionAtLeast(4, 1))
+		{
+			return color;
+		}
+
+		var hsv = new float[3];
+
+		Android.Graphics.Color.ColorToHSV(color, hsv);
+		hsv[1] = Math.Min(hsv[1] * 1.3f, 1.0f);
+
+		hsv[2] = hsv[2] * 0.8f;
+		return Android.Graphics.Color.HSVToColor(hsv);
+    }
 
 	IEnumerable<CalendarEvent> ToEvents(ICursor cur, List<string> projection)
 	{
