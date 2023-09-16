@@ -26,31 +26,36 @@
 					Text="{Binding EventDescription}" />
 
 			<Label Grid.Column="0" Grid.Row="3"
-				Text="Start Date:" />
-			<DatePicker Grid.Column="1" Grid.Row="3"
-						Date="{Binding EventStartDate}" />
+				   Text="Event Location:" />
+			<Entry Grid.Column="1" Grid.Row="3"
+				   Text="{Binding EventLocation}" VerticalOptions="Start" />
 
 			<Label Grid.Column="0" Grid.Row="4"
-				Text="Start Time:" />
-			<TimePicker Grid.Column="1" Grid.Row="4"
-				Time="{Binding EventStartTime}" />
+				Text="Start Date:" />
+			<DatePicker Grid.Column="1" Grid.Row="4"
+						Date="{Binding EventStartDate}" />
 
 			<Label Grid.Column="0" Grid.Row="5"
-				   Text="End Date:" />
-			<DatePicker Grid.Column="1" Grid.Row="5"
-						Date="{Binding EventEndDate}" />
+				Text="Start Time:" />
+			<TimePicker Grid.Column="1" Grid.Row="5"
+				Time="{Binding EventStartTime}" />
 
 			<Label Grid.Column="0" Grid.Row="6"
-				   Text="End Time:" />
-			<TimePicker Grid.Column="1" Grid.Row="6"
-						Time="{Binding EventEndTime}" />
+				   Text="End Date:" />
+			<DatePicker Grid.Column="1" Grid.Row="6"
+						Date="{Binding EventEndDate}" />
 
 			<Label Grid.Column="0" Grid.Row="7"
+				   Text="End Time:" />
+			<TimePicker Grid.Column="1" Grid.Row="7"
+						Time="{Binding EventEndTime}" />
+
+			<Label Grid.Column="0" Grid.Row="8"
 				Text="All day:" />
-			<CheckBox Grid.Column="1" Grid.Row="7"
+			<CheckBox Grid.Column="1" Grid.Row="8"
 				 IsChecked="{Binding EventIsAllDay}" />
 
-			<Button Grid.Column="0" Grid.Row="8" Grid.ColumnSpan="2"
+			<Button Grid.Column="0" Grid.Row="9" Grid.ColumnSpan="2"
 				Text="Save"
 				VerticalOptions="Center" 
 				HorizontalOptions="Center"

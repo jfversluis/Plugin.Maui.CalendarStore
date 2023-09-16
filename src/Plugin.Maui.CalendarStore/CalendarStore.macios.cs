@@ -39,11 +39,18 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
 
-		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(CalendarStore.defaultStartTimeFromNow);
-		var endDateToConvert = endDate ?? startDateToConvert.Add(CalendarStore.defaultEndTimeFromStartTime); // NOTE: 4 years is the maximum period that a iOS calendar events can search
+		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(
+			CalendarStore.defaultStartTimeFromNow);
 
-		var sDate = NSDate.FromTimeIntervalSince1970(TimeSpan.FromMilliseconds(startDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
-		var eDate = NSDate.FromTimeIntervalSince1970(TimeSpan.FromMilliseconds(endDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
+		// NOTE: 4 years is the maximum period that a iOS calendar events can search
+		var endDateToConvert = endDate ?? startDateToConvert.Add(
+			CalendarStore.defaultEndTimeFromStartTime);
+
+		var sDate = NSDate.FromTimeIntervalSince1970(
+			TimeSpan.FromMilliseconds(startDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
+
+		var eDate = NSDate.FromTimeIntervalSince1970(
+			TimeSpan.FromMilliseconds(endDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
 
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
@@ -77,26 +84,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task CreateEvent(string calendarId, string title, string description, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
-	{
-		return InternalSaveEvent(calendarId, title, description, startDateTime, endDateTime, isAllDay);
-	}
-
-	/// <inheritdoc/>
-	public Task CreateEvent(CalendarEvent calendarEvent)
-	{
-		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
-			calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
-	}
-
-	/// <inheritdoc/>
-	public Task CreateAllDayEvent(string calendarId, string title, string description, DateTimeOffset startDate, DateTimeOffset endDate)
-	{
-		return InternalSaveEvent(calendarId, title, description, startDate, endDate, true);
-	}
-
-	static async Task InternalSaveEvent(string calendarId, string title, string description,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDayEvent = false)
+	public async Task CreateEvent(string calendarId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
 	{
 		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
 
@@ -131,10 +120,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 		eventToSave.Calendar = platformCalendar;
 		eventToSave.Title = title;
 		eventToSave.Notes = description;
+		eventToSave.Location = location;
 		eventToSave.StartDate = (NSDate)startDateTime.LocalDateTime;
 		eventToSave.EndDate = (NSDate)endDateTime.LocalDateTime;
-		eventToSave.AllDay = isAllDayEvent;
-		
+		eventToSave.AllDay = isAllDay;
+
 		var saveResult = EventStore.SaveEvent(eventToSave, EKSpan.ThisEvent, true, out var error);
 
 		if (!saveResult || error is not null)
@@ -147,6 +137,21 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 			throw new Exception("Saving the event was unsuccessful.");
 		}
+	}
+
+	/// <inheritdoc/>
+	public Task CreateEvent(CalendarEvent calendarEvent)
+	{
+		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
+			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
+	}
+
+	/// <inheritdoc/>
+	public Task CreateAllDayEvent(string calendarId, string title, string description,
+		string location, DateTimeOffset startDate, DateTimeOffset endDate)
+	{
+		return CreateEvent(calendarId, title, description, location, startDate,
+			endDate, true);
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<EKCalendar> native)

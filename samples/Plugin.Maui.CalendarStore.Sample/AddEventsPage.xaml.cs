@@ -14,6 +14,8 @@ public partial class AddEventsPage : ContentPage
 
 	public string EventDescription { get; set; } = string.Empty;
 
+	public string EventLocation { get; set; } = string.Empty;
+
 	public DateTime EventStartDate { get; set; } = DateTime.Now;
 	public TimeSpan EventStartTime { get; set; } = DateTime.Now.TimeOfDay;
 
@@ -63,13 +65,13 @@ public partial class AddEventsPage : ContentPage
 
 			if (EventIsAllDay)
 			{
-				await calendarStore.CreateAllDayEvent(SelectedCalendar.Id, EventTitle, EventDescription,
-					startDateTime, startEndDateTime);
+				await calendarStore.CreateAllDayEvent(SelectedCalendar.Id, EventTitle,
+					EventDescription, EventLocation, startDateTime, startEndDateTime);
 			}
 			else
 			{
-				await calendarStore.CreateEvent(SelectedCalendar.Id, EventTitle, EventDescription,
-					startDateTime, startEndDateTime);
+				await calendarStore.CreateEvent(SelectedCalendar.Id, EventTitle,
+					EventDescription, EventLocation, startDateTime, startEndDateTime);
 			}
 
 			await DisplayAlert("Event saved", "The event has been successfully saved!", "OK");

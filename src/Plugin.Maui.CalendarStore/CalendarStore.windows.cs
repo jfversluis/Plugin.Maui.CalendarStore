@@ -89,27 +89,16 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	/// <inheritdoc/>
 	public Task CreateAllDayEvent(string calendarId, string title, string description,
-		DateTimeOffset startDate, DateTimeOffset endDate)
+		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
-		return CreateEvent(calendarId, title, description, startDate, endDate, true);
+		return CreateEvent(calendarId, title, description, location,
+			startDate, endDate, true);
 	}
 
 	/// <inheritdoc/>
 	public Task CreateEvent(string calendarId, string title, string description,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
-	{
-		return InternalSaveEvent(calendarId, title, description, startDateTime, endDateTime, isAllDay);
-	}
-
-	/// <inheritdoc/>
-	public Task CreateEvent(CalendarEvent calendarEvent)
-	{
-		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title,
-			calendarEvent.Description, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
-	}
-
-	static async Task InternalSaveEvent(string calendarId, string title, string description,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDayEvent = false)
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
+		bool isAllDay = false)
 	{
 		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
 
@@ -128,12 +117,21 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			Subject = title,
 			Details = description,
+			location = location,
 			StartTime = startDateTime.LocalDateTime,
 			Duration = endDateTime.Subtract(startDateTime),
 			AllDay = isAllDayEvent,
 		};
 
 		await platformCalendar.SaveAppointmentAsync(eventToSave);
+	}
+
+	/// <inheritdoc/>
+	public Task CreateEvent(CalendarEvent calendarEvent)
+	{
+		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
+			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate,
+			calendarEvent.AllDay);
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> native)

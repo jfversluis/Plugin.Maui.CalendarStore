@@ -3,13 +3,14 @@
 partial class CalendarStoreImplementation : ICalendarStore
 {
 	public Task CreateAllDayEvent(string calendarId, string title, string description,
-		DateTimeOffset startDate, DateTimeOffset endDate)
+		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
 		throw new NotImplementedException();
 	}
 
 	public Task CreateEvent(string calendarId, string title, string description,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
+		bool isAllDay = false)
 	{
 		throw new NotImplementedException();
 	}

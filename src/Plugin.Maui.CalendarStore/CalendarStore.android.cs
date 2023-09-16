@@ -175,7 +175,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	/// <inheritdoc/>
 	public async Task CreateEvent(string calendarId, string title, string description,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
+		bool isAllDay = false)
 	{
 		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
 
@@ -230,6 +231,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Description,
 					description);
 
+				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.EventLocation,
+					location);
+
 				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.CalendarId,
 					platformCalendarId);
 
@@ -247,15 +251,16 @@ partial class CalendarStoreImplementation : ICalendarStore
 	public Task CreateEvent(CalendarEvent calendarEvent)
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title,
-			calendarEvent.Description, calendarEvent.StartDate,
-			calendarEvent.EndDate, calendarEvent.AllDay);
+			calendarEvent.Description, calendarEvent.Location,
+			calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
 	}
 
 	/// <inheritdoc/>
 	public Task CreateAllDayEvent(string calendarId, string title, string description,
-		DateTimeOffset startDate, DateTimeOffset endDate)
+		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
-		return CreateEvent(calendarId, title, description, startDate, endDate, true);
+		return CreateEvent(calendarId, title, description, location,
+			startDate, endDate, true);
 	}
 
 	IEnumerable<CalendarEventAttendee> GetAttendees(string eventId)
