@@ -13,7 +13,7 @@
 		<Nullable>Enable</Nullable>
 
 		<!-- Display name -->
-		<ApplicationTitle>Plugin.Maui.CalendarStore.Sample</ApplicationTitle>
+		<ApplicationTitle>CalendarStore Plugin Sample App</ApplicationTitle>
 
 		<!-- App Identifier -->
 		<ApplicationId>com.companyname.pluginsample</ApplicationId>
