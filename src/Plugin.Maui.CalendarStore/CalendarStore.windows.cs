@@ -3,19 +3,21 @@ using Windows.ApplicationModel.Appointments;
 
 namespace Plugin.Maui.CalendarStore;
 
-partial class FeatureImplementation : ICalendarStore
+partial class CalendarStoreImplementation : ICalendarStore
 {
 	Task<AppointmentStore>? uwpAppointmentStore;
 
 	Task<AppointmentStore> GetInstanceAsync() =>
-		uwpAppointmentStore ??= AppointmentManager.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
+		uwpAppointmentStore ??= AppointmentManager.RequestStoreAsync(
+			AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendars()
 	{
 		var instance = await GetInstanceAsync().ConfigureAwait(false);
 
-		var calendars = await instance.FindAppointmentCalendarsAsync(FindAppointmentCalendarsOptions.IncludeHidden).AsTask().ConfigureAwait(false);
+		var calendars = await instance.FindAppointmentCalendarsAsync(
+			FindAppointmentCalendarsOptions.IncludeHidden).AsTask().ConfigureAwait(false);
 
 		return ToCalendars(calendars).ToList();
 	}
@@ -31,7 +33,8 @@ partial class FeatureImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
+	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
+		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
 		var options = new FindAppointmentsOptions();
 
@@ -61,7 +64,8 @@ partial class FeatureImplementation : ICalendarStore
 
 		var instance = await GetInstanceAsync().ConfigureAwait(false);
 
-		var events = await instance.FindAppointmentsAsync(sDate, eDate.Subtract(sDate), options).AsTask().ConfigureAwait(false);
+		var events = await instance.FindAppointmentsAsync(sDate,
+			eDate.Subtract(sDate), options).AsTask().ConfigureAwait(false);
 
 		// confirm the calendar exists if no events were found
 		// the PlatformGetCalendarAsync will throw if not

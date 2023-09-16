@@ -3,7 +3,7 @@ using Microsoft.Maui.ApplicationModel;
 
 namespace Plugin.Maui.CalendarStore;
 
-partial class FeatureImplementation : ICalendarStore
+partial class CalendarStoreImplementation : ICalendarStore
 {
 	static EKEventStore? eventStore;
 

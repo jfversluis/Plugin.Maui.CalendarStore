@@ -11,7 +11,7 @@ public static class CalendarStore
 	/// Provides the default implementation for static usage of this API.
 	/// </summary>
 	public static ICalendarStore Default =>
-		defaultImplementation ??= new FeatureImplementation();
+		defaultImplementation ??= new CalendarStoreImplementation();
 
 	internal static void SetDefault(ICalendarStore? implementation) =>
 		defaultImplementation = implementation;

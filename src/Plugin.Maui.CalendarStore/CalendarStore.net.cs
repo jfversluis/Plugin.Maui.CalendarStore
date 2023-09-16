@@ -1,6 +1,6 @@
 ﻿namespace Plugin.Maui.CalendarStore;
 
-partial class FeatureImplementation : ICalendarStore
+partial class CalendarStoreImplementation : ICalendarStore
 {
 	public Task CreateAllDayEvent(string calendarId, string title, string description,
 		DateTimeOffset startDate, DateTimeOffset endDate)

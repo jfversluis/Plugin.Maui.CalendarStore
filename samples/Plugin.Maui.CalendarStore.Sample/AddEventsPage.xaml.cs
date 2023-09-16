@@ -33,6 +33,11 @@ public partial class AddEventsPage : ContentPage
 
 	protected override async void OnNavigatedTo(NavigatedToEventArgs args)
 	{
+		if (Calendars.Count > 0)
+		{
+			return;
+		}
+
 		foreach (var calendar in await calendarStore.GetCalendars())
 		{
 			Calendars.Add(calendar);
@@ -66,6 +71,8 @@ public partial class AddEventsPage : ContentPage
 				await calendarStore.CreateEvent(SelectedCalendar.Id, EventTitle, EventDescription,
 					startDateTime, startEndDateTime);
 			}
+
+			await DisplayAlert("Event saved", "The event has been successfully saved!", "OK");
 		}
 		catch(Exception ex)
 		{
