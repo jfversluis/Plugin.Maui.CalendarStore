@@ -66,5 +66,6 @@ public class CalendarEvent
 	/// <summary>
 	/// Gets the list of attendees for this event.
 	/// </summary>
-	public IEnumerable<CalendarEventAttendee> Attendees { get; internal set; } = new List<CalendarEventAttendee>();
+	public IEnumerable<CalendarEventAttendee> Attendees { get; internal set; }
+		= new List<CalendarEventAttendee>();
 }

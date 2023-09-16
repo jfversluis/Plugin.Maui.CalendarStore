@@ -1,9 +1,10 @@
 ﻿using EventKit;
 using Microsoft.Maui.ApplicationModel;
+using static Plugin.Maui.CalendarStore.CalendarStore;
 
 namespace Plugin.Maui.CalendarStore;
 
-partial class FeatureImplementation : ICalendarStore
+partial class CalendarStoreImplementation : ICalendarStore
 {
 	static EKEventStore? eventStore;
 
@@ -39,11 +40,18 @@ partial class FeatureImplementation : ICalendarStore
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
 
-		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(CalendarStore.defaultStartTimeFromNow);
-		var endDateToConvert = endDate ?? startDateToConvert.Add(CalendarStore.defaultEndTimeFromStartTime); // NOTE: 4 years is the maximum period that a iOS calendar events can search
+		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(
+			CalendarStore.defaultStartTimeFromNow);
 
-		var sDate = NSDate.FromTimeIntervalSince1970(TimeSpan.FromMilliseconds(startDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
-		var eDate = NSDate.FromTimeIntervalSince1970(TimeSpan.FromMilliseconds(endDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
+		// NOTE: 4 years is the maximum period that a iOS calendar events can search
+		var endDateToConvert = endDate ?? startDateToConvert.Add(
+			CalendarStore.defaultEndTimeFromStartTime);
+
+		var sDate = NSDate.FromTimeIntervalSince1970(
+			TimeSpan.FromMilliseconds(startDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
+
+		var eDate = NSDate.FromTimeIntervalSince1970(
+			TimeSpan.FromMilliseconds(endDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
 
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
@@ -68,12 +76,83 @@ partial class FeatureImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public Task<CalendarEvent> GetEvent(string eventId)
 	{
-		if (!(EventStore.GetCalendarItem(eventId) is EKEvent calendarEvent))
+		if (EventStore.GetCalendarItem(eventId) is not EKEvent calendarEvent)
 		{
 			throw CalendarStore.InvalidEvent(eventId);
 		}
 
 		return Task.FromResult(ToEvent(calendarEvent));
+	}
+
+	/// <inheritdoc/>
+	public async Task CreateEvent(string calendarId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
+	{
+		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
+
+		if (permissionResult != PermissionStatus.Granted)
+		{
+			throw new PermissionException("Permission for writing to calendar store is not granted.");
+		}
+
+		var platformCalendar = EventStore.GetCalendar(calendarId) ?? throw CalendarStore.InvalidCalendar(calendarId);
+
+		if (!platformCalendar.AllowsContentModifications)
+		{
+			throw new CalendarStoreException($"Selected calendar (id: {calendarId}) is read-only.");
+		}
+
+		var accessRequest = await EventStore.RequestAccessAsync(EKEntityType.Event);
+
+		// An error occurred on the platform level
+		if (accessRequest.Item2 is not null)
+		{
+			throw new CalendarStoreException($"Error occurred while accessing platform calendar store: " +
+				$"{accessRequest.Item2.Description}");
+		}
+
+		// Permission was not granted
+		if (!accessRequest.Item1)
+		{
+			throw new CalendarStoreException("Could not access platform calendar store.");
+		}
+
+		var eventToSave = EKEvent.FromStore(EventStore);
+		eventToSave.Calendar = platformCalendar;
+		eventToSave.Title = title;
+		eventToSave.Notes = description;
+		eventToSave.Location = location;
+		eventToSave.StartDate = (NSDate)startDateTime.LocalDateTime;
+		eventToSave.EndDate = (NSDate)endDateTime.LocalDateTime;
+		eventToSave.AllDay = isAllDay;
+
+		var saveResult = EventStore.SaveEvent(eventToSave, EKSpan.ThisEvent, true, out var error);
+
+		if (!saveResult || error is not null)
+		{
+			if (error is not null)
+			{
+				throw new CalendarStoreException($"Error occurred while saving event: " +
+					$"{error.LocalizedDescription}");
+			}
+
+			throw new CalendarStoreException("Saving the event was unsuccessful.");
+		}
+	}
+
+	/// <inheritdoc/>
+	public Task CreateEvent(CalendarEvent calendarEvent)
+	{
+		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
+			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
+	}
+
+	/// <inheritdoc/>
+	public Task CreateAllDayEvent(string calendarId, string title, string description,
+		string location, DateTimeOffset startDate, DateTimeOffset endDate)
+	{
+		return CreateEvent(calendarId, title, description, location, startDate,
+			endDate, true);
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<EKCalendar> native)
@@ -85,7 +164,7 @@ partial class FeatureImplementation : ICalendarStore
 	}
 
 	static Calendar ToCalendar(EKCalendar calendar) =>
-    	new(calendar.CalendarIdentifier, calendar.Title);
+		new(calendar.CalendarIdentifier, calendar.Title);
 
 	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<EKEvent> native)
 	{
@@ -97,11 +176,11 @@ partial class FeatureImplementation : ICalendarStore
 
 	static CalendarEvent ToEvent(EKEvent platform) =>
 		new(platform.CalendarItemIdentifier,
-			platform.Calendar.CalendarIdentifier,
-			platform.Title)
+			platform.Calendar?.CalendarIdentifier ?? string.Empty,
+			platform.Title ?? string.Empty)
 		{
-			Description = platform.Notes,
-			Location = platform.Location,
+			Description = platform.Notes ?? string.Empty,
+			Location = platform.Location ?? string.Empty,
 			AllDay = platform.AllDay,
 			StartDate = ToDateTimeOffsetWithTimezone(platform.StartDate, platform.TimeZone),
 			EndDate = ToDateTimeOffsetWithTimezone(platform.EndDate, platform.TimeZone),
@@ -115,7 +194,8 @@ partial class FeatureImplementation : ICalendarStore
 		foreach (var attendee in inviteList)
 		{
 			// There is no obvious way to get the attendees email address on iOS?
-			yield return new(attendee.Name, attendee.Name);
+			yield return new(attendee.Name ?? string.Empty,
+				attendee.Name ?? string.Empty);
 		}
 	}
 
