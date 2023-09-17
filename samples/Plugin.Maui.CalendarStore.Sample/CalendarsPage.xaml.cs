@@ -19,7 +19,7 @@ public partial class CalendarsPage : ContentPage
 		this.calendarStore = calendarStore;
 	}
 
-	async void Button_Clicked_Calendars(object sender, EventArgs e)
+	async void LoadCalendars_Clicked(object sender, EventArgs e)
 	{
 		var calendars = await calendarStore.GetCalendars();
 
@@ -28,5 +28,21 @@ public partial class CalendarsPage : ContentPage
 		{
 			Calendars.Add(calendar);
 		}
+	}
+
+	async void CreateCalendar_Clicked(object sender, EventArgs e)
+	{
+		var createResult = await DisplayPromptAsync("Create Calendar",
+			"What do you want to name the calendar?");
+
+		if (string.IsNullOrWhiteSpace(createResult))
+		{
+			return;
+		}
+
+		await calendarStore.CreateCalendar(createResult);
+
+		await DisplayAlert("Calendar Created",
+			$"Calendar \"{createResult}\" created successfully.", "OK");
 	}
 }

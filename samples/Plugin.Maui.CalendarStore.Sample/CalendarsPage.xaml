@@ -5,10 +5,13 @@
 			 xmlns:calendars="clr-namespace:Plugin.Maui.CalendarStore;assembly=Plugin.Maui.CalendarStore"
 			 x:Class="Plugin.Maui.CalendarStore.Sample.CalendarsPage"
 			 x:DataType="local:CalendarsPage"
-			 Title="Load Calendars">
+			 Title="Calendars">
 
 	<VerticalStackLayout Spacing="10" Margin="10">
-		<Button Text="Load Calendars" Clicked="Button_Clicked_Calendars" />
+		<HorizontalStackLayout Spacing="10">
+			<Button Text="Create Calendar..." Clicked="CreateCalendar_Clicked" />
+			<Button Text="Load Calendars" Clicked="LoadCalendars_Clicked" />
+		</HorizontalStackLayout>
 
 		<VerticalStackLayout BindableLayout.ItemsSource="{Binding Calendars}"
 							 Spacing="5">
