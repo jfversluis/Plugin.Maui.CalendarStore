@@ -57,6 +57,13 @@ public partial class AddEventsPage : ContentPage
 				return;
 			}
 
+			if (SelectedCalendar.IsReadOnly)
+			{
+				await DisplayAlert("Error", "The selected calendar is read-only.", "OK");
+
+				return;
+			}
+
 			var startDateTime = new DateTime(EventStartDate.Year, EventStartDate.Month,
 				EventStartDate.Day, EventStartTime.Hours, EventStartTime.Minutes, EventStartTime.Seconds);
 

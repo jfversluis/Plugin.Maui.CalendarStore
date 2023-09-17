@@ -21,6 +21,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			CalendarContract.Calendars.InterfaceConsts.Id,
 			CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName,
 			CalendarContract.Calendars.InterfaceConsts.CalendarColor,
+			CalendarContract.Calendars.InterfaceConsts.CalendarAccessLevel,
 		};
 
 	readonly List<string> eventsColumns = new()
@@ -305,11 +306,17 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var virtualColor = GetDisplayColorFromColor(
 			new Android.Graphics.Color(calendarColor)).AsColor();
 
+		var platformCalendarReadOnly = cursor.GetInt(projection.IndexOf(
+				CalendarContract.Calendars.InterfaceConsts.CalendarAccessLevel));
+
+		var virtualCalendarReadOnly = platformCalendarReadOnly ==
+			(int)CalendarAccess.AccessRead;
+
 		return new(cursor.GetString(projection.IndexOf(
 			CalendarContract.Calendars.InterfaceConsts.Id)) ?? string.Empty,
 			cursor.GetString(projection.IndexOf(
 				CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName)) ?? string.Empty,
-			virtualColor);
+			virtualColor, virtualCalendarReadOnly);
 	}
 
 	// Android calendar does some magic on the actual calendar colors

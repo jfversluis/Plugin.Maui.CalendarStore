@@ -13,11 +13,13 @@ public class Calendar
 	/// <param name="id">The unique identifier for this calendar.</param>
 	/// <param name="name">The (display) name for this calendar.</param>
 	/// <param name="name">The color associated with this calendar.</param>
-	public Calendar(string id, string name, Color color)
+	/// <param name="isReadOnly">Indicates whether this calendar is read-only.</param>
+	public Calendar(string id, string name, Color color, bool isReadOnly)
     {
         Id = id;
         Name = name;
 		Color = color;
+		IsReadOnly = isReadOnly;
     }
 
 	/// <summary>
@@ -34,4 +36,10 @@ public class Calendar
 	/// Gets the color associated with this calendar.
 	/// </summary>
 	public Color Color { get; }
+
+	/// <summary>
+	/// Get whether this calendar is read-only.
+	/// </summary>
+	/// <remarks>Read-only applies to being able to add, edit or delete events for this calendar.</remarks>
+	public bool IsReadOnly { get; }
 }
