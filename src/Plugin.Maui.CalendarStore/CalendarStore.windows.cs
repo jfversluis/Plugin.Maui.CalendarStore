@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Graphics;
+﻿using Microsoft.Maui.Graphics;
 using Windows.ApplicationModel.Appointments;
 
 namespace Plugin.Maui.CalendarStore;
@@ -29,7 +26,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<Calendar> GetCalendar(string calendarId)
 	{
-		var calendar = GetPlatformCalendar(calendarId);
+		var calendar = await GetPlatformCalendar(calendarId);
 
 		return calendar is null ?
 			throw CalendarStore.InvalidCalendar(calendarId) : ToCalendar(calendar);
@@ -83,7 +80,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<CalendarEvent> GetEvent(string eventId)
 	{
-		var e = GetPlatformEvent(eventId);
+		var e = await GetPlatformEvent(eventId);
 
 		return e is null ? throw CalendarStore.InvalidEvent(eventId)
 			: ToEvent(e);
@@ -132,21 +129,17 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task RemoveEvent(string eventId)
 	{
-		var e = await GetPlatformEvent(eventId);
+		var e = await GetPlatformEvent(eventId)
+			?? throw CalendarStore.InvalidEvent(eventId);
+		
+		var platformCalendarManager = await AppointmentManager
+			.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadWrite);
 
-		if (e is null)
-		{
-			throw CalendarStore.InvalidEvent(eventId);
-		}
+		var calendar = await platformCalendarManager
+			.GetAppointmentCalendarAsync(e.CalendarId)
+			?? throw CalendarStore.InvalidCalendar(e.CalendarId);
 
-		var calendar = await GetPlatformCalendar(e.Value.CalendarId);
-
-		if (e is null)
-		{
-			throw CalendarStore.InvalidCalendar(e.Value.CalendarId);
-		}
-
-		calendar.DeleteAppointmentAsync(e.Value.LocalId);
+		await calendar.DeleteAppointmentAsync(e.LocalId);
 	}
 
 	/// <inheritdoc/>
