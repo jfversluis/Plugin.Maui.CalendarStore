@@ -166,7 +166,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	static Calendar ToCalendar(EKCalendar calendar) =>
 		new(calendar.CalendarIdentifier, calendar.Title,
-			new UIColor(calendar.CGColor).AsColor());
+			new UIColor(calendar.CGColor).AsColor(),
+			!calendar.AllowsContentModifications);
 
 	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<EKEvent> native)
 	{

@@ -12,7 +12,8 @@
 	</ContentPage.Resources>
 
 	<ScrollView>
-		<Grid Margin="20" HorizontalOptions="Center" ColumnDefinitions="100, 300"
+		<Grid Margin="20" HorizontalOptions="Center"
+			  ColumnDefinitions="100, 300"
 			  RowDefinitions="50,50,100,50,50,50,50,50,50,50,*"
 			  RowSpacing="5" ColumnSpacing="10">
 
