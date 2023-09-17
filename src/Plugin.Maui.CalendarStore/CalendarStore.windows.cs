@@ -36,7 +36,16 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task CreateCalendar(string name, Color? color = null)
 	{
-		throw new NotImplementException();
+		var platformCalendarManager = await GetAppointmentStore(true);
+
+		var platformCalendar = 
+			await platformCalendarManager.CreateAppointmentCalendarAsync(name);
+
+		if (color is not null)
+		{
+			platformCalendar.DisplayColor = AsPlatform(color);
+			await platformCalendar.SaveAsync();
+		}
 	}
 
 	/// <inheritdoc/>
@@ -189,6 +198,13 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	// For some reason can't find the .NET MAUI built-in one?
 	static Color AsColor(Windows.UI.Color platformColor) => Color.FromRgba(platformColor.R, platformColor.G, platformColor.B, platformColor.A);
+
+	static Windows.UI.Color AsPlatform(Color virtualColor)
+	{
+		virtualColor.ToRgba(out byte r, out byte g, out byte b, out byte a);
+
+		return Windows.UI.Color.FromArgb(a, r, g, b);
+	}
 
 	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<Appointment> native)
 	{
