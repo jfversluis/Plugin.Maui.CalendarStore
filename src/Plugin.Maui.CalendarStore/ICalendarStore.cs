@@ -81,4 +81,18 @@ public interface ICalendarStore
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate);
+
+	/// <summary>
+	/// Removes an event, specified by its unique ID, from the device calendar.
+	/// </summary>
+	/// <param name="eventId">The unique identifier of the event to remove.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	Task RemoveEvent(string eventId);
+
+	/// <summary>
+	/// Removes the given event from the device calendar.
+	/// </summary>
+	/// <param name="event">The event object that is to be deleted.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	Task RemoveEvent(CalendarEvent @event);
 }

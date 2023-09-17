@@ -191,7 +191,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (permissionResult != PermissionStatus.Granted)
 		{
-			throw new PermissionException("Permission for writing to calendar store is not granted.");
+			throw new PermissionException(
+				"Permission for writing to calendar store is not granted.");
 		}
 
 		using var cursor = platformContentResolver.Query(
@@ -250,7 +251,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 				if (!long.TryParse(idUrl?.LastPathSegment, out _))
 				{
-					throw new CalendarStore.CalendarStoreException("There was an error saving the event.");
+					throw new CalendarStore.CalendarStoreException(
+						"There was an error saving the event.");
 				}
 			}
 		}
@@ -271,6 +273,29 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return CreateEvent(calendarId, title, description, location,
 			startDate, endDate, true);
 	}
+
+	/// <inheritdoc/>
+	public Task RemoveEvent(string eventId)
+	{
+		// Android ids are always integers
+		if (string.IsNullOrEmpty(eventId) ||
+			!long.TryParse(eventId, out long platformEventId))
+		{
+			throw CalendarStore.InvalidEvent(eventId);
+		}
+
+		ContentValues eventToRemove = new();
+		eventToRemove.Put(
+			CalendarContract.Events.InterfaceConsts.Id, platformEventId);
+		var deleteEventUri = ContentUris.WithAppendedId(eventsTableUri, platformEventId);
+		var removeCount = platformContentResolver?.Delete(deleteEventUri, null, null);
+
+		return Task.FromResult(removeCount == 1);
+	}
+
+	/// <inheritdoc/>
+	public Task RemoveEvent(CalendarEvent @event) =>
+		RemoveEvent(@event.Id);
 
 	IEnumerable<CalendarEventAttendee> GetAttendees(string eventId)
 	{

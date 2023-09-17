@@ -1,4 +1,5 @@
-﻿using EventKit;
+﻿using System.Globalization;
+using EventKit;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics.Platform;
 using static Plugin.Maui.CalendarStore.CalendarStore;
@@ -33,20 +34,21 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		var calendar = calendars.FirstOrDefault(c => c.CalendarIdentifier == calendarId);
 
-		return calendar is null ? throw CalendarStore.InvalidCalendar(calendarId) : ToCalendar(calendar);
+		return calendar is null ? throw InvalidCalendar(calendarId) : ToCalendar(calendar);
 	}
 
 	/// <inheritdoc/>
-	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
+	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
+		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
 
 		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(
-			CalendarStore.defaultStartTimeFromNow);
+			defaultStartTimeFromNow);
 
 		// NOTE: 4 years is the maximum period that a iOS calendar events can search
 		var endDateToConvert = endDate ?? startDateToConvert.Add(
-			CalendarStore.defaultEndTimeFromStartTime);
+			defaultEndTimeFromStartTime);
 
 		var sDate = NSDate.FromTimeIntervalSince1970(
 			TimeSpan.FromMilliseconds(startDateToConvert.ToUnixTimeMilliseconds()).TotalSeconds);
@@ -62,7 +64,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 			if (calendar is null)
 			{
-				throw CalendarStore.InvalidCalendar(calendarId);
+				throw InvalidCalendar(calendarId);
 			}
 
 			calendars = new[] { calendar };
@@ -75,28 +77,17 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task<CalendarEvent> GetEvent(string eventId)
-	{
-		if (EventStore.GetCalendarItem(eventId) is not EKEvent calendarEvent)
-		{
-			throw CalendarStore.InvalidEvent(eventId);
-		}
-
-		return Task.FromResult(ToEvent(calendarEvent));
-	}
+	public async Task<CalendarEvent> GetEvent(string eventId) =>
+		ToEvent(await GetPlatformEvent(eventId));
 
 	/// <inheritdoc/>
 	public async Task CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
 	{
-		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
+		await EnsureWriteCalendarPermission();
 
-		if (permissionResult != PermissionStatus.Granted)
-		{
-			throw new PermissionException("Permission for writing to calendar store is not granted.");
-		}
-
-		var platformCalendar = EventStore.GetCalendar(calendarId) ?? throw CalendarStore.InvalidCalendar(calendarId);
+		var platformCalendar = EventStore.GetCalendar(calendarId)
+			?? throw InvalidCalendar(calendarId);
 
 		if (!platformCalendar.AllowsContentModifications)
 		{
@@ -154,6 +145,58 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		return CreateEvent(calendarId, title, description, location, startDate,
 			endDate, true);
+	}
+
+	/// <inheritdoc/>
+	public async Task RemoveEvent(string eventId)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(eventId);
+
+		await EnsureWriteCalendarPermission();
+
+		var platformEvent = await GetPlatformEvent(eventId);
+
+		var removeResult = EventStore.RemoveEvent(platformEvent, EKSpan.ThisEvent,
+			true, out var error);
+
+		if (!removeResult || error is not null)
+		{
+			if (error is not null)
+			{
+				throw new CalendarStoreException($"Error occurred while removing event: " +
+					$"{error.LocalizedDescription}");
+			}
+
+			throw new CalendarStoreException("Removing the event was unsuccessful.");
+		}
+	}
+
+	/// <inheritdoc/>
+	public Task RemoveEvent(CalendarEvent @event) =>
+		RemoveEvent(@event.Id);
+
+	static async Task EnsureWriteCalendarPermission()
+	{
+		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
+
+		if (permissionResult != PermissionStatus.Granted)
+		{
+			throw new PermissionException("Permission for writing to calendar store is not granted.");
+		}
+	}
+
+	static async Task<EKEvent> GetPlatformEvent(string eventId)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(eventId);
+
+		await Permissions.RequestAsync<Permissions.CalendarRead>();
+
+		if (EventStore.GetCalendarItem(eventId) is not EKEvent calendarEvent)
+		{
+			throw InvalidEvent(eventId);
+		}
+
+		return calendarEvent;
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<EKCalendar> native)

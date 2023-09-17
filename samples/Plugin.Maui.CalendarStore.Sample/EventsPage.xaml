@@ -1,25 +1,36 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:local="clr-namespace:Plugin.Maui.CalendarStore.Sample"
+			 xmlns:calendar="clr-namespace:Plugin.Maui.CalendarStore;assembly=Plugin.Maui.CalendarStore"
              x:Class="Plugin.Maui.CalendarStore.Sample.EventsPage"
-			 Title="Load Events">
-	
-	<VerticalStackLayout Spacing="10" Margin="10">
-		<Button Text="Load Events" Clicked="Button_Clicked_Events" />
+			 x:DataType="local:EventsPage"
+			 Title="Events">
+	<ScrollView>
+		<VerticalStackLayout Spacing="10" Margin="10">
+			<Button Text="Load Events" Clicked="LoadEvents_Clicked" />
 
-		<VerticalStackLayout BindableLayout.ItemsSource="{Binding Events}" Spacing="5">
-			<BindableLayout.ItemTemplate>
-				<DataTemplate>
-					<VerticalStackLayout>
-						<Label Text="{Binding Title, StringFormat='Title: {0}'}" FontSize="25" />
-						<Label Text="{Binding Id, StringFormat='ID: {0}'}" />
-						<Label Text="{Binding CalendarId, StringFormat='Calendar ID: {0}'}" />
-						<Label Text="{Binding Location, StringFormat='Location: {0}'}" />
-						<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
-						<Label Text="{Binding StartDate, StringFormat='Start Date: {0}'}" />
-					</VerticalStackLayout>
-				</DataTemplate>
-			</BindableLayout.ItemTemplate>
+			<VerticalStackLayout BindableLayout.ItemsSource="{Binding Events}" Spacing="5">
+				<BindableLayout.ItemTemplate>
+					<DataTemplate x:DataType="calendar:CalendarEvent">
+						<Grid ColumnDefinitions="*, 100">
+							<VerticalStackLayout Grid.Column="0">
+								<Label Text="{Binding Title, StringFormat='Title: {0}'}" FontSize="25" />
+								<Label Text="{Binding Id, StringFormat='ID: {0}'}" />
+								<Label Text="{Binding CalendarId, StringFormat='Calendar ID: {0}'}" />
+								<Label Text="{Binding Location, StringFormat='Location: {0}'}" />
+								<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
+								<Label Text="{Binding AllDay, StringFormat='All Day: {0}'}" />
+								<Label Text="{Binding StartDate, StringFormat='Start Date: {0}'}" />
+							</VerticalStackLayout>
+
+							<Button Grid.Column="1" Text="Remove"
+									Clicked="Remove_Clicked"
+									VerticalOptions="Center"/>
+						</Grid>
+					</DataTemplate>
+				</BindableLayout.ItemTemplate>
+			</VerticalStackLayout>
 		</VerticalStackLayout>
-	</VerticalStackLayout>
+	</ScrollView>
 </ContentPage>
