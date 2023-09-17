@@ -1,4 +1,6 @@
-﻿namespace Plugin.Maui.CalendarStore;
+﻿using Microsoft.Maui.Graphics;
+
+namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
 /// The CalendarStore API lets a user read information about the device's calendar and associated data.
@@ -26,6 +28,10 @@ public static partial class CalendarStore
 	/// <inheritdoc cref="ICalendarStore.GetCalendar(string)"/>
 	public static async Task<Calendar> GetCalendarAsync(string calendarId) =>
         await Default.GetCalendar(calendarId);
+
+	/// <inheritdoc cref="ICalendarStore.CreateCalendar(string, Color?)"/>
+	public static async Task CreateCalendar(string name, Color? color = null) =>
+		await Default.CreateCalendar(name, color);
 
 	/// <inheritdoc cref="ICalendarStore.GetEvents(string?, DateTimeOffset?, DateTimeOffset?)"/>
 	public static async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string? calendarId = null,

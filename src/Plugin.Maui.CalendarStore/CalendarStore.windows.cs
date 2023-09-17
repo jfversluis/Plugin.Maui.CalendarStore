@@ -34,6 +34,12 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
+	public async Task CreateCalendar(string name, Color? color = null)
+	{
+		throw new NotImplementException();
+	}
+
+	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
 		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
