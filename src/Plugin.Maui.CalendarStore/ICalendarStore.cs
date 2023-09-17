@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Graphics;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -21,6 +22,14 @@ public interface ICalendarStore
 	/// <remarks>The ID format differentiates between platforms. For example, on Android it is an integer, on other platforms it can be a string or GUID.</remarks>
 	/// <exception cref="ArgumentException">Thrown when a calendar with the value specified in <paramref name="calendarId"/> could not be found.</exception>
 	Task<Calendar> GetCalendar(string calendarId);
+
+	/// <summary>
+	/// Creates a new calendar.
+	/// </summary>
+	/// <param name="name">The name for the calendar to create.</param>
+	/// <param name="color">The color to use for the calendar to create.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	Task CreateCalendar(string name, Color? color = null);
 
 	/// <summary>
 	/// Retrieves events from a specific calendar or all calendars from the device.

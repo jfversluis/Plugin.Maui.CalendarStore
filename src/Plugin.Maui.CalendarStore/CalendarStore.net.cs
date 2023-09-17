@@ -1,4 +1,6 @@
-﻿namespace Plugin.Maui.CalendarStore;
+﻿using Microsoft.Maui.Graphics;
+
+namespace Plugin.Maui.CalendarStore;
 
 partial class CalendarStoreImplementation : ICalendarStore
 {
@@ -26,6 +28,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	public Task<IEnumerable<Calendar>> GetCalendars()
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task CreateCalendar(string name, Color? color = null)
 	{
 		throw new NotImplementedException();
 	}

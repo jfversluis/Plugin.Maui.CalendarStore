@@ -1,6 +1,6 @@
-﻿using System.Globalization;
-using EventKit;
+﻿using EventKit;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
 using static Plugin.Maui.CalendarStore.CalendarStore;
 
@@ -35,6 +35,63 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var calendar = calendars.FirstOrDefault(c => c.CalendarIdentifier == calendarId);
 
 		return calendar is null ? throw InvalidCalendar(calendarId) : ToCalendar(calendar);
+	}
+
+	/// <inheritdoc/>
+	public async Task CreateCalendar(string name, Color? color = null)
+	{
+		await EnsureWriteCalendarPermission();
+
+		var calendarToCreate = EKCalendar.Create(EKEntityType.Event, EventStore);
+		calendarToCreate.Title = name;
+
+		if (color is not null)
+		{
+			calendarToCreate.CGColor = color.AsCGColor();
+		}
+
+		calendarToCreate.Source = GetBestPossibleSource()
+			?? throw new CalendarStoreException(
+				"No platform EKSource available to save calendar.");
+
+		var saveResult = EventStore.SaveCalendar(calendarToCreate, true, out var error);
+
+		if (!saveResult || error is not null)
+		{
+			if (error is not null)
+			{
+				throw new CalendarStoreException($"Error occurred while saving calendar: " +
+					$"{error.LocalizedDescription}");
+			}
+
+			throw new CalendarStoreException("Saving the calendar was unsuccessful.");
+		}
+	}
+
+	static EKSource? GetBestPossibleSource()
+	{
+		if (EventStore.DefaultCalendarForNewEvents?.Source is not null)
+		{
+			return EventStore.DefaultCalendarForNewEvents.Source;
+		}
+
+		var remoteSource = EventStore.Sources.Where(
+			s => s.SourceType == EKSourceType.CalDav).FirstOrDefault();
+
+		if (remoteSource is not null)
+		{
+			return remoteSource;
+		}
+
+		var localSource = EventStore.Sources.Where(
+			s => s.SourceType == EKSourceType.Local).FirstOrDefault();
+
+		if (localSource is not null)
+		{
+			return localSource;
+		}
+
+		return null;
 	}
 
 	/// <inheritdoc/>

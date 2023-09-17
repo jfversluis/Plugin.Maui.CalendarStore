@@ -5,6 +5,8 @@ using Android.Provider;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
+using static Android.Icu.Text.CaseMap;
+using static Android.Util.EventLogTags;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -110,6 +112,32 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return ToCalendar(cursor, calendarColumns);
 	}
 
+	public async Task CreateCalendar(string name, Color? color = null)
+	{
+		await EnsureWriteCalendarPermission();
+
+		ContentValues calendarToCreate = new();
+
+		calendarToCreate.Put(
+			CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName,
+			name);
+
+		if (color is not null)
+		{
+			calendarToCreate.Put(CalendarContract.Calendars.InterfaceConsts.CalendarColor,
+				color.AsColor());
+		}
+
+		var idUrl = platformContentResolver?.Insert(calendarsTableUri,
+			calendarToCreate);
+
+		if (!long.TryParse(idUrl?.LastPathSegment, out _))
+		{
+			throw new CalendarStore.CalendarStoreException(
+				"There was an error saving the calendar.");
+		}
+	}
+
 	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(
 		string? calendarId = null, DateTimeOffset? startDate = null,
@@ -187,13 +215,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
 		bool isAllDay = false)
 	{
-		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
-
-		if (permissionResult != PermissionStatus.Granted)
-		{
-			throw new PermissionException(
-				"Permission for writing to calendar store is not granted.");
-		}
+		await EnsureWriteCalendarPermission();
 
 		using var cursor = platformContentResolver.Query(
 			calendarsTableUri, calendarColumns.ToArray(), null, null, null);
@@ -296,6 +318,17 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public Task RemoveEvent(CalendarEvent @event) =>
 		RemoveEvent(@event.Id);
+
+	static async Task EnsureWriteCalendarPermission()
+	{
+		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
+
+		if (permissionResult != PermissionStatus.Granted)
+		{
+			throw new PermissionException(
+				"Permission for writing to calendar store is not granted.");
+		}
+	}
 
 	IEnumerable<CalendarEventAttendee> GetAttendees(string eventId)
 	{

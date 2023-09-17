@@ -132,6 +132,10 @@ Retrieves all available calendars from the device.
 
 Retrieves a specific calendar from the device.
 
+##### `CreateCalendar(string name, Color? color = null)`
+
+Creates a new calendar on the device with the specified name and optionally color.
+
 ##### `IEnumerable<CalendarEvent> GetEvents(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)`
 
 Retrieves events from a specific calendar or all calendars from the device.
