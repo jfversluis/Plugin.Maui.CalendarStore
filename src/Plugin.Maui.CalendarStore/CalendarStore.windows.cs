@@ -144,7 +144,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	static Calendar ToCalendar(AppointmentCalendar calendar) =>
-		new(calendar.LocalId, calendar.DisplayName, calendar.DisplayColor.ToColor());
+		new(calendar.LocalId, calendar.DisplayName, AsColor(calendar.DisplayColor));
+
+	// For some reason can't find the .NET MAUI built-in one?
+	static Color AsColor(Windows.UI.Color platformColor) => Color.FromRgba(platformColor.R, platformColor.G, platformColor.B, platformColor.A);
 
 	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<Appointment> native)
 	{
