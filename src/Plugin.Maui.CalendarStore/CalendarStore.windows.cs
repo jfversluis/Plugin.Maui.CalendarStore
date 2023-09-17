@@ -1,5 +1,5 @@
 ﻿using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Graphics.Platform;
+using Microsoft.Maui.Platform;
 using Windows.ApplicationModel.Appointments;
 
 namespace Plugin.Maui.CalendarStore;
@@ -144,7 +144,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	static Calendar ToCalendar(AppointmentCalendar calendar) =>
-		new(calendar.LocalId, calendar.DisplayName, calendar.DisplayColor.AsColor());
+		new(calendar.LocalId, calendar.DisplayName, calendar.DisplayColor.ToColor());
 
 	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<Appointment> native)
 	{
