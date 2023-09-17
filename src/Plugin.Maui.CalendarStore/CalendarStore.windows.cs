@@ -1,5 +1,4 @@
-﻿using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Graphics;
+﻿using Microsoft.Maui.Graphics;
 using Windows.ApplicationModel.Appointments;
 
 namespace Plugin.Maui.CalendarStore;
@@ -8,17 +7,19 @@ partial class CalendarStoreImplementation : ICalendarStore
 {
 	Task<AppointmentStore>? uwpAppointmentStore;
 
-	Task<AppointmentStore> GetInstanceAsync() =>
+	Task<AppointmentStore> GetAppointmentStore(bool requestWrite = false) =>
 		uwpAppointmentStore ??= AppointmentManager.RequestStoreAsync(
-			AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
+			requestWrite ? AppointmentStoreAccessType.AllCalendarsReadWrite
+			: AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendars()
 	{
-		var instance = await GetInstanceAsync().ConfigureAwait(false);
+		var instance = await GetAppointmentStore().ConfigureAwait(false);
 
 		var calendars = await instance.FindAppointmentCalendarsAsync(
-			FindAppointmentCalendarsOptions.IncludeHidden).AsTask().ConfigureAwait(false);
+			FindAppointmentCalendarsOptions.IncludeHidden)
+			.AsTask().ConfigureAwait(false);
 
 		return ToCalendars(calendars).ToList();
 	}
@@ -26,11 +27,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<Calendar> GetCalendar(string calendarId)
 	{
-		var instance = await GetInstanceAsync().ConfigureAwait(false);
+		var calendar = await GetPlatformCalendar(calendarId);
 
-		var calendar = await instance.GetAppointmentCalendarAsync(calendarId).AsTask().ConfigureAwait(false);
-
-		return calendar is null ? throw CalendarStore.InvalidCalendar(calendarId) : ToCalendar(calendar);
+		return calendar is null ?
+			throw CalendarStore.InvalidCalendar(calendarId) : ToCalendar(calendar);
 	}
 
 	/// <inheritdoc/>
@@ -63,14 +63,14 @@ partial class CalendarStoreImplementation : ICalendarStore
 			eDate = sDate;
 		}
 
-		var instance = await GetInstanceAsync().ConfigureAwait(false);
+		var instance = await GetAppointmentStore().ConfigureAwait(false);
 
 		var events = await instance.FindAppointmentsAsync(sDate,
 			eDate.Subtract(sDate), options).AsTask().ConfigureAwait(false);
 
 		// confirm the calendar exists if no events were found
-		// the PlatformGetCalendarAsync will throw if not
-		if ((events is null || events.Count == 0) && !string.IsNullOrEmpty(calendarId))
+		if ((events is null || events.Count == 0) &&
+			!string.IsNullOrEmpty(calendarId))
 		{
 			await GetCalendar(calendarId).ConfigureAwait(false);
 		}
@@ -81,11 +81,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<CalendarEvent> GetEvent(string eventId)
 	{
-		var instance = await GetInstanceAsync().ConfigureAwait(false);
+		var e = await GetPlatformEvent(eventId);
 
-		var e = await instance.GetAppointmentAsync(eventId).AsTask().ConfigureAwait(false);
-
-		return e is null ? throw CalendarStore.InvalidEvent(eventId) : ToEvent(e);
+		return e is null ? throw CalendarStore.InvalidEvent(eventId)
+			: ToEvent(e);
 	}
 
 	/// <inheritdoc/>
@@ -101,15 +100,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
 		bool isAllDay = false)
 	{
-		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
-
-		if (permissionResult != PermissionStatus.Granted)
-		{
-			throw new PermissionException("Permission for writing to calendar store is not granted.");
-		}
-
-		var platformCalendarManager = await AppointmentManager
-			.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadWrite);
+		var platformCalendarManager = await GetAppointmentStore(true);
 
 		var platformCalendar = await platformCalendarManager
 			.GetAppointmentCalendarAsync(calendarId);
@@ -133,6 +124,49 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
 			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate,
 			calendarEvent.AllDay);
+	}
+
+	/// <inheritdoc/>
+	public async Task RemoveEvent(string eventId)
+	{
+		var e = await GetPlatformEvent(eventId)
+			?? throw CalendarStore.InvalidEvent(eventId);
+		
+		var platformCalendarManager = await GetAppointmentStore(true);
+
+		var calendar = await platformCalendarManager
+			.GetAppointmentCalendarAsync(e.CalendarId)
+			?? throw CalendarStore.InvalidCalendar(e.CalendarId);
+
+		await calendar.DeleteAppointmentAsync(e.LocalId);
+	}
+
+	/// <inheritdoc/>
+	public Task RemoveEvent(CalendarEvent @event) =>
+		RemoveEvent(@event.Id);
+
+	async Task<AppointmentCalendar?> GetPlatformCalendar(string calendarId)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(calendarId);
+
+		var instance = await GetAppointmentStore().ConfigureAwait(false);
+
+		var calendar = await instance.GetAppointmentCalendarAsync(calendarId)
+			.AsTask().ConfigureAwait(false);
+
+		return calendar;
+	}
+
+	async Task<Appointment?> GetPlatformEvent(string eventId)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(eventId);
+
+		var instance = await GetAppointmentStore().ConfigureAwait(false);
+
+		var e = await instance.GetAppointmentAsync(eventId)
+			.AsTask().ConfigureAwait(false);
+
+		return e;
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> native)

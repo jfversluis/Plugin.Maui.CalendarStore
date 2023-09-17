@@ -40,4 +40,14 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		throw new NotImplementedException();
 	}
+
+	public Task RemoveEvent(string eventId)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task RemoveEvent(CalendarEvent @event)
+	{
+		throw new NotImplementedException();
+	}
 }

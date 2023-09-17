@@ -1,22 +1,32 @@
-﻿namespace Plugin.Maui.CalendarStore.Sample;
+﻿using System.Collections.ObjectModel;
 
+namespace Plugin.Maui.CalendarStore.Sample;
+
+// This page uses dependency injection and injects the ICalendarStore
+// implementation that is registered in MauiProgram.cs
 public partial class CalendarsPage : ContentPage
 {
-	readonly ICalendarStore calendars;
+	readonly ICalendarStore calendarStore;
 
-	public Calendar[]? Calendars { get; set; }
+	public ObservableCollection<Calendar> Calendars { get; set; } = new();
 
-	public CalendarsPage(ICalendarStore calendars)
+	public CalendarsPage(ICalendarStore calendarStore)
 	{
+		BindingContext = this;
+
 		InitializeComponent();
 		
-		this.calendars = calendars;
+		this.calendarStore = calendarStore;
 	}
 
 	async void Button_Clicked_Calendars(object sender, EventArgs e)
 	{
-		Calendars = (await calendars.GetCalendars()).ToArray();
+		var calendars = await calendarStore.GetCalendars();
 
-		BindingContext = this;
+		Calendars.Clear();
+		foreach(var calendar in calendars)
+		{
+			Calendars.Add(calendar);
+		}
 	}
 }
