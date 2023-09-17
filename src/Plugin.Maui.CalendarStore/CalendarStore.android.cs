@@ -112,8 +112,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return ToCalendar(cursor, calendarColumns);
 	}
 
-	public Task CreateCalendar(string name, Color? color = null)
+	public async Task CreateCalendar(string name, Color? color = null)
 	{
+		await EnsureWriteCalendarPermission();
+
 		ContentValues calendarToCreate = new();
 
 		calendarToCreate.Put(
@@ -134,8 +136,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw new CalendarStore.CalendarStoreException(
 				"There was an error saving the calendar.");
 		}
-
-		return Task.CompletedTask;
 	}
 
 	/// <inheritdoc/>
@@ -215,13 +215,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
 		bool isAllDay = false)
 	{
-		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
-
-		if (permissionResult != PermissionStatus.Granted)
-		{
-			throw new PermissionException(
-				"Permission for writing to calendar store is not granted.");
-		}
+		await EnsureWriteCalendarPermission();
 
 		using var cursor = platformContentResolver.Query(
 			calendarsTableUri, calendarColumns.ToArray(), null, null, null);
@@ -324,6 +318,17 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public Task RemoveEvent(CalendarEvent @event) =>
 		RemoveEvent(@event.Id);
+
+	static async Task EnsureWriteCalendarPermission()
+	{
+		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
+
+		if (permissionResult != PermissionStatus.Granted)
+		{
+			throw new PermissionException(
+				"Permission for writing to calendar store is not granted.");
+		}
+	}
 
 	IEnumerable<CalendarEventAttendee> GetAttendees(string eventId)
 	{
