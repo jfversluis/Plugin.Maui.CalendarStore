@@ -1,5 +1,5 @@
 ﻿using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Platform;
+using Microsoft.Maui.Graphics;
 using Windows.ApplicationModel.Appointments;
 
 namespace Plugin.Maui.CalendarStore;
