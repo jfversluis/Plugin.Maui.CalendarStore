@@ -1,5 +1,6 @@
 ﻿using EventKit;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Graphics.Platform;
 using static Plugin.Maui.CalendarStore.CalendarStore;
 
 namespace Plugin.Maui.CalendarStore;
@@ -164,7 +165,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	static Calendar ToCalendar(EKCalendar calendar) =>
-		new(calendar.CalendarIdentifier, calendar.Title);
+		new(calendar.CalendarIdentifier, calendar.Title,
+			new UIColor(calendar.CGColor).AsColor());
 
 	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<EKEvent> native)
 	{

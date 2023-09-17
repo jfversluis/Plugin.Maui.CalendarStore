@@ -11,8 +11,11 @@
 			<BindableLayout.ItemTemplate>
 				<DataTemplate>
 					<VerticalStackLayout>
-						<Label Text="{Binding Name, StringFormat='Name: {0}'}" FontSize="25" />
-						<Label Text="{Binding Id, StringFormat='ID: {0}'}" />
+						<HorizontalStackLayout Spacing="10">
+							<BoxView Color="{Binding Color}" WidthRequest="20" HeightRequest="20" />
+							<Label Text="{Binding Name, StringFormat='Name: {0}'}" FontSize="25" />
+						</HorizontalStackLayout>
+						<Label Text="{Binding Id, StringFormat='ID: {0}'}" Margin="30,0,0,0" />
 					</VerticalStackLayout>
 				</DataTemplate>
 			</BindableLayout.ItemTemplate>
