@@ -152,6 +152,15 @@ Creates an event based on the information in the `CalendarEvent` object. This is
 
 Creates an all-day event in the specified calendar with the provided information. This is basically just a convenience method that calls `CreateEvent` with `isAllDay` set to true.
 
+##### `RemoveEvent(string eventId)`
+
+Removes an event, specified by the unique identifier, from the device calendar.
+
+##### `RemoveEvent(CalendarEvent calendarEvent)`
+
+Removes an event from the device calendar.
+This is basically just a convenience method that calls `RemoveEvent` with `calendarEvent.Id`.
+
 # Acknowledgements
 
 This project could not have came to be without these projects and people, thank you! <3
