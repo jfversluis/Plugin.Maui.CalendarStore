@@ -7,14 +7,15 @@ partial class CalendarStoreImplementation : ICalendarStore
 {
 	Task<AppointmentStore>? uwpAppointmentStore;
 
-	Task<AppointmentStore> GetInstanceAsync() =>
+	Task<AppointmentStore> GetAppointmentStore(bool requestWrite = false) =>
 		uwpAppointmentStore ??= AppointmentManager.RequestStoreAsync(
-			AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
+			requestWrite ? AppointmentStoreAccessType.AllCalendarsReadWrite
+			: AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendars()
 	{
-		var instance = await GetInstanceAsync().ConfigureAwait(false);
+		var instance = await GetAppointmentStore().ConfigureAwait(false);
 
 		var calendars = await instance.FindAppointmentCalendarsAsync(
 			FindAppointmentCalendarsOptions.IncludeHidden)
@@ -62,7 +63,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			eDate = sDate;
 		}
 
-		var instance = await GetInstanceAsync().ConfigureAwait(false);
+		var instance = await GetAppointmentStore().ConfigureAwait(false);
 
 		var events = await instance.FindAppointmentsAsync(sDate,
 			eDate.Subtract(sDate), options).AsTask().ConfigureAwait(false);
@@ -99,8 +100,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
 		bool isAllDay = false)
 	{
-		var platformCalendarManager = await AppointmentManager
-			.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadWrite);
+		var platformCalendarManager = await GetAppointmentStore(true);
 
 		var platformCalendar = await platformCalendarManager
 			.GetAppointmentCalendarAsync(calendarId);
@@ -132,8 +132,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var e = await GetPlatformEvent(eventId)
 			?? throw CalendarStore.InvalidEvent(eventId);
 		
-		var platformCalendarManager = await AppointmentManager
-			.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadWrite);
+		var platformCalendarManager = await GetAppointmentStore(true);
 
 		var calendar = await platformCalendarManager
 			.GetAppointmentCalendarAsync(e.CalendarId)
@@ -150,7 +149,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		ArgumentException.ThrowIfNullOrEmpty(calendarId);
 
-		var instance = await GetInstanceAsync().ConfigureAwait(false);
+		var instance = await GetAppointmentStore().ConfigureAwait(false);
 
 		var calendar = await instance.GetAppointmentCalendarAsync(calendarId)
 			.AsTask().ConfigureAwait(false);
@@ -162,7 +161,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		ArgumentException.ThrowIfNullOrEmpty(eventId);
 
-		var instance = await GetInstanceAsync().ConfigureAwait(false);
+		var instance = await GetAppointmentStore().ConfigureAwait(false);
 
 		var e = await instance.GetAppointmentAsync(eventId)
 			.AsTask().ConfigureAwait(false);
