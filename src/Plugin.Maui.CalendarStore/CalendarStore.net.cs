@@ -67,4 +67,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		throw new NotImplementedException();
 	}
+
+	public Task UpdateCalendar(string calendarId, string newName, Color? newColor = null)
+	{
+		throw new NotImplementedException();
+	}
 }

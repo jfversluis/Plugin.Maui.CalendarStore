@@ -46,16 +46,36 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var platformCalendarManager = await GetAppointmentStore(true)
 			.ConfigureAwait(false);
 
-		var platformCalendar = 
+		var calendarToCreate = 
 			await platformCalendarManager.CreateAppointmentCalendarAsync(name)
 			.AsTask().ConfigureAwait(false);
 
 		if (color is not null)
 		{
-			platformCalendar.DisplayColor = AsPlatform(color);
-			await platformCalendar.SaveAsync()
+			calendarToCreate.DisplayColor = AsPlatform(color);
+			
+			await calendarToCreate.SaveAsync()
 				.AsTask().ConfigureAwait(false);
 		}
+	}
+
+	/// <inheritdoc/>
+	public async Task UpdateCalendar(string calendarId, string newName, Color? newColor = null)
+	{
+		await EnsureWriteCalendarPermission();
+
+		var calendarToUpdate = await GetPlatformCalendar(calendarId)
+			?? throw CalendarStore.InvalidCalendar(calendarId);
+
+		calendarToUpdate.DisplayName = newName;
+
+		if (newColor is not null)
+		{
+			calendarToUpdate.DisplayColor = AsPlatform(newColor);
+		}
+
+		await calendarToUpdate.SaveAsync()
+			.AsTask().ConfigureAwait(false);
 	}
 
 	/// <inheritdoc/>

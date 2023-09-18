@@ -65,6 +65,35 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 	}
 
+	/// <inheritdoc/>
+	public async Task UpdateCalendar(string calendarId, string newName, Color? newColor = null)
+	{
+		await EnsureWriteCalendarPermission();
+
+		var calendarToUpdate = await GetPlatformCalendar(calendarId)
+			?? throw InvalidCalendar(calendarId);
+
+		calendarToUpdate.Title = newName;
+
+		if (newColor is not null)
+		{
+			calendarToUpdate.CGColor = newColor.AsCGColor();
+		}
+
+		var saveResult = EventStore.SaveCalendar(calendarToUpdate, true, out var error);
+
+		if (!saveResult || error is not null)
+		{
+			if (error is not null)
+			{
+				throw new CalendarStoreException($"Error occurred while updating calendar: " +
+					$"{error.LocalizedDescription}");
+			}
+
+			throw new CalendarStoreException("Updating the calendar was unsuccessful.");
+		}
+	}
+
 	public async Task DeleteCalendar(string calendarId)
 	{
 		await EnsureWriteCalendarPermission();
