@@ -33,6 +33,11 @@ public static partial class CalendarStore
 	public static async Task CreateCalendar(string name, Color? color = null) =>
 		await Default.CreateCalendar(name, color);
 
+	/// <inheritdoc cref="ICalendarStore.UpdateCalendar(string, string, Color?)"/>
+	public static async Task UpdateCalendar(string calendarId, string newName,
+		Color? newColor = null) =>
+		await Default.UpdateCalendar(calendarId, newName, newColor);
+
 	/// <inheritdoc cref="ICalendarStore.DeleteCalendar(string)"/>
 	public static async Task DeleteCalendar(string calendarId) =>
 		await Default.DeleteCalendar(calendarId);

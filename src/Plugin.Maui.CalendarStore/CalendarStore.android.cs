@@ -4,6 +4,7 @@ using Android.Provider;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
+using static Java.Util.Jar.Attributes;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -81,30 +82,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<Calendar> GetCalendar(string calendarId)
 	{
-		ArgumentException.ThrowIfNullOrEmpty(calendarId);
-
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
-
-		// Android ids are always integers
-		if (!long.TryParse(calendarId, out _))
-		{
-			throw CalendarStore.InvalidCalendar(calendarId);
-		}
-
-		var queryConditions =
-			$"{CalendarContract.Calendars.InterfaceConsts.Deleted} != 1 AND " +
-			$"{CalendarContract.Calendars.InterfaceConsts.Id} = {calendarId}";
-
-		using var cursor = platformContentResolver.Query(calendarsTableUri,
-			calendarColumns.ToArray(), queryConditions, null, null)
-			?? throw new CalendarStore.CalendarStoreException("Error while querying calendars");
-
-		if (cursor.Count <= 0)
-		{
-			throw CalendarStore.InvalidCalendar(calendarId);
-		}
-
-		cursor.MoveToNext();
+		var cursor = await GetPlatformCalendar(calendarId);
 
 		return ToCalendar(cursor, calendarColumns);
 	}
@@ -137,6 +115,42 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
+	public async Task UpdateCalendar(string calendarId, string newName, Color? newColor = null)
+	{
+		await EnsureWriteCalendarPermission();
+
+		ContentValues calendarToUpdate = new();
+
+		// We just want to know a calendar with this ID exists
+		_ = await GetPlatformCalendar(calendarId);
+
+		calendarToUpdate.Put(CalendarContract.Calendars.InterfaceConsts.Id, calendarId);
+
+		calendarToUpdate.Put(
+			CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName,
+			newName);
+
+		if (newColor is not null)
+		{
+			calendarToUpdate.Put(
+				CalendarContract.Calendars.InterfaceConsts.CalendarColor,
+				newColor.AsColor());
+		}
+
+		var calendarToUpdateUri =
+			ContentUris.WithAppendedId(calendarsTableUri, long.Parse(calendarId));
+
+		var updateCount = platformContentResolver?.Update(calendarToUpdateUri,
+			calendarToUpdate, null, null);
+
+		if (updateCount != 1)
+		{
+			throw new CalendarStore.CalendarStoreException(
+				"There was an error updating the calendar.");
+		}
+	}
+
+	/// <inheritdoc/>
 	public async Task DeleteCalendar(string calendarId)
 	{
 		await EnsureWriteCalendarPermission();
@@ -148,14 +162,17 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw CalendarStore.InvalidCalendar(calendarId);
 		}
 
-		ContentValues calendarToRemove = new();
-		calendarToRemove.Put(
-			CalendarContract.Calendars.InterfaceConsts.Id, platformCalendarId);
+		// We just want to know a calendar with this ID exists
+		_ = await GetPlatformCalendar(calendarId);
 
 		var deleteEventUri = ContentUris.WithAppendedId(calendarsTableUri, platformCalendarId);
-		var removeCount = platformContentResolver?.Delete(deleteEventUri, null, null);
+		var deleteCount = platformContentResolver?.Delete(deleteEventUri, null, null);
 
-		//return removeCount == 1;
+		if (deleteCount != 1)
+		{
+			throw new CalendarStore.CalendarStoreException(
+				"There was an error deleting the calendar.");
+		}
 	}
 
 	/// <inheritdoc/>
@@ -337,9 +354,13 @@ partial class CalendarStoreImplementation : ICalendarStore
 			CalendarContract.Events.InterfaceConsts.Id, platformEventId);
 
 		var deleteEventUri = ContentUris.WithAppendedId(eventsTableUri, platformEventId);
-		var removeCount = platformContentResolver?.Delete(deleteEventUri, null, null);
+		var deleteCount = platformContentResolver?.Delete(deleteEventUri, null, null);
 
-		//return removeCount == 1;
+		if (deleteCount != 1)
+		{
+			throw new CalendarStore.CalendarStoreException(
+				"There was an error deleting the event.");
+		}
 	}
 
 	/// <inheritdoc/>
@@ -373,6 +394,36 @@ partial class CalendarStoreImplementation : ICalendarStore
 			?? throw new CalendarStore.CalendarStoreException("Error while querying attendees");
 
 		return ToAttendees(cursor, attendeesColumns).ToList();
+	}
+
+	async Task<ICursor> GetPlatformCalendar(string calendarId)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(calendarId);
+
+		await Permissions.RequestAsync<Permissions.CalendarRead>();
+
+		// Android ids are always integers
+		if (!long.TryParse(calendarId, out _))
+		{
+			throw CalendarStore.InvalidCalendar(calendarId);
+		}
+
+		var queryConditions =
+			$"{CalendarContract.Calendars.InterfaceConsts.Deleted} != 1 AND " +
+			$"{CalendarContract.Calendars.InterfaceConsts.Id} = {calendarId}";
+
+		using var cursor = platformContentResolver.Query(calendarsTableUri,
+			calendarColumns.ToArray(), queryConditions, null, null)
+			?? throw new CalendarStore.CalendarStoreException("Error while querying calendars");
+
+		if (cursor.Count <= 0)
+		{
+			throw CalendarStore.InvalidCalendar(calendarId);
+		}
+
+		cursor.MoveToNext();
+
+		return cursor;
 	}
 
 	static IEnumerable<Calendar> ToCalendars(ICursor cursor, List<string> projection)

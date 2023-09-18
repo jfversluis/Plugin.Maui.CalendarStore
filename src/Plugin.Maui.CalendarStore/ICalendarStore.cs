@@ -32,6 +32,15 @@ public interface ICalendarStore
 	Task CreateCalendar(string name, Color? color = null);
 
 	/// <summary>
+	/// Updates an existing calendar with the provided values.
+	/// </summary>
+	/// <param name="calendarId">The unique identifier of the existing calendar.</param>
+	/// <param name="newName">The new name to update the calendar with.</param>
+	/// <param name="newColor">The new color to update the calendar with.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	Task UpdateCalendar(string calendarId, string newName, Color? newColor = null);
+
+	/// <summary>
 	/// Deletes a calendar, specified by its unique ID, from the device.
 	/// </summary>
 	/// <param name="calendarId">The unique identifier of the calendar to be deleted.</param>

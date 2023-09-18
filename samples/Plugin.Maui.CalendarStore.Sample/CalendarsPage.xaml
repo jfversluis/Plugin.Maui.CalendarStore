@@ -36,9 +36,15 @@
 							</HorizontalStackLayout>
 						</VerticalStackLayout>
 
-						<Button Grid.Column="1" Text="Delete"
+						<VerticalStackLayout Grid.Column="1" Spacing="5">
+						<Button Text="Update"
+								Clicked="Update_Clicked"
+								VerticalOptions="Center"/>
+							
+						<Button Text="Delete"
 								Clicked="Delete_Clicked"
 								VerticalOptions="Center"/>
+						</VerticalStackLayout>
 					</Grid>
 				</DataTemplate>
 			</BindableLayout.ItemTemplate>

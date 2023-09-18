@@ -144,6 +144,10 @@ Retrieves a specific calendar from the device.
 
 Creates a new calendar on the device with the specified name and optionally color.
 
+##### `UpdateCalendar(string calendarId, string newName, Color? newColor = null)`
+
+Updates the calendar, specified by the unique identifier, with the given values.
+
 ##### `DeleteCalendar(string calendarId)`
 
 Removes a calendar, specified by the unique identifier, from the device.

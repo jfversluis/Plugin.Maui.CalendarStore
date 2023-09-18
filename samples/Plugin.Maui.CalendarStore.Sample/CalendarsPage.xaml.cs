@@ -42,6 +42,31 @@ public partial class CalendarsPage : ContentPage
 			$"Calendar \"{createResult}\" created successfully.", "OK");
 	}
 
+	async void Update_Clicked(object sender, EventArgs e)
+	{
+		if ((sender as BindableObject)?.
+			BindingContext is not Calendar calendarToUpdate)
+		{
+			await DisplayAlert("Error", "Could not determine calendar to update.", "OK");
+			return;
+		}
+
+		var updateResult = await DisplayPromptAsync("Update Calendar",
+			"Enter the updated calendar name:", placeholder: calendarToUpdate.Name);
+
+		if (string.IsNullOrWhiteSpace(updateResult))
+		{
+			return;
+		}
+
+		await calendarStore.UpdateCalendar(calendarToUpdate.Id, updateResult);
+
+		await LoadCalendars();
+
+		await DisplayAlert("Calendar Updated",
+			$"Calendar \"{updateResult}\" updated successfully.", "OK");
+	}
+
 	async void Delete_Clicked(object sender, EventArgs e)
 	{
 		if ((sender as BindableObject)?.
