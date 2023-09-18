@@ -75,6 +75,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
+	public Task DeleteCalendar(Calendar calendarToDelete) =>
+		DeleteCalendar(calendarToDelete.Id);
+
+	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
 		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
@@ -177,7 +181,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task RemoveEvent(string eventId)
+	public async Task DeleteEvent(string eventId)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -196,8 +200,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task RemoveEvent(CalendarEvent @event) =>
-		RemoveEvent(@event.Id);
+	public Task DeleteEvent(CalendarEvent eventToDelete) =>
+		DeleteEvent(eventToDelete.Id);
 
 	static async Task EnsureWriteCalendarPermission()
 	{
@@ -248,7 +252,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 			calendar.CanCreateOrUpdateAppointments);
 
 	// For some reason can't find the .NET MAUI built-in one?
-	static Color AsColor(Windows.UI.Color platformColor) => Color.FromRgba(platformColor.R, platformColor.G, platformColor.B, platformColor.A);
+	static Color AsColor(Windows.UI.Color platformColor) =>
+		Color.FromRgba(platformColor.R, platformColor.G, platformColor.B, platformColor.A);
 
 	static Windows.UI.Color AsPlatform(Color virtualColor)
 	{

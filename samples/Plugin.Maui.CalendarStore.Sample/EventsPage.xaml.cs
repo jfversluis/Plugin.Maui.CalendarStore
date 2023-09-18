@@ -44,7 +44,7 @@ public partial class EventsPage : ContentPage
 			return;
 		}
 
-		await CalendarStore.Default.RemoveEvent(eventToRemove.Id);
+		await CalendarStore.Default.DeleteEvent(eventToRemove.Id);
 		Events.Remove(eventToRemove);
 
 		await DisplayAlert("Success", "Event deleted!", "OK");

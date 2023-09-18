@@ -85,6 +85,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
+	public Task DeleteCalendar(Calendar calendarToDelete) =>
+		DeleteCalendar(calendarToDelete.Id);
+
+	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
 		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
@@ -195,7 +199,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task RemoveEvent(string eventId)
+	public async Task DeleteEvent(string eventId)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(eventId);
 
@@ -219,8 +223,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task RemoveEvent(CalendarEvent @event) =>
-		RemoveEvent(@event.Id);
+	public Task DeleteEvent(CalendarEvent eventToDelete) =>
+		DeleteEvent(eventToDelete.Id);
 
 	static async Task EnsureWriteCalendarPermission()
 	{

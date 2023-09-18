@@ -1,12 +1,9 @@
-﻿using System;
-using Android.Content;
+﻿using Android.Content;
 using Android.Database;
 using Android.Provider;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
-using static Android.Icu.Text.CaseMap;
-using static Android.Util.EventLogTags;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -160,6 +157,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		//return removeCount == 1;
 	}
+
+	/// <inheritdoc/>
+	public Task DeleteCalendar(Calendar calendarToDelete) =>
+		DeleteCalendar(calendarToDelete.Id);
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(
@@ -320,7 +321,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task RemoveEvent(string eventId)
+	public async Task DeleteEvent(string eventId)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -342,8 +343,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task RemoveEvent(CalendarEvent @event) =>
-		RemoveEvent(@event.Id);
+	public Task DeleteEvent(CalendarEvent eventToDelete) =>
+		DeleteEvent(eventToDelete.Id);
 
 	static async Task EnsureWriteCalendarPermission()
 	{
