@@ -53,6 +53,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (!saveResult || error is not null)
 		{
+			EventStore.Reset();
+
 			if (error is not null)
 			{
 				throw new CalendarStoreException($"Error occurred while saving calendar: " +
@@ -173,6 +175,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (!saveResult || error is not null)
 		{
+			EventStore.Reset();
+
 			if (error is not null)
 			{
 				throw new CalendarStoreException($"Error occurred while saving event: " +
@@ -212,6 +216,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (!removeResult || error is not null)
 		{
+			EventStore.Reset();
+
 			if (error is not null)
 			{
 				throw new CalendarStoreException($"Error occurred while removing event: " +
