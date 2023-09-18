@@ -22,7 +22,7 @@ You can either use it as a static class, e.g.: `CalendarStore.Default.GetCalenda
 
 Before you can start using `CalendarStore`, you will need to request the proper permissions on each platform.
 
-The permissions will automatically be requested by this library when needed.
+The runtime permission is automatically requested by the plugin when any of the methods is called.
 
 #### iOS/macOS
 
@@ -30,12 +30,12 @@ On iOS and macOS, add the `NSCalendarsUsageDescription` key to your `info.plist`
 
 ```xml
 <key>NSCalendarsUsageDescription</key>
-<string>This app wants to read from your calendar</string>
+<string>This app wants to access your calendars</string>
 ```
 
 For macOS additionally you will have to add an entry to the `Entitlements.plist`, you will need to add the `com.apple.security.personal-information.calendar` key with a value of `true`.
 
-See an example of a complete Entitlements file below.
+See an example of a complete `Entitlements.plist` file below.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -52,7 +52,7 @@ See an example of a complete Entitlements file below.
 
 #### Android
 
-On Android declare the `READ_CALENDAR` permissions in your `AndroidManifest.xml` file for reading calendar information. If you also want to write information, also add the `WRITE_CALENDAR` permission. 
+On Android declare the `READ_CALENDAR` permission in your `AndroidManifest.xml` file for reading calendar information. If you also want to write information, also add the `WRITE_CALENDAR` permission.
 
 This should be placed in the `manifest` node. You can also add this through the visual editor in Visual Studio.
 
@@ -65,7 +65,15 @@ The runtime permission is automatically requested by the plugin when any of the 
 
 #### Windows
 
-On Windows no permissions are required.
+On Windows declare the `Appointments` permission in your `Package.appxmanifest` file.
+
+This should be places in the `<Capabilities>` node, that is under the `<Package>` node.
+
+The runtime permission is automatically requested by the plugin when any of the methods is called.
+
+```xml
+<uap:Capability Name="appointments"/>
+`````
 
 ### Dependency Injection
 
@@ -136,6 +144,15 @@ Retrieves a specific calendar from the device.
 
 Creates a new calendar on the device with the specified name and optionally color.
 
+##### `DeleteCalendar(string calendarId)`
+
+Removes a calendar, specified by the unique identifier, from the device.
+
+##### `DeleteCalendar(Calendar calendarToDelete)`
+
+Removes a calendar from the device.
+This is basically just a convenience method that calls `DeleteCalendar` with `calendarToDelete.Id`.
+
 ##### `IEnumerable<CalendarEvent> GetEvents(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)`
 
 Retrieves events from a specific calendar or all calendars from the device.
@@ -156,14 +173,14 @@ Creates an event based on the information in the `CalendarEvent` object. This is
 
 Creates an all-day event in the specified calendar with the provided information. This is basically just a convenience method that calls `CreateEvent` with `isAllDay` set to true.
 
-##### `RemoveEvent(string eventId)`
+##### `DeleteEvent(string eventId)`
 
 Removes an event, specified by the unique identifier, from the device calendar.
 
-##### `RemoveEvent(CalendarEvent calendarEvent)`
+##### `DeleteEvent(CalendarEvent eventToDelete)`
 
 Removes an event from the device calendar.
-This is basically just a convenience method that calls `RemoveEvent` with `calendarEvent.Id`.
+This is basically just a convenience method that calls `DeleteEvent` with `eventToDelete.Id`.
 
 # Acknowledgements
 

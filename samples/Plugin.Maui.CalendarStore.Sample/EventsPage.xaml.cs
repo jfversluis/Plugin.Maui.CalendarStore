@@ -26,18 +26,17 @@ public partial class EventsPage : ContentPage
 		}
 	}
 
-	async void Remove_Clicked(object sender, EventArgs e)
+	async void Delete_Clicked(object sender, EventArgs e)
 	{
 		if ((sender as BindableObject)?.
 			BindingContext is not CalendarEvent eventToRemove)
 		{
-			await DisplayAlert("Error", "Could not determine event to remove.", "OK");
+			await DisplayAlert("Error", "Could not determine event to delete.", "OK");
 			return;
 		}
 
 		var promptResult = await DisplayActionSheet(
-			$"Are you sure you want to remove event \"{eventToRemove.Title}\"?{Environment.NewLine}" +
-			$"{Environment.NewLine}This will result in the event being actually deleted from your actual calendar.",
+			$"Are you sure you want to delete event \"{eventToRemove.Title}\"?",
 			"Cancel", "Remove");
 
 		if (promptResult.Equals("Cancel", StringComparison.OrdinalIgnoreCase))
@@ -45,9 +44,9 @@ public partial class EventsPage : ContentPage
 			return;
 		}
 
-		await CalendarStore.Default.RemoveEvent(eventToRemove.Id);
+		await CalendarStore.Default.DeleteEvent(eventToRemove.Id);
 		Events.Remove(eventToRemove);
 
-		await DisplayAlert("Success", "Event removed!", "OK");
+		await DisplayAlert("Success", "Event deleted!", "OK");
 	}
 }

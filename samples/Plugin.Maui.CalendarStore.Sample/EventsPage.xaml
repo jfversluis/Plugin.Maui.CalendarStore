@@ -8,6 +8,8 @@
 			 Title="Events">
 	<ScrollView>
 		<VerticalStackLayout Spacing="10" Margin="10">
+			<Label Text="Note: any action you take here on events, will have effect on the events in your actual calendar." />
+
 			<Button Text="Load Events" Clicked="LoadEvents_Clicked" />
 
 			<VerticalStackLayout BindableLayout.ItemsSource="{Binding Events}" Spacing="5">
@@ -24,8 +26,8 @@
 								<Label Text="{Binding StartDate, StringFormat='Start Date: {0}'}" />
 							</VerticalStackLayout>
 
-							<Button Grid.Column="1" Text="Remove"
-									Clicked="Remove_Clicked"
+							<Button Grid.Column="1" Text="Delete"
+									Clicked="Delete_Clicked"
 									VerticalOptions="Center"/>
 						</Grid>
 					</DataTemplate>
