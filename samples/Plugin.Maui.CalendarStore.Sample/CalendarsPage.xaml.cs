@@ -21,13 +21,7 @@ public partial class CalendarsPage : ContentPage
 
 	async void LoadCalendars_Clicked(object sender, EventArgs e)
 	{
-		var calendars = await calendarStore.GetCalendars();
-
-		Calendars.Clear();
-		foreach(var calendar in calendars)
-		{
-			Calendars.Add(calendar);
-		}
+		await LoadCalendars();
 	}
 
 	async void CreateCalendar_Clicked(object sender, EventArgs e)
@@ -42,7 +36,44 @@ public partial class CalendarsPage : ContentPage
 
 		await calendarStore.CreateCalendar(createResult);
 
+		await LoadCalendars();
+
 		await DisplayAlert("Calendar Created",
 			$"Calendar \"{createResult}\" created successfully.", "OK");
+	}
+
+	async void Delete_Clicked(object sender, EventArgs e)
+	{
+		if ((sender as BindableObject)?.
+			BindingContext is not Calendar calendarToRemove)
+		{
+			await DisplayAlert("Error", "Could not determine calendar to delete.", "OK");
+			return;
+		}
+
+		var promptResult = await DisplayActionSheet(
+			$"Are you sure you want to delete calendar \"{calendarToRemove.Name}\"?",
+			"Cancel", "Remove");
+
+		if (promptResult.Equals("Cancel", StringComparison.OrdinalIgnoreCase))
+		{
+			return;
+		}
+
+		await CalendarStore.Default.DeleteCalendar(calendarToRemove.Id);
+		Calendars.Remove(calendarToRemove);
+
+		await DisplayAlert("Success", "Calendar deleted!", "OK");
+	}
+
+	async Task LoadCalendars()
+	{
+		var calendars = await calendarStore.GetCalendars();
+
+		Calendars.Clear();
+		foreach (var calendar in calendars)
+		{
+			Calendars.Add(calendar);
+		}
 	}
 }

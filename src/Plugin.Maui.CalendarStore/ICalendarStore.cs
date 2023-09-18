@@ -31,6 +31,8 @@ public interface ICalendarStore
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
 	Task CreateCalendar(string name, Color? color = null);
 
+	Task DeleteCalendar(string calendarId);
+
 	/// <summary>
 	/// Retrieves events from a specific calendar or all calendars from the device.
 	/// </summary>

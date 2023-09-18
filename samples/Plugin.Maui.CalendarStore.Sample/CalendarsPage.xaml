@@ -8,6 +8,8 @@
 			 Title="Calendars">
 
 	<VerticalStackLayout Spacing="10" Margin="10">
+		<Label Text="Note: any action you take here on calendar, will have effect on the calendars on this device." />
+
 		<HorizontalStackLayout Spacing="10">
 			<Button Text="Create Calendar..." Clicked="CreateCalendar_Clicked" />
 			<Button Text="Load Calendars" Clicked="LoadCalendars_Clicked" />
@@ -17,21 +19,27 @@
 							 Spacing="5">
 			<BindableLayout.ItemTemplate>
 				<DataTemplate x:DataType="calendars:Calendar">
-					<VerticalStackLayout>
-						<HorizontalStackLayout Spacing="10">
-							<BoxView Color="{Binding Color}"
-									 WidthRequest="20"
-									 HeightRequest="20" />
+					<Grid ColumnDefinitions="*, 100">
+						<VerticalStackLayout Grid.Column="0">
+							<HorizontalStackLayout Spacing="10">
+								<BoxView Color="{Binding Color}"
+										 WidthRequest="20"
+										 HeightRequest="20" />
 
-							<Label Text="{Binding Name, StringFormat='Name: {0}'}"
-								   FontSize="25" />
-						</HorizontalStackLayout>
+								<Label Text="{Binding Name, StringFormat='Name: {0}'}"
+									   FontSize="25" />
+							</HorizontalStackLayout>
 
-						<HorizontalStackLayout Margin="30,0,0,0">
-							<Label Text="{Binding Id, StringFormat='ID: {0}, '}" />
-							<Label Text="{Binding IsReadOnly, StringFormat='Read-only: {0}'}" />
-						</HorizontalStackLayout>
-					</VerticalStackLayout>
+							<HorizontalStackLayout Margin="30,0,0,0">
+								<Label Text="{Binding Id, StringFormat='ID: {0}, '}" />
+								<Label Text="{Binding IsReadOnly, StringFormat='Read-only: {0}'}" />
+							</HorizontalStackLayout>
+						</VerticalStackLayout>
+
+						<Button Grid.Column="1" Text="Delete"
+								Clicked="Delete_Clicked"
+								VerticalOptions="Center"/>
+					</Grid>
 				</DataTemplate>
 			</BindableLayout.ItemTemplate>
 		</VerticalStackLayout>

@@ -112,6 +112,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return ToCalendar(cursor, calendarColumns);
 	}
 
+	/// <inheritdoc/>
 	public async Task CreateCalendar(string name, Color? color = null)
 	{
 		await EnsureWriteCalendarPermission();
@@ -136,6 +137,28 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw new CalendarStore.CalendarStoreException(
 				"There was an error saving the calendar.");
 		}
+	}
+
+	/// <inheritdoc/>
+	public async Task DeleteCalendar(string calendarId)
+	{
+		await EnsureWriteCalendarPermission();
+
+		// Android ids are always integers
+		if (string.IsNullOrEmpty(calendarId) ||
+			!long.TryParse(calendarId, out long platformCalendarId))
+		{
+			throw CalendarStore.InvalidCalendar(calendarId);
+		}
+
+		ContentValues calendarToRemove = new();
+		calendarToRemove.Put(
+			CalendarContract.Calendars.InterfaceConsts.Id, platformCalendarId);
+
+		var deleteEventUri = ContentUris.WithAppendedId(calendarsTableUri, platformCalendarId);
+		var removeCount = platformContentResolver?.Delete(deleteEventUri, null, null);
+
+		//return removeCount == 1;
 	}
 
 	/// <inheritdoc/>
@@ -297,8 +320,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task RemoveEvent(string eventId)
+	public async Task RemoveEvent(string eventId)
 	{
+		await EnsureWriteCalendarPermission();
+
 		// Android ids are always integers
 		if (string.IsNullOrEmpty(eventId) ||
 			!long.TryParse(eventId, out long platformEventId))
@@ -309,10 +334,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 		ContentValues eventToRemove = new();
 		eventToRemove.Put(
 			CalendarContract.Events.InterfaceConsts.Id, platformEventId);
+
 		var deleteEventUri = ContentUris.WithAppendedId(eventsTableUri, platformEventId);
 		var removeCount = platformContentResolver?.Delete(deleteEventUri, null, null);
 
-		return Task.FromResult(removeCount == 1);
+		//return removeCount == 1;
 	}
 
 	/// <inheritdoc/>

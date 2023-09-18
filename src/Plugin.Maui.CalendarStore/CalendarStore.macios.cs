@@ -26,15 +26,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<Calendar> GetCalendar(string calendarId)
 	{
-		ArgumentException.ThrowIfNullOrEmpty(calendarId);
+		var calendar = await GetPlatformCalendar(calendarId);
 
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
-
-		var calendars = EventStore.GetCalendars(EKEntityType.Event);
-
-		var calendar = calendars.FirstOrDefault(c => c.CalendarIdentifier == calendarId);
-
-		return calendar is null ? throw InvalidCalendar(calendarId) : ToCalendar(calendar);
+		return calendar is null ? throw InvalidCalendar(calendarId)
+			: ToCalendar(calendar);
 	}
 
 	/// <inheritdoc/>
@@ -68,30 +63,25 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 	}
 
-	static EKSource? GetBestPossibleSource()
+	public async Task DeleteCalendar(string calendarId)
 	{
-		if (EventStore.DefaultCalendarForNewEvents?.Source is not null)
+		await EnsureWriteCalendarPermission();
+
+		var calendar = await GetPlatformCalendar(calendarId)
+			?? throw InvalidCalendar(calendarId);
+
+		var removeResult = EventStore.RemoveCalendar(calendar, true, out var error);
+
+		if (!removeResult || error is not null)
 		{
-			return EventStore.DefaultCalendarForNewEvents.Source;
+			if (error is not null)
+			{
+				throw new CalendarStoreException($"Error occurred while deleting calendar: " +
+					$"{error.LocalizedDescription}");
+			}
+
+			throw new CalendarStoreException("Deleting the calendar was unsuccessful.");
 		}
-
-		var remoteSource = EventStore.Sources.Where(
-			s => s.SourceType == EKSourceType.CalDav).FirstOrDefault();
-
-		if (remoteSource is not null)
-		{
-			return remoteSource;
-		}
-
-		var localSource = EventStore.Sources.Where(
-			s => s.SourceType == EKSourceType.Local).FirstOrDefault();
-
-		if (localSource is not null)
-		{
-			return localSource;
-		}
-
-		return null;
 	}
 
 	/// <inheritdoc/>
@@ -240,6 +230,43 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			throw new PermissionException("Permission for writing to calendar store is not granted.");
 		}
+	}
+
+	static EKSource? GetBestPossibleSource()
+	{
+		if (EventStore.DefaultCalendarForNewEvents?.Source is not null)
+		{
+			return EventStore.DefaultCalendarForNewEvents.Source;
+		}
+
+		var remoteSource = EventStore.Sources.Where(
+			s => s.SourceType == EKSourceType.CalDav).FirstOrDefault();
+
+		if (remoteSource is not null)
+		{
+			return remoteSource;
+		}
+
+		var localSource = EventStore.Sources.Where(
+			s => s.SourceType == EKSourceType.Local).FirstOrDefault();
+
+		if (localSource is not null)
+		{
+			return localSource;
+		}
+
+		return null;
+	}
+
+	static async Task<EKCalendar?> GetPlatformCalendar(string calendarId)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(calendarId);
+
+		await Permissions.RequestAsync<Permissions.CalendarRead>();
+
+		var calendars = EventStore.GetCalendars(EKEntityType.Event);
+
+		return calendars.FirstOrDefault(c => c.CalendarIdentifier == calendarId);
 	}
 
 	static async Task<EKEvent> GetPlatformEvent(string eventId)
