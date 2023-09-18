@@ -22,11 +22,11 @@ public static partial class CalendarStore
 	internal static readonly TimeSpan defaultEndTimeFromStartTime = TimeSpan.FromDays(14);
 
 	/// <inheritdoc cref="ICalendarStore.GetCalendars"/>
-	public static async Task<IEnumerable<Calendar>> GetCalendarsAsync() =>
+	public static async Task<IEnumerable<Calendar>> GetCalendars() =>
         await Default.GetCalendars();
 
 	/// <inheritdoc cref="ICalendarStore.GetCalendar(string)"/>
-	public static async Task<Calendar> GetCalendarAsync(string calendarId) =>
+	public static async Task<Calendar> GetCalendar(string calendarId) =>
         await Default.GetCalendar(calendarId);
 
 	/// <inheritdoc cref="ICalendarStore.CreateCalendar(string, Color?)"/>
@@ -34,12 +34,12 @@ public static partial class CalendarStore
 		await Default.CreateCalendar(name, color);
 
 	/// <inheritdoc cref="ICalendarStore.GetEvents(string?, DateTimeOffset?, DateTimeOffset?)"/>
-	public static async Task<IEnumerable<CalendarEvent>> GetEventsAsync(string? calendarId = null,
+	public static async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
         DateTimeOffset? startDate = null, DateTimeOffset? endDate = null) =>
         await Default.GetEvents(calendarId, startDate, endDate);
 
 	/// <inheritdoc cref="ICalendarStore.GetEvent(string)"/>
-	public static async Task<CalendarEvent> GetEventAsync(string eventId) =>
+	public static async Task<CalendarEvent> GetEvent(string eventId) =>
         await Default.GetEvent(eventId);
 
 	/// <inheritdoc cref="ICalendarStore.CreateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool)"/>
