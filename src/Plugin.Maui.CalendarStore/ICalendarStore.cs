@@ -32,6 +32,22 @@ public interface ICalendarStore
 	Task CreateCalendar(string name, Color? color = null);
 
 	/// <summary>
+	/// Deletes a calendar, specified by its unique ID, from the device.
+	/// </summary>
+	/// <param name="calendarId">The unique identifier of the calendar to be deleted.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <remarks>If the calendar is part of a cloud service, the calendar might also be deleted from all other devices where the calendar is used.</remarks>
+	Task DeleteCalendar(string calendarId);
+
+	/// <summary>
+	/// Deletes the given calendar from the device.
+	/// </summary>
+	/// <param name="calendarToDelete">The calendar object that is to be deleted.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <remarks>If the calendar is part of a cloud service, the calendar might also be deleted from all other devices where the calendar is used.</remarks>
+	Task DeleteCalendar(Calendar calendarToDelete);
+
+	/// <summary>
 	/// Retrieves events from a specific calendar or all calendars from the device.
 	/// </summary>
 	/// <param name="calendarId">The calendar identifier to retrieve events for. If not provided, events will be retrieved for all calendars on the device.</param>
@@ -92,16 +108,16 @@ public interface ICalendarStore
 		string location, DateTimeOffset startDate, DateTimeOffset endDate);
 
 	/// <summary>
-	/// Removes an event, specified by its unique ID, from the device calendar.
+	/// Deletes an event, specified by its unique ID, from the device calendar.
 	/// </summary>
-	/// <param name="eventId">The unique identifier of the event to remove.</param>
+	/// <param name="eventId">The unique identifier of the event to be deleted.</param>
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
-	Task RemoveEvent(string eventId);
+	Task DeleteEvent(string eventId);
 
 	/// <summary>
-	/// Removes the given event from the device calendar.
+	/// Deletes the given event from the device calendar.
 	/// </summary>
-	/// <param name="event">The event object that is to be deleted.</param>
+	/// <param name="eventToDelete">The event object that is to be deleted.</param>
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
-	Task RemoveEvent(CalendarEvent @event);
+	Task DeleteEvent(CalendarEvent eventToDelete);
 }

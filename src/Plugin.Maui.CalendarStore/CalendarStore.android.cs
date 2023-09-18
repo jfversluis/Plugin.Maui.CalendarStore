@@ -1,12 +1,9 @@
-﻿using System;
-using Android.Content;
+﻿using Android.Content;
 using Android.Database;
 using Android.Provider;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
-using static Android.Icu.Text.CaseMap;
-using static Android.Util.EventLogTags;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -112,6 +109,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return ToCalendar(cursor, calendarColumns);
 	}
 
+	/// <inheritdoc/>
 	public async Task CreateCalendar(string name, Color? color = null)
 	{
 		await EnsureWriteCalendarPermission();
@@ -137,6 +135,32 @@ partial class CalendarStoreImplementation : ICalendarStore
 				"There was an error saving the calendar.");
 		}
 	}
+
+	/// <inheritdoc/>
+	public async Task DeleteCalendar(string calendarId)
+	{
+		await EnsureWriteCalendarPermission();
+
+		// Android ids are always integers
+		if (string.IsNullOrEmpty(calendarId) ||
+			!long.TryParse(calendarId, out long platformCalendarId))
+		{
+			throw CalendarStore.InvalidCalendar(calendarId);
+		}
+
+		ContentValues calendarToRemove = new();
+		calendarToRemove.Put(
+			CalendarContract.Calendars.InterfaceConsts.Id, platformCalendarId);
+
+		var deleteEventUri = ContentUris.WithAppendedId(calendarsTableUri, platformCalendarId);
+		var removeCount = platformContentResolver?.Delete(deleteEventUri, null, null);
+
+		//return removeCount == 1;
+	}
+
+	/// <inheritdoc/>
+	public Task DeleteCalendar(Calendar calendarToDelete) =>
+		DeleteCalendar(calendarToDelete.Id);
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(
@@ -297,8 +321,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task RemoveEvent(string eventId)
+	public async Task DeleteEvent(string eventId)
 	{
+		await EnsureWriteCalendarPermission();
+
 		// Android ids are always integers
 		if (string.IsNullOrEmpty(eventId) ||
 			!long.TryParse(eventId, out long platformEventId))
@@ -309,15 +335,16 @@ partial class CalendarStoreImplementation : ICalendarStore
 		ContentValues eventToRemove = new();
 		eventToRemove.Put(
 			CalendarContract.Events.InterfaceConsts.Id, platformEventId);
+
 		var deleteEventUri = ContentUris.WithAppendedId(eventsTableUri, platformEventId);
 		var removeCount = platformContentResolver?.Delete(deleteEventUri, null, null);
 
-		return Task.FromResult(removeCount == 1);
+		//return removeCount == 1;
 	}
 
 	/// <inheritdoc/>
-	public Task RemoveEvent(CalendarEvent @event) =>
-		RemoveEvent(@event.Id);
+	public Task DeleteEvent(CalendarEvent eventToDelete) =>
+		DeleteEvent(eventToDelete.Id);
 
 	static async Task EnsureWriteCalendarPermission()
 	{

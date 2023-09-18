@@ -37,6 +37,16 @@ partial class CalendarStoreImplementation : ICalendarStore
 		throw new NotImplementedException();
 	}
 
+	public Task DeleteCalendar(string calendarId)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task DeleteCalendar(Calendar calendarToDelete)
+	{
+		throw new NotImplementedException();
+	}
+
 	public Task<CalendarEvent> GetEvent(string eventId)
 	{
 		throw new NotImplementedException();
@@ -48,12 +58,12 @@ partial class CalendarStoreImplementation : ICalendarStore
 		throw new NotImplementedException();
 	}
 
-	public Task RemoveEvent(string eventId)
+	public Task DeleteEvent(string eventId)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task RemoveEvent(CalendarEvent @event)
+	public Task DeleteEvent(CalendarEvent eventToDelete)
 	{
 		throw new NotImplementedException();
 	}

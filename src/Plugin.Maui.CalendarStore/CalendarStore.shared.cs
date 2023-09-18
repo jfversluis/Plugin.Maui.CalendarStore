@@ -33,6 +33,10 @@ public static partial class CalendarStore
 	public static async Task CreateCalendar(string name, Color? color = null) =>
 		await Default.CreateCalendar(name, color);
 
+	/// <inheritdoc cref="ICalendarStore.DeleteCalendar(string)"/>
+	public static async Task DeleteCalendar(string calendarId) =>
+		await Default.DeleteCalendar(calendarId);
+
 	/// <inheritdoc cref="ICalendarStore.GetEvents(string?, DateTimeOffset?, DateTimeOffset?)"/>
 	public static async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
         DateTimeOffset? startDate = null, DateTimeOffset? endDate = null) =>
@@ -58,13 +62,13 @@ public static partial class CalendarStore
 		await Default.CreateAllDayEvent(calendarId, title, description, location,
 			startDate, endDate);
 
-	/// <inheritdoc cref="ICalendarStore.RemoveEvent(string)"/>
-	public static async Task RemoveEvent(string eventId) =>
-		await Default.RemoveEvent(eventId);
+	/// <inheritdoc cref="ICalendarStore.DeleteEvent(string)"/>
+	public static async Task DeleteEvent(string eventId) =>
+		await Default.DeleteEvent(eventId);
 
-	/// <inheritdoc cref="ICalendarStore.RemoveEvent(CalendarEvent)"/>
+	/// <inheritdoc cref="ICalendarStore.DeleteEvent(CalendarEvent)"/>
 	public static Task RemoveEvent(CalendarEvent @event) =>
-		RemoveEvent(@event.Id);
+		DeleteEvent(@event.Id);
 
 	internal static ArgumentException InvalidCalendar(string calendarId) =>
         new($"No calendar exists with ID '{calendarId}'.", nameof(calendarId));
