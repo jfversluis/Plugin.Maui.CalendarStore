@@ -29,9 +29,16 @@
 								<Label Text="{Binding StartDate, StringFormat='Start Date: {0}'}" />
 							</VerticalStackLayout>
 
-							<Button Grid.Column="1" Text="Delete"
-									Clicked="Delete_Clicked"
-									VerticalOptions="Center"/>
+							<VerticalStackLayout Grid.Column="1" Spacing="5">
+								<Button Text="Update"
+										Clicked="Update_Clicked"
+										VerticalOptions="Center"/>
+
+								<Button Text="Delete"
+										BackgroundColor="OrangeRed"
+										Clicked="Delete_Clicked"
+										VerticalOptions="Center"/>
+							</VerticalStackLayout>
 						</Grid>
 					</DataTemplate>
 				</BindableLayout.ItemTemplate>

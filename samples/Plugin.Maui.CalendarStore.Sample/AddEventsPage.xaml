@@ -86,7 +86,7 @@
 				Text="Save"
 				VerticalOptions="Center" 
 				HorizontalOptions="Center"
-				Clicked="Button_Clicked"/>
+				Clicked="Save_Clicked"/>
 		</Grid>
 	</ScrollView>
 </ContentPage>

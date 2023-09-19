@@ -5,6 +5,8 @@ namespace Plugin.Maui.CalendarStore.Sample;
 // This page uses the static CalendarStore.Default class
 public partial class EventsPage : ContentPage
 {
+	bool needsReload;
+
 	public ObservableCollection<CalendarEvent> Events { get; set; } = new();
 
 	public EventsPage()
@@ -19,12 +21,35 @@ public partial class EventsPage : ContentPage
 		await LoadEvents();
 	}
 
+	protected override async void OnNavigatedTo(NavigatedToEventArgs args)
+	{
+		if (needsReload)
+		{
+			await LoadEvents();
+		}
+	}
+
 	async void CreateEvent_Clicked(object sender, EventArgs e)
 	{
 		await Shell.Current.Navigation.PushAsync(
-			new AddEventsPage(CalendarStore.Default));
+			new AddEventsPage(CalendarStore.Default, null));
 
-		await LoadEvents();
+		needsReload = true;
+	}
+
+	async void Update_Clicked(object sender, EventArgs e)
+	{
+		if ((sender as BindableObject)?.
+			BindingContext is not CalendarEvent eventToUpdate)
+		{
+			await DisplayAlert("Error", "Could not determine event to update.", "OK");
+			return;
+		}
+
+		await Shell.Current.Navigation.PushAsync(
+			new AddEventsPage(CalendarStore.Default, eventToUpdate));
+
+		needsReload = true;
 	}
 
 	async void Delete_Clicked(object sender, EventArgs e)
