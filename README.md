@@ -148,14 +148,14 @@ Creates a new calendar on the device with the specified name and optionally colo
 
 Updates the calendar, specified by the unique identifier, with the given values.
 
-##### `DeleteCalendar(string calendarId)`
+<!--##### `DeleteCalendar(string calendarId)`
 
 Removes a calendar, specified by the unique identifier, from the device.
 
 ##### `DeleteCalendar(Calendar calendarToDelete)`
 
 Removes a calendar from the device.
-This is basically just a convenience method that calls `DeleteCalendar` with `calendarToDelete.Id`.
+This is basically just a convenience method that calls `DeleteCalendar` with `calendarToDelete.Id`.-->
 
 ##### `IEnumerable<CalendarEvent> GetEvents(string? calendarId = null, DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)`
 

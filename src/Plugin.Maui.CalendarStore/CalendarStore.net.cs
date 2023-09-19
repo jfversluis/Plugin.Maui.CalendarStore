@@ -37,15 +37,15 @@ partial class CalendarStoreImplementation : ICalendarStore
 		throw new NotImplementedException();
 	}
 
-	public Task DeleteCalendar(string calendarId)
-	{
-		throw new NotImplementedException();
-	}
+	//public Task DeleteCalendar(string calendarId)
+	//{
+	//	throw new NotImplementedException();
+	//}
 
-	public Task DeleteCalendar(Calendar calendarToDelete)
-	{
-		throw new NotImplementedException();
-	}
+	//public Task DeleteCalendar(Calendar calendarToDelete)
+	//{
+	//	throw new NotImplementedException();
+	//}
 
 	public Task<CalendarEvent> GetEvent(string eventId)
 	{

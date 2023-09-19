@@ -94,30 +94,31 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 	}
 
-	public async Task DeleteCalendar(string calendarId)
-	{
-		await EnsureWriteCalendarPermission();
+	///// <inheritdoc/>
+	//public async Task DeleteCalendar(string calendarId)
+	//{
+	//	await EnsureWriteCalendarPermission();
 
-		var calendar = await GetPlatformCalendar(calendarId)
-			?? throw InvalidCalendar(calendarId);
+	//	var calendar = await GetPlatformCalendar(calendarId)
+	//		?? throw InvalidCalendar(calendarId);
 
-		var removeResult = EventStore.RemoveCalendar(calendar, true, out var error);
+	//	var removeResult = EventStore.RemoveCalendar(calendar, true, out var error);
 
-		if (!removeResult || error is not null)
-		{
-			if (error is not null)
-			{
-				throw new CalendarStoreException($"Error occurred while deleting calendar: " +
-					$"{error.LocalizedDescription}");
-			}
+	//	if (!removeResult || error is not null)
+	//	{
+	//		if (error is not null)
+	//		{
+	//			throw new CalendarStoreException($"Error occurred while deleting calendar: " +
+	//				$"{error.LocalizedDescription}");
+	//		}
 
-			throw new CalendarStoreException("Deleting the calendar was unsuccessful.");
-		}
-	}
+	//		throw new CalendarStoreException("Deleting the calendar was unsuccessful.");
+	//	}
+	//}
 
-	/// <inheritdoc/>
-	public Task DeleteCalendar(Calendar calendarToDelete) =>
-		DeleteCalendar(calendarToDelete.Id);
+	///// <inheritdoc/>
+	//public Task DeleteCalendar(Calendar calendarToDelete) =>
+	//	DeleteCalendar(calendarToDelete.Id);
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,

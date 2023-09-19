@@ -76,25 +76,25 @@ partial class CalendarStoreImplementation : ICalendarStore
 			.AsTask().ConfigureAwait(false);
 	}
 
-	/// <inheritdoc/>
-	public async Task DeleteCalendar(string calendarId)
-	{
-		await EnsureWriteCalendarPermission();
+	///// <inheritdoc/>
+	//public async Task DeleteCalendar(string calendarId)
+	//{
+	//	await EnsureWriteCalendarPermission();
 
-		var platformCalendarManager = await GetAppointmentStore(true)
-			.ConfigureAwait(false);
+	//	var platformCalendarManager = await GetAppointmentStore(true)
+	//		.ConfigureAwait(false);
 
-		var calendarToDelete =
-			await platformCalendarManager.GetAppointmentCalendarAsync(calendarId)
-			.AsTask().ConfigureAwait(false);
+	//	var calendarToDelete =
+	//		await platformCalendarManager.GetAppointmentCalendarAsync(calendarId)
+	//		.AsTask().ConfigureAwait(false);
 
-		await calendarToDelete.DeleteAsync()
-			.AsTask().ConfigureAwait(false);
-	}
+	//	await calendarToDelete.DeleteAsync()
+	//		.AsTask().ConfigureAwait(false);
+	//}
 
-	/// <inheritdoc/>
-	public Task DeleteCalendar(Calendar calendarToDelete) =>
-		DeleteCalendar(calendarToDelete.Id);
+	///// <inheritdoc/>
+	//public Task DeleteCalendar(Calendar calendarToDelete) =>
+	//	DeleteCalendar(calendarToDelete.Id);
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,

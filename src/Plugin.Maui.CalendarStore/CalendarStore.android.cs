@@ -149,34 +149,34 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 	}
 
-	/// <inheritdoc/>
-	public async Task DeleteCalendar(string calendarId)
-	{
-		await EnsureWriteCalendarPermission();
+	///// <inheritdoc/>
+	//public async Task DeleteCalendar(string calendarId)
+	//{
+	//	await EnsureWriteCalendarPermission();
 
-		// Android ids are always integers
-		if (string.IsNullOrEmpty(calendarId) ||
-			!long.TryParse(calendarId, out long platformCalendarId))
-		{
-			throw CalendarStore.InvalidCalendar(calendarId);
-		}
+	//	// Android ids are always integers
+	//	if (string.IsNullOrEmpty(calendarId) ||
+	//		!long.TryParse(calendarId, out long platformCalendarId))
+	//	{
+	//		throw CalendarStore.InvalidCalendar(calendarId);
+	//	}
 
-		// We just want to know a calendar with this ID exists
-		_ = await GetPlatformCalendar(calendarId);
+	//	// We just want to know a calendar with this ID exists
+	//	_ = await GetPlatformCalendar(calendarId);
 
-		var deleteEventUri = ContentUris.WithAppendedId(calendarsTableUri, platformCalendarId);
-		var deleteCount = platformContentResolver?.Delete(deleteEventUri, null, null);
+	//	var deleteEventUri = ContentUris.WithAppendedId(calendarsTableUri, platformCalendarId);
+	//	var deleteCount = platformContentResolver?.Delete(deleteEventUri, null, null);
 
-		if (deleteCount != 1)
-		{
-			throw new CalendarStore.CalendarStoreException(
-				"There was an error deleting the calendar.");
-		}
-	}
+	//	if (deleteCount != 1)
+	//	{
+	//		throw new CalendarStore.CalendarStoreException(
+	//			"There was an error deleting the calendar.");
+	//	}
+	//}
 
-	/// <inheritdoc/>
-	public Task DeleteCalendar(Calendar calendarToDelete) =>
-		DeleteCalendar(calendarToDelete.Id);
+	///// <inheritdoc/>
+	//public Task DeleteCalendar(Calendar calendarToDelete) =>
+	//	DeleteCalendar(calendarToDelete.Id);
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(
