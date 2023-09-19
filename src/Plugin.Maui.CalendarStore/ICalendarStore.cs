@@ -4,7 +4,7 @@ using Microsoft.Maui.Graphics;
 namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
-/// The CalendarStore API lets a user read information about the device's calendar and associated data.
+/// The CalendarStore API lets a user access information about the device's calendar and associated data.
 /// </summary>
 public interface ICalendarStore
 {
@@ -12,6 +12,7 @@ public interface ICalendarStore
 	/// Retrieves all available calendars from the device.
 	/// </summary>
 	/// <returns>A list of <see cref="Calendar"/> objects that each represent a calendar on the user's device.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	Task<IEnumerable<Calendar>> GetCalendars();
 
 	/// <summary>
@@ -20,7 +21,8 @@ public interface ICalendarStore
 	/// <param name="calendarId">The unique identifier of the calendar to retrieve.</param>
 	/// <returns>A <see cref="Calendar"/> object that represents the requested calendar from the user's device.</returns>
 	/// <remarks>The ID format differentiates between platforms. For example, on Android it is an integer, on other platforms it can be a string or GUID.</remarks>
-	/// <exception cref="ArgumentException">Thrown when a calendar with the value specified in <paramref name="calendarId"/> could not be found.</exception>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the calendar corresponding with the value in <paramref name="calendarId"/> cannot be found.</exception>
 	Task<Calendar> GetCalendar(string calendarId);
 
 	/// <summary>
@@ -29,6 +31,7 @@ public interface ICalendarStore
 	/// <param name="name">The name for the calendar to create.</param>
 	/// <param name="color">The color to use for the calendar to create.</param>
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	Task CreateCalendar(string name, Color? color = null);
 
 	/// <summary>
@@ -38,6 +41,8 @@ public interface ICalendarStore
 	/// <param name="newName">The new name to update the calendar with.</param>
 	/// <param name="newColor">The new color to update the calendar with.</param>
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the calendar corresponding with the value in <paramref name="calendarId"/> cannot be found.</exception>
 	Task UpdateCalendar(string calendarId, string newName, Color? newColor = null);
 
 	///// <summary>
@@ -63,6 +68,7 @@ public interface ICalendarStore
 	/// <param name="startDate">The start date of the range to retrieve events for.</param>
 	/// <param name="endDate">The end date of the range to retrieve events for.</param>
 	/// <returns>A list of events from the calendars on the device.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="ArgumentException">Thrown when a calendar with the value specified in <paramref name="calendarId"/> could not be found.</exception>
 	Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
 		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null);
@@ -72,12 +78,14 @@ public interface ICalendarStore
 	/// </summary>
 	/// <param name="eventId">The unique identifier of the event to retrieve.</param>
 	/// <returns>A <see cref="CalendarEvent"/> object that represents the requested event from the user's device.</returns>
-	/// <exception cref="ArgumentException">Thrown when an event with the value specified in <paramref name="eventId"/> could not be found.</exception>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event corresponding with the value in <paramref name="eventId"/> cannot be found.</exception>
 	Task<CalendarEvent> GetEvent(string eventId);
 
 	/// <summary>
 	/// Creates a new event with the provided information in the specified calendar.
 	/// </summary>
+	/// <param name="calendarId">The unique identifier of the calendar to add the newly created event to.</param>
 	/// <param name="title">The title of the event.</param>
 	/// <param name="description">The description of the event.</param>
 	/// <param name="location">The location of the event.</param>
@@ -87,12 +95,13 @@ public interface ICalendarStore
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
 	/// <remarks>When <paramref name="isAllDay"/> is set to <see langword="true"/>, any time information in <paramref name="startDateTime"/> and <paramref name="endDateTime"/> is omitted.</remarks>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the calendar corresponding with the value in <paramref name="calendarId"/> cannot be found.</exception>
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task CreateEvent(string calendarId, string title, string description, string location,
 		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false);
 
 	/// <summary>
-	/// Creates a new event based on the provided <paramref name="calendarEvent"/> object. 
+	/// Creates a new event based on the provided <paramref name="calendarEvent"/> object.
 	/// </summary>
 	/// <param name="calendarEvent">The event object with the details to save to the calendar specified in this object.</param>
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
@@ -116,9 +125,31 @@ public interface ICalendarStore
 	Task CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate);
 
+	/// <summary>
+	/// Updates an existing event with the provided information.
+	/// </summary>
+	/// <param name="eventId">The unique identifier of the event to update.</param>
+	/// <param name="title">The updated title for the event.</param>
+	/// <param name="description">The updated description for the event.</param>
+	/// <param name="location">The updated location for the event.</param>
+	/// <param name="startDateTime">The updated start date and time for the event.</param>
+	/// <param name="endDateTime">The updated end date and time for the event.</param>
+	/// <param name="isAllDay">The updated value that indicates whether or not this event should be marked as an all-day event.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event corresponding with the value in <paramref name="eventId"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task UpdateEvent(string eventId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay);
 
+	/// <summary>
+	/// Updates a event based on the provided <paramref name="eventToUpdate"/> object. 
+	/// </summary>
+	/// <param name="eventToUpdate">The event object with the details to update the existing event with.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event identifier corresponding with the value in <paramref name="eventToUpdate"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task UpdateEvent(CalendarEvent eventToUpdate);
 
 	/// <summary>
@@ -126,6 +157,9 @@ public interface ICalendarStore
 	/// </summary>
 	/// <param name="eventId">The unique identifier of the event to be deleted.</param>
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event corresponding with the value in <paramref name="eventId"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task DeleteEvent(string eventId);
 
 	/// <summary>
@@ -133,5 +167,8 @@ public interface ICalendarStore
 	/// </summary>
 	/// <param name="eventToDelete">The event object that is to be deleted.</param>
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event identifier corresponding with the value in <paramref name="eventToDelete"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task DeleteEvent(CalendarEvent eventToDelete);
 }

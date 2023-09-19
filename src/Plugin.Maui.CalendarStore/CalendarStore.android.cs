@@ -264,7 +264,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (cursor != null)
 		{
-			if (!int.TryParse(calendarId, out int virtualCalendarId))
+			if (!long.TryParse(calendarId, out long virtualCalendarId))
 			{
 				throw CalendarStore.InvalidCalendar(calendarId);
 			}
@@ -340,7 +340,64 @@ partial class CalendarStoreImplementation : ICalendarStore
 	public async Task UpdateEvent(string eventId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)
 	{
-		throw new NotImplementedException();
+		await EnsureWriteCalendarPermission();
+
+		using var cursor = platformContentResolver.Query(
+			calendarsTableUri, calendarColumns.ToArray(), null, null, null);
+
+		long platformEventId = 0;
+
+		if (cursor != null)
+		{
+			if (!long.TryParse(eventId, out long virtualEventId))
+			{
+				throw CalendarStore.InvalidEvent(eventId);
+			}
+
+			while (cursor.MoveToNext())
+			{
+				long id = cursor.GetLong(cursor.GetColumnIndex(calendarColumns[0]));
+
+				if (id == virtualEventId)
+				{
+					platformEventId = cursor.GetLong(
+						cursor.GetColumnIndex(calendarColumns[0]));
+
+					break;
+				}
+			}
+
+			if (platformEventId != 0)
+			{
+				ContentValues eventToUpdate = new();
+				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
+					startDateTime.ToUnixTimeMilliseconds());
+
+				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtend,
+					endDateTime.ToUnixTimeMilliseconds());
+
+				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.AllDay,
+					isAllDay);
+
+				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Title,
+					title);
+
+				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Description,
+					description);
+
+				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.EventLocation,
+					location);
+
+				var updateCount = platformContentResolver?.Update(
+					ContentUris.WithAppendedId(eventsTableUri, platformEventId), eventToUpdate, null, null);
+
+				if (updateCount != 1)
+				{
+					throw new CalendarStore.CalendarStoreException(
+						"There was an error updating the event.");
+				}
+			}
+		}
 	}
 
 	/// <inheritdoc/>
@@ -364,8 +421,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		eventToRemove.Put(
 			CalendarContract.Events.InterfaceConsts.Id, platformEventId);
 
-		var deleteEventUri = ContentUris.WithAppendedId(eventsTableUri, platformEventId);
-		var deleteCount = platformContentResolver?.Delete(deleteEventUri, null, null);
+		var deleteCount = platformContentResolver?.Delete(
+			ContentUris.WithAppendedId(eventsTableUri, platformEventId), null, null);
 
 		if (deleteCount != 1)
 		{
@@ -392,7 +449,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	IEnumerable<CalendarEventAttendee> GetAttendees(string eventId)
 	{
 		// Android ids are always integers
-		if (!string.IsNullOrEmpty(eventId) && !int.TryParse(eventId, out _))
+		if (!string.IsNullOrEmpty(eventId) && !long.TryParse(eventId, out _))
 		{
 			throw CalendarStore.InvalidCalendar(eventId);
 		}

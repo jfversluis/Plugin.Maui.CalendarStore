@@ -24,9 +24,10 @@
 								<Label Text="{Binding Id, StringFormat='ID: {0}'}" />
 								<Label Text="{Binding CalendarId, StringFormat='Calendar ID: {0}'}" />
 								<Label Text="{Binding Location, StringFormat='Location: {0}'}" />
-								<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
 								<Label Text="{Binding AllDay, StringFormat='All Day: {0}'}" />
 								<Label Text="{Binding StartDate, StringFormat='Start Date: {0}'}" />
+								<Label Text="{Binding EndDate, StringFormat='End Date: {0}'}" />
+								<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
 							</VerticalStackLayout>
 
 							<VerticalStackLayout Grid.Column="1" Spacing="5">

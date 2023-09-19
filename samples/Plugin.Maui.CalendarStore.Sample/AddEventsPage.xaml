@@ -25,7 +25,8 @@
 					ItemDisplayBinding="{Binding Name}"
 					SelectedItem="{Binding SelectedCalendar}"
 					HorizontalOptions="FillAndExpand"
-					VerticalOptions="CenterAndExpand" />
+					VerticalOptions="CenterAndExpand"
+					IsEnabled="{Binding IsCreateAction}"/>
 
 			<Label Grid.Column="0" Grid.Row="1"
 				   Text="Event Title:" />

@@ -7,22 +7,17 @@ public partial class AddEventsPage : ContentPage
 	readonly CalendarEvent? eventToUpdate;
 	readonly ICalendarStore calendarStore;
 
+	public bool IsCreateAction => eventToUpdate is null;
+
 	public ObservableCollection<Calendar> Calendars { get; set; } = new();
-
 	public Calendar? SelectedCalendar { get; set; }
-
 	public string EventTitle { get; set; } = string.Empty;
-
 	public string EventDescription { get; set; } = string.Empty;
-
 	public string EventLocation { get; set; } = string.Empty;
-
 	public DateTime EventStartDate { get; set; } = DateTime.Now;
 	public TimeSpan EventStartTime { get; set; } = DateTime.Now.TimeOfDay;
-
 	public DateTime EventEndDate { get; set; } = DateTime.Now;
 	public TimeSpan EventEndTime { get; set; } = DateTime.Now.TimeOfDay.Add(TimeSpan.FromHours(1));
-
 	public bool EventIsAllDay { get; set; }
 
 	public AddEventsPage(ICalendarStore calendarStore, CalendarEvent? eventToUpdate)
@@ -70,6 +65,7 @@ public partial class AddEventsPage : ContentPage
 			OnPropertyChanged(nameof(EventEndTime));
 			OnPropertyChanged(nameof(EventIsAllDay));
 			OnPropertyChanged(nameof(SelectedCalendar));
+			OnPropertyChanged(nameof(IsCreateAction));
 
 			Title = "Edit Event";
 		}
