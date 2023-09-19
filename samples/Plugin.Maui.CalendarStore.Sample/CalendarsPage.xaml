@@ -41,9 +41,10 @@
 								Clicked="Update_Clicked"
 								VerticalOptions="Center"/>
 							
-						<Button Text="Delete"
+						<!-- TODO -->
+						<!--<Button Text="Delete"
 								Clicked="Delete_Clicked"
-								VerticalOptions="Center"/>
+								VerticalOptions="Center"/>-->
 						</VerticalStackLayout>
 					</Grid>
 				</DataTemplate>
