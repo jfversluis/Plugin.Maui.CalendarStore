@@ -165,7 +165,7 @@ Retrieves events from a specific calendar or all calendars from the device.
 
 Retrieves a specific event from the calendar store on the device.
 
-##### `CreateEvent(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false);`
+##### `CreateEvent(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)`
 
 Creates an event in the specified calendar with the provided information.
 
@@ -176,6 +176,15 @@ Creates an event based on the information in the `CalendarEvent` object. This is
 ##### `CreateAllDayEvent(string calendarId, string title, string description, string location, DateTimeOffset startDate, DateTimeOffset endDate)`
 
 Creates an all-day event in the specified calendar with the provided information. This is basically just a convenience method that calls `CreateEvent` with `isAllDay` set to true.
+
+##### `UpdateEvent(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)`
+
+Updates an event, specified by the unique identifier, on the device calendar.
+
+##### `UpdateEvent(CalendarEvent eventToUpdate)`
+
+Updates an event on the device calendar.
+This is basically just a convenience method that calls `UpdateEvent` with all the details provided from `eventToUpdate`.
 
 ##### `DeleteEvent(string eventId)`
 

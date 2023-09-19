@@ -3,7 +3,7 @@
 namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
-/// The CalendarStore API lets a user read information about the device's calendar and associated data.
+/// The CalendarStore API lets a user access information about the device's calendar and associated data.
 /// </summary>
 public static partial class CalendarStore
 {
@@ -71,13 +71,22 @@ public static partial class CalendarStore
 		await Default.CreateAllDayEvent(calendarId, title, description, location,
 			startDate, endDate);
 
+	/// <inheritdoc cref="ICalendarStore.UpdateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool)"/>
+	public static async Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay) =>
+		await Default.UpdateEvent(eventId, title, description, location, startDateTime, endDateTime, isAllDay);
+
+	/// <inheritdoc cref="ICalendarStore.UpdateEvent(CalendarEvent)"/>
+	public static async Task UpdateEvent(CalendarEvent eventToUpdate) =>
+		await Default.UpdateEvent(eventToUpdate);
+
 	/// <inheritdoc cref="ICalendarStore.DeleteEvent(string)"/>
 	public static async Task DeleteEvent(string eventId) =>
 		await Default.DeleteEvent(eventId);
 
 	/// <inheritdoc cref="ICalendarStore.DeleteEvent(CalendarEvent)"/>
-	public static Task RemoveEvent(CalendarEvent @event) =>
-		DeleteEvent(@event.Id);
+	public static Task DeleteEvent(CalendarEvent eventToDelete) =>
+		DeleteEvent(eventToDelete.Id);
 
 	internal static ArgumentException InvalidCalendar(string calendarId) =>
         new($"No calendar exists with ID '{calendarId}'.", nameof(calendarId));

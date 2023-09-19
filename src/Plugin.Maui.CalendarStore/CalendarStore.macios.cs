@@ -233,6 +233,43 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
+	public async Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)
+	{
+		await EnsureWriteCalendarPermission();
+
+		var eventToUpdate = await GetPlatformEvent(eventId);
+
+		eventToUpdate.Title = title;
+		eventToUpdate.Notes = description;
+		eventToUpdate.Location = location;
+		eventToUpdate.StartDate = (NSDate)startDateTime.LocalDateTime;
+		eventToUpdate.EndDate = (NSDate)endDateTime.LocalDateTime;
+		eventToUpdate.AllDay = isAllDay;
+
+		var updateResult = EventStore.SaveEvent(eventToUpdate, EKSpan.ThisEvent,
+			true, out var error);
+
+		if (!updateResult || error is not null)
+		{
+			EventStore.Reset();
+
+			if (error is not null)
+			{
+				throw new CalendarStoreException($"Error occurred while updating event: " +
+					$"{error.LocalizedDescription}");
+			}
+
+			throw new CalendarStoreException("Updating the event was unsuccessful.");
+		}
+	}
+
+	/// <inheritdoc/>
+	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
+		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.AllDay);
+
+	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(eventId);

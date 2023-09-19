@@ -43,6 +43,7 @@
 							
 						<!-- TODO -->
 						<!--<Button Text="Delete"
+								BackgroundColor="OrangeRed"
 								Clicked="Delete_Clicked"
 								VerticalOptions="Center"/>-->
 						</VerticalStackLayout>

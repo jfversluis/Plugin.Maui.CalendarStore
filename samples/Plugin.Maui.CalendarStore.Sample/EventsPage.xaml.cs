@@ -5,6 +5,8 @@ namespace Plugin.Maui.CalendarStore.Sample;
 // This page uses the static CalendarStore.Default class
 public partial class EventsPage : ContentPage
 {
+	bool needsReload;
+
 	public ObservableCollection<CalendarEvent> Events { get; set; } = new();
 
 	public EventsPage()
@@ -16,14 +18,38 @@ public partial class EventsPage : ContentPage
 
 	async void LoadEvents_Clicked(object sender, EventArgs e)
 	{
-		var events = await CalendarStore.Default.GetEvents(startDate: DateTimeOffset.Now.AddDays(-7),
-			endDate: DateTimeOffset.Now.AddDays(7));
+		await LoadEvents();
+	}
 
-		Events.Clear();
-		foreach(var ev in events)
+	protected override async void OnNavigatedTo(NavigatedToEventArgs args)
+	{
+		if (needsReload)
 		{
-			Events.Add(ev);
+			await LoadEvents();
 		}
+	}
+
+	async void CreateEvent_Clicked(object sender, EventArgs e)
+	{
+		await Shell.Current.Navigation.PushAsync(
+			new AddEventsPage(CalendarStore.Default, null));
+
+		needsReload = true;
+	}
+
+	async void Update_Clicked(object sender, EventArgs e)
+	{
+		if ((sender as BindableObject)?.
+			BindingContext is not CalendarEvent eventToUpdate)
+		{
+			await DisplayAlert("Error", "Could not determine event to update.", "OK");
+			return;
+		}
+
+		await Shell.Current.Navigation.PushAsync(
+			new AddEventsPage(CalendarStore.Default, eventToUpdate));
+
+		needsReload = true;
 	}
 
 	async void Delete_Clicked(object sender, EventArgs e)
@@ -48,5 +74,18 @@ public partial class EventsPage : ContentPage
 		Events.Remove(eventToRemove);
 
 		await DisplayAlert("Success", "Event deleted!", "OK");
+	}
+
+	async Task LoadEvents()
+	{
+		var events = await CalendarStore.Default
+			.GetEvents(startDate: DateTimeOffset.Now.AddDays(-7),
+			endDate: DateTimeOffset.Now.AddDays(7));
+
+		Events.Clear();
+		foreach (var ev in events)
+		{
+			Events.Add(ev);
+		}
 	}
 }

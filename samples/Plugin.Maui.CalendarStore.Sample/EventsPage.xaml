@@ -10,7 +10,10 @@
 		<VerticalStackLayout Spacing="10" Margin="10">
 			<Label Text="Note: any action you take here on events, will have effect on the events in your actual calendar." />
 
-			<Button Text="Load Events" Clicked="LoadEvents_Clicked" />
+			<HorizontalStackLayout Spacing="10">
+				<Button Text="Create Event..." Clicked="CreateEvent_Clicked" />
+				<Button Text="Load Events" Clicked="LoadEvents_Clicked" />
+			</HorizontalStackLayout>
 
 			<VerticalStackLayout BindableLayout.ItemsSource="{Binding Events}" Spacing="5">
 				<BindableLayout.ItemTemplate>
@@ -21,14 +24,22 @@
 								<Label Text="{Binding Id, StringFormat='ID: {0}'}" />
 								<Label Text="{Binding CalendarId, StringFormat='Calendar ID: {0}'}" />
 								<Label Text="{Binding Location, StringFormat='Location: {0}'}" />
-								<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
 								<Label Text="{Binding AllDay, StringFormat='All Day: {0}'}" />
 								<Label Text="{Binding StartDate, StringFormat='Start Date: {0}'}" />
+								<Label Text="{Binding EndDate, StringFormat='End Date: {0}'}" />
+								<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
 							</VerticalStackLayout>
 
-							<Button Grid.Column="1" Text="Delete"
-									Clicked="Delete_Clicked"
-									VerticalOptions="Center"/>
+							<VerticalStackLayout Grid.Column="1" Spacing="5">
+								<Button Text="Update"
+										Clicked="Update_Clicked"
+										VerticalOptions="Center"/>
+
+								<Button Text="Delete"
+										BackgroundColor="OrangeRed"
+										Clicked="Delete_Clicked"
+										VerticalOptions="Center"/>
+							</VerticalStackLayout>
 						</Grid>
 					</DataTemplate>
 				</BindableLayout.ItemTemplate>

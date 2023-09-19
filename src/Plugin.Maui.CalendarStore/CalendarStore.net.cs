@@ -72,4 +72,15 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		throw new NotImplementedException();
 	}
+
+	public Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task UpdateEvent(CalendarEvent eventToUpdate)
+	{
+		throw new NotImplementedException();
+	}
 }
