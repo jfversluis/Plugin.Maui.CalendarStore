@@ -14,9 +14,5 @@
 		<ShellContent
 			Title="Events"
 			ContentTemplate="{DataTemplate pages:EventsPage}" />
-
-		<ShellContent
-			Title="Add Events"
-			ContentTemplate="{DataTemplate pages:AddEventsPage}" />
 	</TabBar>
 </Shell>

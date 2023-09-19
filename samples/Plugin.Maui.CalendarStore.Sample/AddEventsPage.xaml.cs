@@ -82,6 +82,8 @@ public partial class AddEventsPage : ContentPage
 			}
 
 			await DisplayAlert("Event saved", "The event has been successfully saved!", "OK");
+
+			await Shell.Current.Navigation.PopAsync();
 		}
 		catch(Exception ex)
 		{

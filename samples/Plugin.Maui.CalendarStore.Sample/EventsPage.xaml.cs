@@ -16,14 +16,15 @@ public partial class EventsPage : ContentPage
 
 	async void LoadEvents_Clicked(object sender, EventArgs e)
 	{
-		var events = await CalendarStore.Default.GetEvents(startDate: DateTimeOffset.Now.AddDays(-7),
-			endDate: DateTimeOffset.Now.AddDays(7));
+		await LoadEvents();
+	}
 
-		Events.Clear();
-		foreach(var ev in events)
-		{
-			Events.Add(ev);
-		}
+	async void CreateEvent_Clicked(object sender, EventArgs e)
+	{
+		await Shell.Current.Navigation.PushAsync(
+			new AddEventsPage(CalendarStore.Default));
+
+		await LoadEvents();
 	}
 
 	async void Delete_Clicked(object sender, EventArgs e)
@@ -48,5 +49,18 @@ public partial class EventsPage : ContentPage
 		Events.Remove(eventToRemove);
 
 		await DisplayAlert("Success", "Event deleted!", "OK");
+	}
+
+	async Task LoadEvents()
+	{
+		var events = await CalendarStore.Default
+			.GetEvents(startDate: DateTimeOffset.Now.AddDays(-7),
+			endDate: DateTimeOffset.Now.AddDays(7));
+
+		Events.Clear();
+		foreach (var ev in events)
+		{
+			Events.Add(ev);
+		}
 	}
 }

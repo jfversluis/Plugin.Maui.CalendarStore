@@ -116,6 +116,11 @@ public interface ICalendarStore
 	Task CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate);
 
+	Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay);
+
+	Task UpdateEvent(CalendarEvent eventToUpdate);
+
 	/// <summary>
 	/// Deletes an event, specified by its unique ID, from the device calendar.
 	/// </summary>

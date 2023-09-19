@@ -10,7 +10,10 @@
 		<VerticalStackLayout Spacing="10" Margin="10">
 			<Label Text="Note: any action you take here on events, will have effect on the events in your actual calendar." />
 
-			<Button Text="Load Events" Clicked="LoadEvents_Clicked" />
+			<HorizontalStackLayout Spacing="10">
+				<Button Text="Create Event..." Clicked="CreateEvent_Clicked" />
+				<Button Text="Load Events" Clicked="LoadEvents_Clicked" />
+			</HorizontalStackLayout>
 
 			<VerticalStackLayout BindableLayout.ItemsSource="{Binding Events}" Spacing="5">
 				<BindableLayout.ItemTemplate>

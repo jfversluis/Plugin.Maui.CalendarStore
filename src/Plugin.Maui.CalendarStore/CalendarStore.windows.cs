@@ -34,8 +34,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		var calendar = await GetPlatformCalendar(calendarId);
 
-		return calendar is null ?
-			throw CalendarStore.InvalidCalendar(calendarId) : ToCalendar(calendar);
+		return ToCalendar(calendar);
 	}
 
 	/// <inheritdoc/>
@@ -64,8 +63,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await EnsureWriteCalendarPermission();
 
-		var calendarToUpdate = await GetPlatformCalendar(calendarId)
-			?? throw CalendarStore.InvalidCalendar(calendarId);
+		var calendarToUpdate = await GetPlatformCalendar(calendarId);
 
 		calendarToUpdate.DisplayName = newName;
 
@@ -150,10 +148,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await Permissions.RequestAsync<Permissions.CalendarRead>();
 
-		var e = await GetPlatformEvent(eventId);
+		var eventToReturn = await GetPlatformEvent(eventId);
 
-		return e is null ? throw CalendarStore.InvalidEvent(eventId)
-			: ToEvent(e);
+		return ToEvent(eventToReturn);
 	}
 
 	/// <inheritdoc/>
@@ -201,6 +198,33 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
+	public async Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)
+	{
+		await EnsureWriteCalendarPermission();
+
+		var eventToUpdate = await GetPlatformEvent(eventId);
+
+		var platformCalendar =
+			await GetPlatformCalendar(eventToUpdate.CalendarId, true);
+
+		eventToUpdate.Subject = title;
+		eventToUpdate.Details = description;
+		eventToUpdate.Location = location;
+		eventToUpdate.StartTime = startDateTime.LocalDateTime;
+		eventToUpdate.Duration = endDateTime.Subtract(startDateTime);
+		eventToUpdate.AllDay = isAllDay;
+
+		await platformCalendar.SaveAppointmentAsync(eventToUpdate)
+			.AsTask().ConfigureAwait(false);
+	}
+
+	/// <inheritdoc/>
+	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
+		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.AllDay);
+
+	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
 	{
 		await EnsureWriteCalendarPermission();
@@ -235,28 +259,31 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 	}
 
-	async Task<AppointmentCalendar?> GetPlatformCalendar(string calendarId)
+	async Task<AppointmentCalendar> GetPlatformCalendar(string calendarId,
+		bool requestWriteAccess = false)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(calendarId);
 
-		var instance = await GetAppointmentStore().ConfigureAwait(false);
+		var instance = await GetAppointmentStore(requestWriteAccess)
+			.ConfigureAwait(false);
 
 		var calendar = await instance.GetAppointmentCalendarAsync(calendarId)
 			.AsTask().ConfigureAwait(false);
 
-		return calendar;
+		return calendar ?? throw CalendarStore.InvalidCalendar(calendarId);
 	}
 
-	async Task<Appointment?> GetPlatformEvent(string eventId)
+	async Task<Appointment> GetPlatformEvent(string eventId)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(eventId);
 
-		var instance = await GetAppointmentStore().ConfigureAwait(false);
+		var instance = await GetAppointmentStore()
+			.ConfigureAwait(false);
 
-		var e = await instance.GetAppointmentAsync(eventId)
+		var eventToReturn = await instance.GetAppointmentAsync(eventId)
 			.AsTask().ConfigureAwait(false);
 
-		return e;
+		return eventToReturn ?? throw CalendarStore.InvalidEvent(eventId);
 	}
 
 	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> native)

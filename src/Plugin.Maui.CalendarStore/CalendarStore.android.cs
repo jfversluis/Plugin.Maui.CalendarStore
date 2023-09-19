@@ -4,7 +4,6 @@ using Android.Provider;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
-using static Java.Util.Jar.Attributes;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -336,6 +335,18 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return CreateEvent(calendarId, title, description, location,
 			startDate, endDate, true);
 	}
+
+	/// <inheritdoc/>
+	public async Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)
+	{
+		throw new NotImplementedException();
+	}
+
+	/// <inheritdoc/>
+	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
+		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.AllDay);
 
 	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
