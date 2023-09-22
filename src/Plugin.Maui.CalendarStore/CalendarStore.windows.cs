@@ -110,7 +110,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		options.FetchProperties.Add(AppointmentProperties.Location);
 		options.FetchProperties.Add(AppointmentProperties.StartTime);
 		options.FetchProperties.Add(AppointmentProperties.Duration);
-		options.FetchProperties.Add(AppointmentProperties.IsAllDay);
+		options.FetchProperties.Add(AppointmentProperties.AllDay);
 		options.FetchProperties.Add(AppointmentProperties.Invitees);
 
 		// calendar
@@ -182,7 +182,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Location = location,
 			StartTime = startDateTime.LocalDateTime,
 			Duration = endDateTime.Subtract(startDateTime),
-			IsAllDay = isAllDay,
+			AllDay = isAllDay,
 		};
 
 		await platformCalendar.SaveAppointmentAsync(eventToSave)
@@ -213,7 +213,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		eventToUpdate.Location = location;
 		eventToUpdate.StartTime = startDateTime.LocalDateTime;
 		eventToUpdate.Duration = endDateTime.Subtract(startDateTime);
-		eventToUpdate.IsAllDay = isAllDay;
+		eventToUpdate.AllDay = isAllDay;
 
 		await platformCalendar.SaveAppointmentAsync(eventToUpdate)
 			.AsTask().ConfigureAwait(false);
