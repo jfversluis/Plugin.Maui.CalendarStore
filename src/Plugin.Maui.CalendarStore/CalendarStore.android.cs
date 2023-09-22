@@ -325,7 +325,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title,
 			calendarEvent.Description, calendarEvent.Location,
-			calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
+			calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.IsAllDay);
 	}
 
 	/// <inheritdoc/>
@@ -403,7 +403,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
 		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
-			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.AllDay);
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.IsAllDay);
 
 	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
@@ -564,7 +564,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 				CalendarContract.Events.InterfaceConsts.Description)) ?? string.Empty,
 			Location = cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.EventLocation)) ?? string.Empty,
-			AllDay = allDay,
+			IsAllDay = allDay,
 			StartDate = timezone is null ? start : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(start, timezone),
 			EndDate = timezone is null ? end : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(end, timezone),
 			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(
