@@ -110,7 +110,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		options.FetchProperties.Add(AppointmentProperties.Location);
 		options.FetchProperties.Add(AppointmentProperties.StartTime);
 		options.FetchProperties.Add(AppointmentProperties.Duration);
-		options.FetchProperties.Add(AppointmentProperties.AllDay);
+		options.FetchProperties.Add(AppointmentProperties.IsAllDay);
 		options.FetchProperties.Add(AppointmentProperties.Invitees);
 
 		// calendar
@@ -182,7 +182,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Location = location,
 			StartTime = startDateTime.LocalDateTime,
 			Duration = endDateTime.Subtract(startDateTime),
-			AllDay = isAllDay,
+			IsAllDay = isAllDay,
 		};
 
 		await platformCalendar.SaveAppointmentAsync(eventToSave)
@@ -194,7 +194,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
 			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate,
-			calendarEvent.AllDay);
+			calendarEvent.IsAllDay);
 	}
 
 	/// <inheritdoc/>
@@ -213,7 +213,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		eventToUpdate.Location = location;
 		eventToUpdate.StartTime = startDateTime.LocalDateTime;
 		eventToUpdate.Duration = endDateTime.Subtract(startDateTime);
-		eventToUpdate.AllDay = isAllDay;
+		eventToUpdate.IsAllDay = isAllDay;
 
 		await platformCalendar.SaveAppointmentAsync(eventToUpdate)
 			.AsTask().ConfigureAwait(false);
@@ -222,7 +222,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
 		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
-			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.AllDay);
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.IsAllDay);
 
 	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
@@ -323,7 +323,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Description = e.Details,
 			Location = e.Location,
 			StartDate = e.StartTime,
-			AllDay = e.AllDay,
+			IsAllDay = e.AllDay,
 			EndDate = e.StartTime.Add(e.Duration),
 			Attendees = e.Invitees != null
 				? ToAttendees(e.Invitees).ToList()
