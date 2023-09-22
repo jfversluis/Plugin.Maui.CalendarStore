@@ -46,7 +46,7 @@ public class CalendarEvent
 	/// <summary>
 	/// Gets whether this event is marked as an all-day event.
 	/// </summary>
-    public bool AllDay { get; internal set; }
+    public bool IsAllDay { get; internal set; }
 
 	/// <summary>
 	/// Gets the start date and time for this event.

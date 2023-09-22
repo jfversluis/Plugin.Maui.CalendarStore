@@ -51,7 +51,7 @@ public partial class AddEventsPage : ContentPage
 			EventStartTime = eventToUpdate.StartDate.LocalDateTime.TimeOfDay;
 			EventEndDate = eventToUpdate.EndDate.LocalDateTime;
 			EventEndTime = eventToUpdate.EndDate.LocalDateTime.TimeOfDay;
-			EventIsAllDay = eventToUpdate.AllDay;
+			EventIsAllDay = eventToUpdate.IsAllDay;
 
 			SelectedCalendar = Calendars
 				.Where(c => c.Id.Equals(eventToUpdate.CalendarId)).Single();

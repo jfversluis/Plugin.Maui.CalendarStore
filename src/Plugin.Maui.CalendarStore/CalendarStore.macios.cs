@@ -221,7 +221,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	public Task CreateEvent(CalendarEvent calendarEvent)
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
-			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.AllDay);
+			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.IsAllDay);
 	}
 
 	/// <inheritdoc/>
@@ -267,7 +267,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
 		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
-			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.AllDay);
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.IsAllDay);
 
 	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
@@ -388,7 +388,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			Description = platform.Notes ?? string.Empty,
 			Location = platform.Location ?? string.Empty,
-			AllDay = platform.AllDay,
+			IsAllDay = platform.AllDay,
 			StartDate = ToDateTimeOffsetWithTimezone(platform.StartDate, platform.TimeZone),
 			EndDate = ToDateTimeOffsetWithTimezone(platform.EndDate, platform.TimeZone),
 			Attendees = platform.Attendees != null
