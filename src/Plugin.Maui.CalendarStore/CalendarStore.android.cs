@@ -4,6 +4,7 @@ using Android.Provider;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
+using static Plugin.Maui.CalendarStore.CalendarStore;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -47,19 +48,19 @@ partial class CalendarStoreImplementation : ICalendarStore
 	public CalendarStoreImplementation()
 	{
 		calendarsTableUri = CalendarContract.Calendars.ContentUri
-			?? throw new CalendarStore.CalendarStoreException(
+			?? throw new CalendarStoreException(
 				"Could not determine Android calendars table URI.");
 
 		eventsTableUri = CalendarContract.Events.ContentUri
-			?? throw new CalendarStore.CalendarStoreException(
+			?? throw new CalendarStoreException(
 				"Could not determine Android events table URI.");
 
 		attendeesTableUri = CalendarContract.Attendees.ContentUri
-			?? throw new CalendarStore.CalendarStoreException(
+			?? throw new CalendarStoreException(
 				"Could not determine Android attendees table URI.");
 
 		platformContentResolver = Platform.AppContext.ApplicationContext?.ContentResolver
-			?? throw new CalendarStore.CalendarStoreException(
+			?? throw new CalendarStoreException(
 				"Could not determine Android events table URI.");
 	}
 
@@ -73,7 +74,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver?.Query(calendarsTableUri,
 			calendarColumns.ToArray(), queryConditions, null, null)
-			?? throw new CalendarStore.CalendarStoreException("Error while querying calendars");
+			?? throw new CalendarStoreException("Error while querying calendars");
 
 		return ToCalendars(cursor, calendarColumns).ToList();
 	}
@@ -108,7 +109,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (!long.TryParse(idUrl?.LastPathSegment, out _))
 		{
-			throw new CalendarStore.CalendarStoreException(
+			throw new CalendarStoreException(
 				"There was an error saving the calendar.");
 		}
 	}
@@ -144,7 +145,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (updateCount != 1)
 		{
-			throw new CalendarStore.CalendarStoreException(
+			throw new CalendarStoreException(
 				"There was an error updating the calendar.");
 		}
 	}
@@ -158,7 +159,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	//	if (string.IsNullOrEmpty(calendarId) ||
 	//		!long.TryParse(calendarId, out long platformCalendarId))
 	//	{
-	//		throw CalendarStore.InvalidCalendar(calendarId);
+	//		throw InvalidCalendar(calendarId);
 	//	}
 
 	//	// We just want to know a calendar with this ID exists
@@ -169,7 +170,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	//	if (deleteCount != 1)
 	//	{
-	//		throw new CalendarStore.CalendarStoreException(
+	//		throw new CalendarStoreException(
 	//			"There was an error deleting the calendar.");
 	//	}
 	//}
@@ -188,11 +189,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// Android ids are always integers
 		if (!string.IsNullOrEmpty(calendarId) && !int.TryParse(calendarId, out _))
 		{
-			throw CalendarStore.InvalidCalendar(calendarId);
+			throw InvalidCalendar(calendarId);
 		}
 
-		var sDate = startDate ?? DateTimeOffset.Now.Add(CalendarStore.defaultStartTimeFromNow);
-		var eDate = endDate ?? sDate.Add(CalendarStore.defaultEndTimeFromStartTime);		
+		var sDate = startDate ?? DateTimeOffset.Now.Add(defaultStartTimeFromNow);
+		var eDate = endDate ?? sDate.Add(defaultEndTimeFromStartTime);		
 
 		var calendarSpecificEvent =
 			$"{CalendarContract.Events.InterfaceConsts.Dtend} >= " +
@@ -211,7 +212,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver.Query(eventsTableUri,
 			eventsColumns.ToArray(), calendarSpecificEvent, null, sortOrder)
-			?? throw new CalendarStore.CalendarStoreException("Error while querying events");
+			?? throw new CalendarStoreException("Error while querying events");
 
 		// Confirm the calendar exists if no events were found
 		if (cursor.Count == 0 && !string.IsNullOrEmpty(calendarId))
@@ -230,7 +231,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// Android ids are always integers
 		if (!string.IsNullOrEmpty(eventId) && !long.TryParse(eventId, out _))
 		{
-			throw CalendarStore.InvalidCalendar(eventId);
+			throw InvalidCalendar(eventId);
 		}
 
 		var calendarSpecificEvent =
@@ -238,11 +239,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver.Query(eventsTableUri,
 			eventsColumns.ToArray(), calendarSpecificEvent, null, null)
-			?? throw new CalendarStore.CalendarStoreException("Error while querying events");
+			?? throw new CalendarStoreException("Error while querying events");
 
 		if (cursor.Count <= 0)
 		{
-			throw CalendarStore.InvalidEvent(eventId);
+			throw InvalidEvent(eventId);
 		}
 
 		cursor.MoveToNext();
@@ -257,66 +258,69 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await EnsureWriteCalendarPermission();
 
-		using var cursor = platformContentResolver.Query(
-			calendarsTableUri, calendarColumns.ToArray(), null, null, null);
+		using var cursor = await GetPlatformCalendar(calendarId);
 
 		long platformCalendarId = 0;
 
-		if (cursor != null)
+		if (cursor is null)
 		{
-			if (!long.TryParse(calendarId, out long virtualCalendarId))
+			throw new CalendarStoreException("Cursor is null.");
+		}
+
+		if (!long.TryParse(calendarId, out long virtualCalendarId))
+		{
+			throw InvalidCalendar(calendarId);
+		}
+
+		while (cursor.MoveToNext())
+		{
+			long id = cursor.GetLong(cursor.GetColumnIndex(calendarColumns[0]));
+
+			if (id == virtualCalendarId)
 			{
-				throw CalendarStore.InvalidCalendar(calendarId);
+				platformCalendarId = cursor.GetLong(
+					cursor.GetColumnIndex(calendarColumns[0]));
+
+				break;
 			}
+		}
 
-			while (cursor.MoveToNext())
-			{
-				long id = cursor.GetLong(cursor.GetColumnIndex(calendarColumns[0]));
+		if (platformCalendarId <= 0)
+		{
+			throw new CalendarStoreException("Could not determine platform calendar ID.");
+		}
 
-				if (id == virtualCalendarId)
-				{
-					platformCalendarId = cursor.GetLong(
-						cursor.GetColumnIndex(calendarColumns[0]));
+		ContentValues eventToInsert = new();
+		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
+			startDateTime.ToUnixTimeMilliseconds());
 
-					break;
-				}
-			}
+		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtend,
+			endDateTime.ToUnixTimeMilliseconds());
 
-			if (platformCalendarId != 0)
-			{
-				ContentValues eventToInsert = new();
-				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
-					startDateTime.ToUnixTimeMilliseconds());
+		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.EventTimezone,
+			TimeZoneInfo.Local.StandardName);
 
-				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtend,
-					endDateTime.ToUnixTimeMilliseconds());
+		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.AllDay,
+			isAllDay);
 
-				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.EventTimezone,
-					TimeZoneInfo.Local.StandardName);
+		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Title,
+			title);
 
-				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.AllDay,
-					isAllDay);
+		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Description,
+			description);
 
-				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Title,
-					title);
+		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.EventLocation,
+			location);
 
-				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Description,
-					description);
+		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.CalendarId,
+			platformCalendarId);
 
-				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.EventLocation,
-					location);
+		var idUrl = platformContentResolver?.Insert(eventsTableUri, eventToInsert);
 
-				eventToInsert.Put(CalendarContract.Events.InterfaceConsts.CalendarId,
-					platformCalendarId);
-
-				var idUrl = platformContentResolver?.Insert(eventsTableUri, eventToInsert);
-
-				if (!long.TryParse(idUrl?.LastPathSegment, out _))
-				{
-					throw new CalendarStore.CalendarStoreException(
-						"There was an error saving the event.");
-				}
-			}
+		if (!long.TryParse(idUrl?.LastPathSegment, out _))
+		{
+			throw new CalendarStoreException(
+				"There was an error saving the event.");
 		}
 	}
 
@@ -343,60 +347,60 @@ partial class CalendarStoreImplementation : ICalendarStore
 		await EnsureWriteCalendarPermission();
 
 		using var cursor = platformContentResolver.Query(
-			calendarsTableUri, calendarColumns.ToArray(), null, null, null);
+			eventsTableUri, calendarColumns.ToArray(), null, null, null)
+			?? throw new CalendarStoreException("Error while querying events");
 
 		long platformEventId = 0;
 
-		if (cursor != null)
+		if (!long.TryParse(eventId, out long virtualEventId))
 		{
-			if (!long.TryParse(eventId, out long virtualEventId))
+			throw InvalidEvent(eventId);
+		}
+
+		while (cursor.MoveToNext())
+		{
+			long id = cursor.GetLong(cursor.GetColumnIndex(calendarColumns[0]));
+
+			if (id == virtualEventId)
 			{
-				throw CalendarStore.InvalidEvent(eventId);
+				platformEventId = cursor.GetLong(
+					cursor.GetColumnIndex(calendarColumns[0]));
+
+				break;
 			}
+		}
 
-			while (cursor.MoveToNext())
-			{
-				long id = cursor.GetLong(cursor.GetColumnIndex(calendarColumns[0]));
+		if (platformEventId <= 0)
+		{
+			throw new CalendarStoreException("Could not determine platform event ID.");
+		}
 
-				if (id == virtualEventId)
-				{
-					platformEventId = cursor.GetLong(
-						cursor.GetColumnIndex(calendarColumns[0]));
+		ContentValues eventToUpdate = new();
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
+			startDateTime.ToUnixTimeMilliseconds());
 
-					break;
-				}
-			}
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtend,
+			endDateTime.ToUnixTimeMilliseconds());
 
-			if (platformEventId != 0)
-			{
-				ContentValues eventToUpdate = new();
-				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
-					startDateTime.ToUnixTimeMilliseconds());
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.AllDay,
+			isAllDay);
 
-				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtend,
-					endDateTime.ToUnixTimeMilliseconds());
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Title,
+			title);
 
-				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.AllDay,
-					isAllDay);
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Description,
+			description);
 
-				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Title,
-					title);
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.EventLocation,
+			location);
 
-				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Description,
-					description);
+		var updateCount = platformContentResolver?.Update(
+			ContentUris.WithAppendedId(eventsTableUri, platformEventId), eventToUpdate, null, null);
 
-				eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.EventLocation,
-					location);
-
-				var updateCount = platformContentResolver?.Update(
-					ContentUris.WithAppendedId(eventsTableUri, platformEventId), eventToUpdate, null, null);
-
-				if (updateCount != 1)
-				{
-					throw new CalendarStore.CalendarStoreException(
-						"There was an error updating the event.");
-				}
-			}
+		if (updateCount != 1)
+		{
+			throw new CalendarStoreException(
+				"There was an error updating the event.");
 		}
 	}
 
@@ -414,7 +418,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		if (string.IsNullOrEmpty(eventId) ||
 			!long.TryParse(eventId, out long platformEventId))
 		{
-			throw CalendarStore.InvalidEvent(eventId);
+			throw InvalidEvent(eventId);
 		}
 
 		ContentValues eventToRemove = new();
@@ -426,7 +430,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (deleteCount != 1)
 		{
-			throw new CalendarStore.CalendarStoreException(
+			throw new CalendarStoreException(
 				"There was an error deleting the event.");
 		}
 	}
@@ -451,7 +455,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// Android ids are always integers
 		if (!string.IsNullOrEmpty(eventId) && !long.TryParse(eventId, out _))
 		{
-			throw CalendarStore.InvalidCalendar(eventId);
+			throw InvalidCalendar(eventId);
 		}
 
 		var attendeeFilter =
@@ -459,7 +463,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver.Query(attendeesTableUri,
 			attendeesColumns.ToArray(), attendeeFilter, null, null)
-			?? throw new CalendarStore.CalendarStoreException("Error while querying attendees");
+			?? throw new CalendarStoreException("Error while querying attendees");
 
 		return ToAttendees(cursor, attendeesColumns).ToList();
 	}
@@ -473,7 +477,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// Android ids are always integers
 		if (!long.TryParse(calendarId, out _))
 		{
-			throw CalendarStore.InvalidCalendar(calendarId);
+			throw InvalidCalendar(calendarId);
 		}
 
 		var queryConditions =
@@ -482,11 +486,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		using var cursor = platformContentResolver.Query(calendarsTableUri,
 			calendarColumns.ToArray(), queryConditions, null, null)
-			?? throw new CalendarStore.CalendarStoreException("Error while querying calendars");
+			?? throw new CalendarStoreException("Error while querying calendars");
 
 		if (cursor.Count <= 0)
 		{
-			throw CalendarStore.InvalidCalendar(calendarId);
+			throw InvalidCalendar(calendarId);
 		}
 
 		cursor.MoveToNext();
