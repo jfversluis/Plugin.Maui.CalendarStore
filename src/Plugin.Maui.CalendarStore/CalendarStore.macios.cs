@@ -64,7 +64,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw new CalendarStoreException("Saving the calendar was unsuccessful.");
 		}
 
-		// TODO does this actually have the new ID?
 		return calendarToCreate.CalendarIdentifier;
 	}
 
@@ -219,7 +218,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw new CalendarStoreException("Saving the event was unsuccessful.");
 		}
 
-		// TODO does this actually have the new ID?
 		return eventToSave.EventIdentifier;
 	}
 
