@@ -30,7 +30,7 @@ public interface ICalendarStore
 	/// </summary>
 	/// <param name="name">The name for the calendar to create.</param>
 	/// <param name="color">The color to use for the calendar to create.</param>
-	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <returns>The unique identifier of the newly created calendar.</returns>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	Task<string> CreateCalendar(string name, Color? color = null);
 
@@ -92,7 +92,7 @@ public interface ICalendarStore
 	/// <param name="startDateTime">The start date and time for the event.</param>
 	/// <param name="endDateTime">The end date and time for the event.</param>
 	/// <param name="isAllDay">Indicates whether or not this event should be marked as an all-day event.</param>
-	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <returns>The unique identifier of the newly created event.</returns>
 	/// <remarks>When <paramref name="isAllDay"/> is set to <see langword="true"/>, any time information in <paramref name="startDateTime"/> and <paramref name="endDateTime"/> is omitted.</remarks>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="ArgumentException">Thrown when the calendar corresponding with the value in <paramref name="calendarId"/> cannot be found.</exception>
@@ -104,7 +104,7 @@ public interface ICalendarStore
 	/// Creates a new event based on the provided <paramref name="calendarEvent"/> object.
 	/// </summary>
 	/// <param name="calendarEvent">The event object with the details to save to the calendar specified in this object.</param>
-	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <returns>The unique identifier of the newly created event.</returns>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task<string> CreateEvent(CalendarEvent calendarEvent);
@@ -118,7 +118,7 @@ public interface ICalendarStore
 	/// <param name="location">The location of the event.</param>
 	/// <param name="startDate">The start date for the event.</param>
 	/// <param name="endDate">The end date for the event.</param>
-	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <returns>The unique identifier of the newly created event.</returns>
 	/// <remarks>Any time information in <paramref name="startDate"/> and <paramref name="endDate"/> is omitted.</remarks>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>

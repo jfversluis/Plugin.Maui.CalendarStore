@@ -140,9 +140,10 @@ Retrieves all available calendars from the device.
 
 Retrieves a specific calendar from the device.
 
-##### `CreateCalendar(string name, Color? color = null)`
+##### `string CreateCalendar(string name, Color? color = null)`
 
 Creates a new calendar on the device with the specified name and optionally color.
+Returns the ID of the newly created calendar.
 
 ##### `UpdateCalendar(string calendarId, string newName, Color? newColor = null)`
 
@@ -165,17 +166,19 @@ Retrieves events from a specific calendar or all calendars from the device.
 
 Retrieves a specific event from the calendar store on the device.
 
-##### `CreateEvent(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)`
+##### `string CreateEvent(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)`
 
-Creates an event in the specified calendar with the provided information.
+Creates an event in the specified calendar with the provided information. Returns the ID of the newly created event.
 
-##### `CreateEvent(CalendarEvent calendarEvent)`
+##### `string CreateEvent(CalendarEvent calendarEvent)`
 
 Creates an event based on the information in the `CalendarEvent` object. This is basically just a convenience method that calls `CreateEvent` with all the unpacked information from `calendarEvent`.
+Returns the ID of the newly created event.
 
-##### `CreateAllDayEvent(string calendarId, string title, string description, string location, DateTimeOffset startDate, DateTimeOffset endDate)`
+##### `string CreateAllDayEvent(string calendarId, string title, string description, string location, DateTimeOffset startDate, DateTimeOffset endDate)`
 
 Creates an all-day event in the specified calendar with the provided information. This is basically just a convenience method that calls `CreateEvent` with `isAllDay` set to true.
+Returns the ID of the newly created event.
 
 ##### `UpdateEvent(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)`
 
