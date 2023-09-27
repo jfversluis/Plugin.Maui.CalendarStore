@@ -58,7 +58,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 				.AsTask().ConfigureAwait(false);
 		}
 
-		// TODO does this actually return the new ID?
 		return calendarToCreate.LocalId;
 	}
 
@@ -144,6 +143,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 			await GetCalendar(calendarId).ConfigureAwait(false);
 		}
 
+		if (events is null)
+		{
+			return Array.Empty<CalendarEvent>();
+		}
+
 		return ToEvents(events.OrderBy(e => e.StartTime)).ToList();
 	}
 
@@ -192,7 +196,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 		await platformCalendar.SaveAppointmentAsync(eventToSave)
 			.AsTask().ConfigureAwait(false);
 
-		// TODO does this actually return the new ID?
 		return eventToSave.LocalId;
 	}
 
@@ -293,9 +296,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return eventToReturn ?? throw CalendarStore.InvalidEvent(eventId);
 	}
 
-	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> native)
+	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> platformCalendar)
 	{
-		foreach (var calendar in native)
+		foreach (var calendar in platformCalendar)
 		{
 			yield return ToCalendar(calendar);
 		}
@@ -316,9 +319,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return Windows.UI.Color.FromArgb(a, r, g, b);
 	}
 
-	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<Appointment> native)
+	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<Appointment> platformEvents)
 	{
-		foreach (var e in native)
+		foreach (var e in platformEvents)
 		{
 			yield return ToEvent(e);
 		}
@@ -337,9 +340,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 				: new List<CalendarEventAttendee>()
 		};
 
-	static IEnumerable<CalendarEventAttendee> ToAttendees(IEnumerable<AppointmentInvitee> native)
+	static IEnumerable<CalendarEventAttendee> ToAttendees(
+		IEnumerable<AppointmentInvitee> platformAttendees)
 	{
-		foreach (var attendee in native)
+		foreach (var attendee in platformAttendees)
 		{
 			yield return new(attendee.DisplayName, attendee.Address);
 		}
