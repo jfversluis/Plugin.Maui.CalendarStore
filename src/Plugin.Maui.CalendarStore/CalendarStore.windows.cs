@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.ApplicationModel;
+﻿using System.Threading.Tasks;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using Windows.ApplicationModel.Appointments;
 
@@ -38,7 +39,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task CreateCalendar(string name, Color? color = null)
+	public async Task<string> CreateCalendar(string name, Color? color = null)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -56,6 +57,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 			await calendarToCreate.SaveAsync()
 				.AsTask().ConfigureAwait(false);
 		}
+
+		return calendarToCreate.LocalId;
 	}
 
 	/// <inheritdoc/>
@@ -140,6 +143,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 			await GetCalendar(calendarId).ConfigureAwait(false);
 		}
 
+		if (events is null)
+		{
+			return Array.Empty<CalendarEvent>();
+		}
+
 		return ToEvents(events.OrderBy(e => e.StartTime)).ToList();
 	}
 
@@ -154,7 +162,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task CreateAllDayEvent(string calendarId, string title, string description,
+	public Task<string> CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
 		return CreateEvent(calendarId, title, description, location,
@@ -162,7 +170,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task CreateEvent(string calendarId, string title, string description,
+	public async Task<string> CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
 		bool isAllDay = false)
 	{
@@ -187,10 +195,12 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		await platformCalendar.SaveAppointmentAsync(eventToSave)
 			.AsTask().ConfigureAwait(false);
+
+		return eventToSave.LocalId;
 	}
 
 	/// <inheritdoc/>
-	public Task CreateEvent(CalendarEvent calendarEvent)
+	public Task<string> CreateEvent(CalendarEvent calendarEvent)
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
 			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate,
@@ -286,9 +296,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return eventToReturn ?? throw CalendarStore.InvalidEvent(eventId);
 	}
 
-	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> native)
+	static IEnumerable<Calendar> ToCalendars(IEnumerable<AppointmentCalendar> platformCalendar)
 	{
-		foreach (var calendar in native)
+		foreach (var calendar in platformCalendar)
 		{
 			yield return ToCalendar(calendar);
 		}
@@ -309,9 +319,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 		return Windows.UI.Color.FromArgb(a, r, g, b);
 	}
 
-	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<Appointment> native)
+	static IEnumerable<CalendarEvent> ToEvents(IEnumerable<Appointment> platformEvents)
 	{
-		foreach (var e in native)
+		foreach (var e in platformEvents)
 		{
 			yield return ToEvent(e);
 		}
@@ -330,9 +340,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 				: new List<CalendarEventAttendee>()
 		};
 
-	static IEnumerable<CalendarEventAttendee> ToAttendees(IEnumerable<AppointmentInvitee> native)
+	static IEnumerable<CalendarEventAttendee> ToAttendees(
+		IEnumerable<AppointmentInvitee> platformAttendees)
 	{
-		foreach (var attendee in native)
+		foreach (var attendee in platformAttendees)
 		{
 			yield return new(attendee.DisplayName, attendee.Address);
 		}

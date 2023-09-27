@@ -88,7 +88,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task CreateCalendar(string name, Color? color = null)
+	public async Task<string> CreateCalendar(string name, Color? color = null)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -107,11 +107,13 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var idUrl = platformContentResolver?.Insert(calendarsTableUri,
 			calendarToCreate);
 
-		if (!long.TryParse(idUrl?.LastPathSegment, out _))
+		if (!long.TryParse(idUrl?.LastPathSegment, out var savedId))
 		{
 			throw new CalendarStoreException(
 				"There was an error saving the calendar.");
 		}
+
+		return savedId.ToString();
 	}
 
 	/// <inheritdoc/>
@@ -252,7 +254,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task CreateEvent(string calendarId, string title, string description,
+	public async Task<string> CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
 		bool isAllDay = false)
 	{
@@ -288,15 +290,17 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		var idUrl = platformContentResolver?.Insert(eventsTableUri, eventToInsert);
 
-		if (!long.TryParse(idUrl?.LastPathSegment, out _))
+		if (!long.TryParse(idUrl?.LastPathSegment, out var savedId))
 		{
 			throw new CalendarStoreException(
 				"There was an error saving the event.");
 		}
+
+		return savedId.ToString();
 	}
 
 	/// <inheritdoc/>
-	public Task CreateEvent(CalendarEvent calendarEvent)
+	public Task<string> CreateEvent(CalendarEvent calendarEvent)
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title,
 			calendarEvent.Description, calendarEvent.Location,
@@ -304,7 +308,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task CreateAllDayEvent(string calendarId, string title, string description,
+	public Task<string> CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
 		return CreateEvent(calendarId, title, description, location,

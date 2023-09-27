@@ -4,20 +4,20 @@ namespace Plugin.Maui.CalendarStore;
 
 partial class CalendarStoreImplementation : ICalendarStore
 {
-	public Task CreateAllDayEvent(string calendarId, string title, string description,
+	public Task<string> CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task CreateEvent(string calendarId, string title, string description,
+	public Task<string> CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
 		bool isAllDay = false)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task CreateEvent(CalendarEvent calendarEvent)
+	public Task<string> CreateEvent(CalendarEvent calendarEvent)
 	{
 		throw new NotImplementedException();
 	}
@@ -32,7 +32,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		throw new NotImplementedException();
 	}
 
-	public Task CreateCalendar(string name, Color? color = null)
+	public Task<string> CreateCalendar(string name, Color? color = null)
 	{
 		throw new NotImplementedException();
 	}
