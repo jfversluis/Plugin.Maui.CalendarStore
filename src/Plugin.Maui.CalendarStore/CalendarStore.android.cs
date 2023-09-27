@@ -258,37 +258,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await EnsureWriteCalendarPermission();
 
-		using var cursor = await GetPlatformCalendar(calendarId);
-
-		long platformCalendarId = 0;
-
-		if (cursor is null)
-		{
-			throw new CalendarStoreException("Cursor is null.");
-		}
-
-		if (!long.TryParse(calendarId, out long virtualCalendarId))
-		{
-			throw InvalidCalendar(calendarId);
-		}
-
-		while (cursor.MoveToNext())
-		{
-			long id = cursor.GetLong(cursor.GetColumnIndex(calendarColumns[0]));
-
-			if (id == virtualCalendarId)
-			{
-				platformCalendarId = cursor.GetLong(
-					cursor.GetColumnIndex(calendarColumns[0]));
-
-				break;
-			}
-		}
-
-		if (platformCalendarId <= 0)
-		{
-			throw new CalendarStoreException("Could not determine platform calendar ID.");
-		}
+		// We just want to know a calendar with this ID exists
+		_ = await GetPlatformCalendar(calendarId);
 
 		ContentValues eventToInsert = new();
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
@@ -313,7 +284,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			location);
 
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.CalendarId,
-			platformCalendarId);
+			calendarId);
 
 		var idUrl = platformContentResolver?.Insert(eventsTableUri, eventToInsert);
 
