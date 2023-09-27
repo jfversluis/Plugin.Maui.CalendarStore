@@ -32,7 +32,7 @@ public interface ICalendarStore
 	/// <param name="color">The color to use for the calendar to create.</param>
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
-	Task CreateCalendar(string name, Color? color = null);
+	Task<string> CreateCalendar(string name, Color? color = null);
 
 	/// <summary>
 	/// Updates an existing calendar with the provided values.
@@ -97,7 +97,7 @@ public interface ICalendarStore
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="ArgumentException">Thrown when the calendar corresponding with the value in <paramref name="calendarId"/> cannot be found.</exception>
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
-	Task CreateEvent(string calendarId, string title, string description, string location,
+	Task<string> CreateEvent(string calendarId, string title, string description, string location,
 		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false);
 
 	/// <summary>
@@ -107,7 +107,7 @@ public interface ICalendarStore
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
-	Task CreateEvent(CalendarEvent calendarEvent);
+	Task<string> CreateEvent(CalendarEvent calendarEvent);
 
 	/// <summary>
 	/// Creates a new all day event with the provided information in the specified calendar.
@@ -122,7 +122,7 @@ public interface ICalendarStore
 	/// <remarks>Any time information in <paramref name="startDate"/> and <paramref name="endDate"/> is omitted.</remarks>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
-	Task CreateAllDayEvent(string calendarId, string title, string description,
+	Task<string> CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate);
 
 	/// <summary>

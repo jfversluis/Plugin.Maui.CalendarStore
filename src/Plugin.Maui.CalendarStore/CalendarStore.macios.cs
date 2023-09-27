@@ -33,7 +33,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task CreateCalendar(string name, Color? color = null)
+	public async Task<string> CreateCalendar(string name, Color? color = null)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -63,6 +63,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 			throw new CalendarStoreException("Saving the calendar was unsuccessful.");
 		}
+
+		// TODO does this actually have the new ID?
+		return calendarToCreate.CalendarIdentifier;
 	}
 
 	/// <inheritdoc/>
@@ -164,7 +167,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		ToEvent(await GetPlatformEvent(eventId));
 
 	/// <inheritdoc/>
-	public async Task CreateEvent(string calendarId, string title, string description,
+	public async Task<string> CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
 	{
 		await EnsureWriteCalendarPermission();
@@ -215,17 +218,20 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 			throw new CalendarStoreException("Saving the event was unsuccessful.");
 		}
+
+		// TODO does this actually have the new ID?
+		return eventToSave.EventIdentifier;
 	}
 
 	/// <inheritdoc/>
-	public Task CreateEvent(CalendarEvent calendarEvent)
+	public Task<string> CreateEvent(CalendarEvent calendarEvent)
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
 			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.IsAllDay);
 	}
 
 	/// <inheritdoc/>
-	public Task CreateAllDayEvent(string calendarId, string title, string description,
+	public Task<string> CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
 		return CreateEvent(calendarId, title, description, location, startDate,

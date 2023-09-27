@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.ApplicationModel;
+﻿using System.Threading.Tasks;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using Windows.ApplicationModel.Appointments;
 
@@ -38,7 +39,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task CreateCalendar(string name, Color? color = null)
+	public async Task<string> CreateCalendar(string name, Color? color = null)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -56,6 +57,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 			await calendarToCreate.SaveAsync()
 				.AsTask().ConfigureAwait(false);
 		}
+
+		// TODO does this actually return the new ID?
+		return calendarToCreate.LocalId;
 	}
 
 	/// <inheritdoc/>
@@ -154,7 +158,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task CreateAllDayEvent(string calendarId, string title, string description,
+	public Task<string> CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
 		return CreateEvent(calendarId, title, description, location,
@@ -162,7 +166,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task CreateEvent(string calendarId, string title, string description,
+	public async Task<string> CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
 		bool isAllDay = false)
 	{
@@ -187,10 +191,13 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		await platformCalendar.SaveAppointmentAsync(eventToSave)
 			.AsTask().ConfigureAwait(false);
+
+		// TODO does this actually return the new ID?
+		return eventToSave.LocalId;
 	}
 
 	/// <inheritdoc/>
-	public Task CreateEvent(CalendarEvent calendarEvent)
+	public Task<string> CreateEvent(CalendarEvent calendarEvent)
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
 			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate,
