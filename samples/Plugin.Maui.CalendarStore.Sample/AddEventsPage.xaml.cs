@@ -95,27 +95,32 @@ public partial class AddEventsPage : ContentPage
 			var startEndDateTime = new DateTime(EventEndDate.Year, EventEndDate.Month,
 				EventEndDate.Day, EventEndTime.Hours, EventEndTime.Minutes, EventEndTime.Seconds);
 
+			string savedEventId = string.Empty;
+
 			// Check if we're updating an event
 			if (eventToUpdate is not null)
 			{
 				await calendarStore.UpdateEvent(eventToUpdate.Id, EventTitle, EventDescription,
 					EventLocation, startDateTime, startEndDateTime, EventIsAllDay);
+
+				await DisplayAlert("Event saved", $"The event has been successfully updated!", "OK");
 			}
 			else
 			{
+				// We could also not use this overload and just provide EventIsAllDay as a parameter
 				if (EventIsAllDay)
 				{
-					await calendarStore.CreateAllDayEvent(SelectedCalendar.Id, EventTitle,
+					savedEventId = await calendarStore.CreateAllDayEvent(SelectedCalendar.Id, EventTitle,
 						EventDescription, EventLocation, startDateTime, startEndDateTime);
 				}
 				else
 				{
-					await calendarStore.CreateEvent(SelectedCalendar.Id, EventTitle,
+					savedEventId = await calendarStore.CreateEvent(SelectedCalendar.Id, EventTitle,
 						EventDescription, EventLocation, startDateTime, startEndDateTime);
 				}
-			}
 
-			await DisplayAlert("Event saved", "The event has been successfully saved!", "OK");
+				await DisplayAlert("Event saved", $"The event has been successfully saved with ID: {savedEventId}!", "OK");
+			}
 
 			await Shell.Current.Navigation.PopAsync();
 		}

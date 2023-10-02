@@ -218,7 +218,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw new CalendarStoreException("Saving the event was unsuccessful.");
 		}
 
-		return eventToSave.EventIdentifier;
+		return eventToSave.CalendarItemIdentifier;
 	}
 
 	/// <inheritdoc/>
