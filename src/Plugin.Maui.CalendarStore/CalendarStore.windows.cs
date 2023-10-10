@@ -7,12 +7,23 @@ namespace Plugin.Maui.CalendarStore;
 
 partial class CalendarStoreImplementation : ICalendarStore
 {
-	Task<AppointmentStore>? uwpAppointmentStore;
+	AppointmentStore? store;
+	bool canWriteToStore;
 
-	Task<AppointmentStore> GetAppointmentStore(bool requestWrite = false) =>
-		uwpAppointmentStore ??= AppointmentManager.RequestStoreAsync(
+	async Task<AppointmentStore> GetAppointmentStore(bool requestWrite = false)
+	{
+		if(store is not null &&
+			(canWriteToStore || !requestWrite))
+		{
+			return store;
+		}
+
+		store = await AppointmentManager.RequestStoreAsync(
 			requestWrite ? AppointmentStoreAccessType.AllCalendarsReadWrite
 			: AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
+		canWriteToStore = requestWrite;
+		return store; 
+	}
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendars()
@@ -66,7 +77,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await EnsureWriteCalendarPermission();
 
-		var calendarToUpdate = await GetPlatformCalendar(calendarId);
+		var calendarToUpdate = await GetPlatformCalendar(calendarId, true);
 
 		calendarToUpdate.DisplayName = newName;
 
