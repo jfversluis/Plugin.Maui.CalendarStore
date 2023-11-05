@@ -296,6 +296,18 @@ partial class CalendarStoreImplementation : ICalendarStore
 				"There was an error saving the event.");
 		}
 
+		ContentValues reminderValues = new();
+		reminderValues.Put(CalendarContract.Reminders.InterfaceConsts.EventId, savedId);
+		reminderValues.Put(CalendarContract.Reminders.InterfaceConsts.Method, (int)RemindersMethod.Alert);
+		reminderValues.Put(CalendarContract.Reminders.InterfaceConsts.Minutes, 30); // Reminder 30 minutes before the event
+
+		var reminderUri = platformContentResolver?.Insert(CalendarContract.Reminders.ContentUri, reminderValues);
+		if (reminderUri == null)
+		{
+			throw new CalendarStoreException(
+				"There was an error adding a reminder to the event.");
+		}
+
 		return savedId.ToString();
 	}
 
