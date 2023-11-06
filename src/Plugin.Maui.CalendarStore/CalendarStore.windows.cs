@@ -12,7 +12,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	async Task<AppointmentStore> GetAppointmentStore(bool requestWrite = false)
 	{
-		if(store is not null &&
+		if (store is not null &&
 			(canWriteToStore || !requestWrite))
 		{
 			return store;
@@ -22,7 +22,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			requestWrite ? AppointmentStoreAccessType.AllCalendarsReadWrite
 			: AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
 		canWriteToStore = requestWrite;
-		return store; 
+		return store;
 	}
 
 	/// <inheritdoc/>
@@ -57,14 +57,14 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var platformCalendarManager = await GetAppointmentStore(true)
 			.ConfigureAwait(false);
 
-		var calendarToCreate = 
+		var calendarToCreate =
 			await platformCalendarManager.CreateAppointmentCalendarAsync(name)
 			.AsTask().ConfigureAwait(false);
 
 		if (color is not null)
 		{
 			calendarToCreate.DisplayColor = AsPlatform(color);
-			
+
 			await calendarToCreate.SaveAsync()
 				.AsTask().ConfigureAwait(false);
 		}
@@ -136,7 +136,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// dates
 		var sDate = startDate ?? DateTimeOffset.Now.Add(CalendarStore.defaultStartTimeFromNow);
 		var eDate = endDate ?? sDate.Add(CalendarStore.defaultEndTimeFromStartTime);
-		
+
 		if (eDate < sDate)
 		{
 			eDate = sDate;
@@ -252,7 +252,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		var e = await GetPlatformEvent(eventId)
 			?? throw CalendarStore.InvalidEvent(eventId);
-		
+
 		var platformCalendarManager = await GetAppointmentStore(true);
 
 		var calendar = await platformCalendarManager
@@ -270,7 +270,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	static async Task EnsureWriteCalendarPermission()
 	{
-		var permissionResult = 
+		var permissionResult =
 			await Permissions.RequestAsync<Permissions.CalendarWrite>();
 
 		if (permissionResult != PermissionStatus.Granted)
@@ -359,4 +359,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			yield return new(attendee.DisplayName, attendee.Address);
 		}
 	}
+
+	public Task<string> CreateEventWithReminder(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, int reminderMinutes, bool isAllDay = false) => throw new NotImplementedException();
+	public Task UpdateEventWithReminder(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, int reminderMinutes) => throw new NotImplementedException();
 }
