@@ -359,4 +359,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			yield return new(attendee.DisplayName, attendee.Address);
 		}
 	}
+
+	public Task<string> CreateEventWithReminder(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, int reminderMinutes, bool isAllDay = false) => throw new NotImplementedException();
+	public Task UpdateEventWithReminder(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, int reminderMinutes) => throw new NotImplementedException();
 }
