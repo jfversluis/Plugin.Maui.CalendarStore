@@ -397,8 +397,3 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 .DS_Store
-/samples/Plugin.Maui.CalendarStore.Sample/Plugin.Maui.CalendarStore.Sample.csproj
-/samples/Plugin.Maui.CalendarStore.Sample/AddEventsPage.xaml
-/samples/Plugin.Maui.CalendarStore.Sample/AddEventsPage.xaml.cs
-/samples/Plugin.Maui.CalendarStore.Sample/EventsPage.xaml
-/samples/Plugin.Maui.CalendarStore.Sample/Plugin.Maui.CalendarStore.Sample.csproj
