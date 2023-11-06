@@ -64,16 +64,6 @@ public class CalendarEvent
     public TimeSpan Duration => EndDate - StartDate;
 
 	/// <summary>
-	/// Gets whether this event has a reminder or not
-	/// </summary>
-	public bool HasReminder { get; internal set; } = false;
-
-	/// <summary>
-	/// Gets how long in minutes before reminder starts ex: 30mins before
-	/// </summary>	
-	public int MinutesBeforeReminder { get; internal set; } 
-
-	/// <summary>
 	/// Gets the list of attendees for this event.
 	/// </summary>
 	public IEnumerable<CalendarEventAttendee> Attendees { get; internal set; }
