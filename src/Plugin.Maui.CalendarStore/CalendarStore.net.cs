@@ -17,6 +17,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 		throw new NotImplementedException();
 	}
 
+	public Task<string> CreateEventWithReminder(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, int reminderMinutes, bool isAllDay = false)
+	{
+		throw new NotImplementedException();
+	}
 	public Task<string> CreateEvent(CalendarEvent calendarEvent)
 	{
 		throw new NotImplementedException();
@@ -83,4 +87,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		throw new NotImplementedException();
 	}
+
+	public Task UpdateEventWithReminder(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, int reminderMinutes) => throw new NotImplementedException();
 }
