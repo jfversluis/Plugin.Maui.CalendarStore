@@ -16,7 +16,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendars()
 	{
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
+		await Permissions.RequestAsync<FullAccessCalendar>();
 
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
@@ -126,7 +126,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
 		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
+		await Permissions.RequestAsync<FullAccessCalendar>();
 
 		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(
 			defaultStartTimeFromNow);
@@ -305,7 +305,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	static async Task EnsureWriteCalendarPermission()
 	{
-		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
+		var permissionResult = await Permissions.RequestAsync<WriteOnlyCalendar>();
 
 		if (permissionResult != PermissionStatus.Granted)
 		{
@@ -343,7 +343,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		ArgumentException.ThrowIfNullOrEmpty(calendarId);
 
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
+		await Permissions.RequestAsync<FullAccessCalendar>();
 
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
@@ -354,7 +354,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		ArgumentException.ThrowIfNullOrEmpty(eventId);
 
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
+		await Permissions.RequestAsync<FullAccessCalendar>();
 
 		if (EventStore.GetCalendarItem(eventId) is not EKEvent calendarEvent)
 		{

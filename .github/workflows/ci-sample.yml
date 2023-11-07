@@ -15,5 +15,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0'
+
+    - run: dotnet workload install maui
     - name: Build
-      run: dotnet build samples\Plugin.Maui.CalendarStore.Sample.sln -c Release
+      run: dotnet build samples/Plugin.Maui.CalendarStore.Sample/Plugin.Maui.CalendarStore.Sample.csproj -c Release
