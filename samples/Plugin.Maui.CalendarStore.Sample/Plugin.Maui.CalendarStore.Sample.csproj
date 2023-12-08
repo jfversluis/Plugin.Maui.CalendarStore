@@ -45,7 +45,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\src\Plugin.Maui.CalendarStore\Plugin.Maui.CalendarStore.csproj" />
-      <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<ProjectReference Include="..\..\src\Plugin.Maui.CalendarStore\Plugin.Maui.CalendarStore.csproj" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 	</ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 ﻿using EventKit;
-using Microsoft.Maui.ApplicationModel;
+using Foundation;
 
 namespace Plugin.Maui.CalendarStore;
 
