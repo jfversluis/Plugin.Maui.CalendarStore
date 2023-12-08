@@ -30,5 +30,7 @@
 	<string>Assets.xcassets/appicon.appiconset</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>This app wants to read your calendar data.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>This app wants to read your calendar data.</string>
 </dict>
 </plist>

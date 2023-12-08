@@ -1,7 +1,7 @@
 ﻿using EventKit;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Graphics;
+using Foundation;
 using Microsoft.Maui.Graphics.Platform;
+using UIKit;
 using static Plugin.Maui.CalendarStore.CalendarStore;
 
 namespace Plugin.Maui.CalendarStore;
@@ -16,7 +16,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<IEnumerable<Calendar>> GetCalendars()
 	{
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
+		await Permissions.RequestAsync<FullAccessCalendar>();
 
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
@@ -126,7 +126,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
 		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
+		await Permissions.RequestAsync<FullAccessCalendar>();
 
 		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(
 			defaultStartTimeFromNow);
@@ -177,21 +177,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 		if (!platformCalendar.AllowsContentModifications)
 		{
 			throw new CalendarStoreException($"Selected calendar (id: {calendarId}) is read-only.");
-		}
-
-		var accessRequest = await EventStore.RequestAccessAsync(EKEntityType.Event);
-
-		// An error occurred on the platform level
-		if (accessRequest.Item2 is not null)
-		{
-			throw new CalendarStoreException($"Error occurred while accessing platform calendar store: " +
-				$"{accessRequest.Item2.Description}");
-		}
-
-		// Permission was not granted
-		if (!accessRequest.Item1)
-		{
-			throw new CalendarStoreException("Could not access platform calendar store.");
 		}
 
 		var eventToSave = EKEvent.FromStore(EventStore);
@@ -305,7 +290,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	static async Task EnsureWriteCalendarPermission()
 	{
-		var permissionResult = await Permissions.RequestAsync<Permissions.CalendarWrite>();
+		var permissionResult = await Permissions.RequestAsync<WriteOnlyCalendar>();
 
 		if (permissionResult != PermissionStatus.Granted)
 		{
@@ -343,7 +328,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		ArgumentException.ThrowIfNullOrEmpty(calendarId);
 
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
+		await Permissions.RequestAsync<FullAccessCalendar>();
 
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
@@ -354,7 +339,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		ArgumentException.ThrowIfNullOrEmpty(eventId);
 
-		await Permissions.RequestAsync<Permissions.CalendarRead>();
+		await Permissions.RequestAsync<FullAccessCalendar>();
 
 		if (EventStore.GetCalendarItem(eventId) is not EKEvent calendarEvent)
 		{

@@ -16,11 +16,12 @@ jobs:
         run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
           git branch --remote --contains | grep origin/main
+
       - name: Get version information from tag
         id: get_version
         uses: battila7/get-version-action@v2
       - name: Pack
-        run: dotnet pack src\Plugin.Maui.CalendarStore.sln -c Release -p:PackageVersion=${{ steps.get_version.outputs.version-without-v }}
+        run: dotnet pack src/Plugin.Maui.CalendarStore/Plugin.Maui.CalendarStore.csproj -c Release -p:PackageVersion=${{ steps.get_version.outputs.version-without-v }}
       - name: Push
         run: dotnet nuget push src\Plugin.Maui.CalendarStore\bin\Release\Plugin.Maui.CalendarStore.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
         env:
