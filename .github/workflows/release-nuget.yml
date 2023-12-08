@@ -16,10 +16,7 @@ jobs:
         run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
           git branch --remote --contains | grep origin/main
-      - uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0'
-      - run: dotnet workload install maui
+
       - name: Get version information from tag
         id: get_version
         uses: battila7/get-version-action@v2
