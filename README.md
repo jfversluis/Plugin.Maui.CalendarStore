@@ -26,14 +26,27 @@ The runtime permission is automatically requested by the plugin when any of the 
 
 #### iOS/macOS
 
-On iOS and macOS, add the `NSCalendarsUsageDescription` key to your `info.plist` file. When declared, the permission will be requested automatically at runtime.
+For more information, please refer to the [official Apple documentation](https://developer.apple.com/documentation/eventkit/accessing_the_event_store#2975207).
+
+##### iOS 17+
+
+As of iOS 17, Apple has introduced a new layer of security for accessing calendar data. There is now a difference between only writing data to a calendar and obtain full access to calendar data. To use these, add the following keys to your `info.plist` file. When declared, the permission will be requested automatically at runtime.
 
 ```xml
-<key>NSCalendarsUsageDescription</key>
-<string>This app wants to access your calendars</string>
+<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+<string>This app needs your permission to write events to your calendars. This includes creating events, but not reading, modifying or deleting events.</string>
+
+<key>NSCalendarsFullAccessUsageDescription</key>
+<string>This app needs your permission to fully manage events on your calendars. This includes reading, writing, modifying and deleting events.</string>
 ```
 
-For macOS additionally you will have to add an entry to the `Entitlements.plist`, you will need to add the `com.apple.security.personal-information.calendar` key with a value of `true`.
+Remember, you always want to declare the least amount of permissions that are needed for your app. Else this might look suspicious to your users when you have something declared, but you're not using it. That means: leave out any key from above that is not applicable to your situation.
+
+Additionally, make sure that the descriptions you provide are useful and describe why you want to access this data. Failing to do so might result in your app being rejected from the App Store.
+
+If you also still want to support older iOS versions (prior to version 17), also follow the instructions below.
+
+For a sandboxed macOS application, additionally you will have to add an entry to the `Entitlements.plist`, you will need to add the `com.apple.security.personal-information.calendar` key with a value of `true`.
 
 See an example of a complete `Entitlements.plist` file below.
 
@@ -49,6 +62,17 @@ See an example of a complete `Entitlements.plist` file below.
 </dict>
 </plist>
 ```
+
+##### iOS < 17
+
+On iOS and macOS prior to iOS 17, add the `NSCalendarsUsageDescription` key to your `info.plist` file. When declared, the permission will be requested automatically at runtime.
+
+```xml
+<key>NSCalendarsUsageDescription</key>
+<string>This app wants to access your calendars</string>
+```
+
+If your app supports older iOS versions than iOS 17, include this key as well as the ones described above.
 
 #### Android
 
