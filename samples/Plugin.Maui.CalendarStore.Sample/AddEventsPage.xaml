@@ -14,7 +14,7 @@
 	<ScrollView>
 		<Grid Margin="20" HorizontalOptions="Center"
 			  ColumnDefinitions="100, 300"
-			  RowDefinitions="50,50,100,50,50,50,50,50,50,50,*"
+			  RowDefinitions="50,50,100,50,50,50,50,50,50,50,50,*"
 			  RowSpacing="5" ColumnSpacing="10">
 
 			<Label Grid.Column="0" Grid.Row="0"
@@ -76,14 +76,26 @@
 						Time="{Binding EventEndTime}"
 						HorizontalOptions="FillAndExpand"
 						VerticalOptions="CenterAndExpand" />
+			<HorizontalStackLayout Grid.Column="0" Grid.Row="8">
+				<CheckBox IsChecked="{Binding HasReminder}" x:Name="HasReminderChkbx"
+				  HorizontalOptions="Start" CheckedChanged="HasReminderChkbx_CheckedChanged"
+					  Grid.Row="8" />
+				<Label  Text="Has Reminder:" />
+			</HorizontalStackLayout>				
+			<!--<TimePicker />  will add time picker later. thinking if we can leave both normal mins option and TP options-->
+			<Entry Placeholder="Enter Time in Minutes" WidthRequest="160"
+					Text="{Binding MinsBeforeReminder}" Keyboard="Numeric"
+					Grid.Column="1" Grid.Row="8" />
 
-			<Label Grid.Column="0" Grid.Row="8"
-				Text="All day:" />
-			<CheckBox Grid.Column="1" Grid.Row="8"
-				 IsChecked="{Binding EventIsAllDay}"
-				 HorizontalOptions="Start" />
+			<HorizontalStackLayout Grid.Column="0" Grid.Row="9" HorizontalOptions="Fill" x:Name="IsAllDaySection">
+				<Label  Text="All day:" />
+				<CheckBox IsChecked="{Binding EventIsAllDay}" 
+						  HorizontalOptions="Start" />
+				<Label Text="{Binding MinsBeforeReminder}"/>
+			</HorizontalStackLayout>
+			
 
-			<Button Grid.Column="0" Grid.Row="9" Grid.ColumnSpan="2"
+			<Button Grid.Column="0" Grid.Row="10" Grid.ColumnSpan="2"
 				Text="Save"
 				VerticalOptions="Center" 
 				HorizontalOptions="Center"

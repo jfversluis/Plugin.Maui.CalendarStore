@@ -110,6 +110,25 @@ public interface ICalendarStore
 	Task<string> CreateEvent(CalendarEvent calendarEvent);
 
 	/// <summary>
+	/// Creates a new event with reminder with the provided information on specified calendar and reminder time
+	/// </summary> 
+	/// /// <param name="calendarId">The unique identifier of the calendar to add the newly created event to.</param>
+	/// <param name="title">The title of the event.</param>
+	/// <param name="description">The description of the event.</param>
+	/// <param name="location">The location of the event.</param>
+	/// <param name="startDateTime">The start date and time for the event.</param>
+	/// <param name="endDateTime">The end date and time for the event.</param>
+	/// <param name="reminderMinutes">The number of minutes before event starts that reminder notification will be show</param>
+	/// <returns>The unique identifier of the newly created event.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the calendar corresponding with the value in <paramref name="calendarId"/> and or <paramref name="reminderMinutes"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	///
+	Task<string> CreateEventWithReminder(string calendarId, string title, string description, string location,
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, int reminderMinutes, bool isAllDay = false);
+
+
+	/// <summary>
 	/// Creates a new all day event with the provided information in the specified calendar.
 	/// </summary>
 	/// <param name="calendarId">The unique identifier of the calendar to save the event in.</param>
@@ -141,6 +160,25 @@ public interface ICalendarStore
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task UpdateEvent(string eventId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay);
+
+	/// <summary>
+	/// Updates an existing event with reminder with the provided information.
+	/// </summary>
+	/// <param name="eventId">The unique identifier of the event to update.</param>
+	/// <param name="title">The updated title for the event.</param>
+	/// <param name="description">The updated description for the event.</param>
+	/// <param name="location">The updated location for the event.</param>
+	/// <param name="startDateTime">The updated start date and time for the event.</param>
+	/// <param name="endDateTime">The updated end date and time for the event.</param>
+	/// <param name="isAllDay">The updated value that indicates whether or not this event should be marked as an all-day event.</param>
+	/// <param name="reminderMinutes">The updated value if any for the reminder minutes.
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event corresponding with the value in <paramref name="eventId"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	Task UpdateEventWithReminder(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, int reminderMinutes);
+
 
 	/// <summary>
 	/// Updates a event based on the provided <paramref name="eventToUpdate"/> object. 

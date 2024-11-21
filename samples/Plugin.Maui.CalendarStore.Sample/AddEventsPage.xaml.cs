@@ -19,6 +19,8 @@ public partial class AddEventsPage : ContentPage
 	public DateTime EventEndDate { get; set; } = DateTime.Now;
 	public TimeSpan EventEndTime { get; set; } = DateTime.Now.TimeOfDay.Add(TimeSpan.FromHours(1));
 	public bool EventIsAllDay { get; set; }
+	public bool HasReminder { get; set; }
+	public int MinsBeforeReminder { get; set; }
 
 	public AddEventsPage(ICalendarStore calendarStore, CalendarEvent? eventToUpdate)
 	{
@@ -52,10 +54,15 @@ public partial class AddEventsPage : ContentPage
 			EventEndDate = eventToUpdate.EndDate.LocalDateTime;
 			EventEndTime = eventToUpdate.EndDate.LocalDateTime.TimeOfDay;
 			EventIsAllDay = eventToUpdate.IsAllDay;
-
+			MinsBeforeReminder = eventToUpdate.MinutesBeforeReminder;
 			SelectedCalendar = Calendars
 				.Where(c => c.Id.Equals(eventToUpdate.CalendarId)).Single();
 
+			if (MinsBeforeReminder > 0)
+			{
+				HasReminder = true;
+				IsAllDaySection.IsVisible = false;
+			}
 			OnPropertyChanged(nameof(EventTitle));
 			OnPropertyChanged(nameof(EventDescription));
 			OnPropertyChanged(nameof(EventLocation));
@@ -66,6 +73,8 @@ public partial class AddEventsPage : ContentPage
 			OnPropertyChanged(nameof(EventIsAllDay));
 			OnPropertyChanged(nameof(SelectedCalendar));
 			OnPropertyChanged(nameof(IsCreateAction));
+			OnPropertyChanged(nameof(HasReminder));
+			OnPropertyChanged(nameof(MinsBeforeReminder));
 
 			Title = "Edit Event";
 		}
@@ -100,8 +109,18 @@ public partial class AddEventsPage : ContentPage
 			// Check if we're updating an event
 			if (eventToUpdate is not null)
 			{
-				await calendarStore.UpdateEvent(eventToUpdate.Id, EventTitle, EventDescription,
-					EventLocation, startDateTime, startEndDateTime, EventIsAllDay);
+				if (HasReminder)
+				{
+					//best to add another check here to confirm if user wants to save with reminder - for this example
+
+					await calendarStore.UpdateEventWithReminder(eventToUpdate.Id, EventTitle, EventDescription,
+						EventLocation, startDateTime, startEndDateTime, EventIsAllDay, MinsBeforeReminder);
+				}
+				else
+				{
+					await calendarStore.UpdateEvent(eventToUpdate.Id, EventTitle, EventDescription,
+						EventLocation, startDateTime, startEndDateTime, EventIsAllDay);
+				}
 
 				await DisplayAlert("Event saved", $"The event has been successfully updated!", "OK");
 			}
@@ -112,6 +131,11 @@ public partial class AddEventsPage : ContentPage
 				{
 					savedEventId = await calendarStore.CreateAllDayEvent(SelectedCalendar.Id, EventTitle,
 						EventDescription, EventLocation, startDateTime, startEndDateTime);
+				}
+				if(HasReminder)
+				{
+					savedEventId = await calendarStore.CreateEventWithReminder(SelectedCalendar.Id, EventTitle,
+						EventDescription, EventLocation, startDateTime, startEndDateTime, MinsBeforeReminder);
 				}
 				else
 				{
@@ -128,5 +152,10 @@ public partial class AddEventsPage : ContentPage
 		{
 			await DisplayAlert("Error", ex.Message, "OK");
 		}
+	}
+
+	void HasReminderChkbx_CheckedChanged(object sender, CheckedChangedEventArgs e)
+	{
+		IsAllDaySection.IsVisible=!e.Value;
 	}
 }
