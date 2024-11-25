@@ -167,7 +167,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	/// <inheritdoc/>
 	public async Task<string> CreateEvent(string calendarId, string title, string description,
-		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false, Reminder[]? reminders = null)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -187,6 +187,14 @@ partial class CalendarStoreImplementation : ICalendarStore
 		eventToSave.StartDate = (NSDate)startDateTime.LocalDateTime;
 		eventToSave.EndDate = (NSDate)endDateTime.LocalDateTime;
 		eventToSave.AllDay = isAllDay;
+
+		if (reminders is not null)
+		{
+			foreach (var reminder in reminders)
+			{
+				eventToSave.AddAlarm(ToAlarm(reminder));
+			}
+		}
 
 		var saveResult = EventStore.SaveEvent(eventToSave, EKSpan.ThisEvent, true, out var error);
 
@@ -210,20 +218,21 @@ partial class CalendarStoreImplementation : ICalendarStore
 	public Task<string> CreateEvent(CalendarEvent calendarEvent)
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
-			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.IsAllDay);
+			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.IsAllDay,
+			calendarEvent.Reminders.ToArray());
 	}
 
 	/// <inheritdoc/>
 	public Task<string> CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
-		return CreateEvent(calendarId, title, description, location, startDate,
-			endDate, true);
+		return CreateEvent(calendarId, title, description, location, startDate, endDate, true);
 	}
 
 	/// <inheritdoc/>
 	public async Task UpdateEvent(string eventId, string title, string description,
-		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders = null)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -235,6 +244,22 @@ partial class CalendarStoreImplementation : ICalendarStore
 		eventToUpdate.StartDate = (NSDate)startDateTime.LocalDateTime;
 		eventToUpdate.EndDate = (NSDate)endDateTime.LocalDateTime;
 		eventToUpdate.AllDay = isAllDay;
+
+		if (reminders is not null)
+		{
+			if (eventToUpdate.Alarms is not null && eventToUpdate.HasAlarms)
+			{
+				foreach (var alarm in eventToUpdate.Alarms)
+				{
+					eventToUpdate.RemoveAlarm(alarm);
+				}
+			}
+
+			foreach (var reminder in reminders)
+			{
+				eventToUpdate.AddAlarm(ToAlarm(reminder));
+			}
+		}
 
 		var updateResult = EventStore.SaveEvent(eventToUpdate, EKSpan.ThisEvent,
 			true, out var error);
@@ -256,7 +281,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
 		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
-			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.IsAllDay);
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.IsAllDay,
+			eventToUpdate.Reminders.ToArray());
 
 	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
@@ -408,13 +434,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 			(DateTime)platformDate, timezoneToApply.Name);
 	}
 
-	public Task<string> CreateEventWithReminder(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, int reminderMinutes, bool isAllDay = false)
+	static EKAlarm ToAlarm(Reminder reminder)
 	{
-		throw new NotImplementedException();
-	}
-
-	public Task UpdateEventWithReminder(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, int reminderMinutes)
-	{
-		throw new NotImplementedException();
+		return EKAlarm.FromDate((NSDate)reminder.DateTime.LocalDateTime);
 	}
 }

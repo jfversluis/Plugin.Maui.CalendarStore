@@ -183,7 +183,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<string> CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
-		bool isAllDay = false)
+		bool isAllDay = false, Reminder[]? reminders = null)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -215,7 +215,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title, calendarEvent.Description,
 			calendarEvent.Location, calendarEvent.StartDate, calendarEvent.EndDate,
-			calendarEvent.IsAllDay);
+			calendarEvent.IsAllDay, calendarEvent.Reminders.ToArray());
 	}
 
 	/// <inheritdoc/>
@@ -358,15 +358,5 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			yield return new(attendee.DisplayName, attendee.Address);
 		}
-	}
-
-	public Task<string> CreateEventWithReminder(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, int reminderMinutes, bool isAllDay = false)
-	{
-		throw new NotImplementedException();
-	}
-
-	public Task UpdateEventWithReminder(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, int reminderMinutes)
-	{
-		throw new NotImplementedException();
 	}
 }
