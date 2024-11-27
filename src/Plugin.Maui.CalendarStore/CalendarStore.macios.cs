@@ -245,16 +245,18 @@ partial class CalendarStoreImplementation : ICalendarStore
 		eventToUpdate.EndDate = (NSDate)endDateTime.LocalDateTime;
 		eventToUpdate.AllDay = isAllDay;
 
+		// Always clear all alarms, because we're going to replace them or remove them
+		if (eventToUpdate.Alarms is not null && eventToUpdate.HasAlarms)
+		{
+			foreach (var alarm in eventToUpdate.Alarms)
+			{
+				eventToUpdate.RemoveAlarm(alarm);
+			}
+		}
+
+		// If new reminders were provided, populate alarms again
 		if (reminders is not null)
 		{
-			if (eventToUpdate.Alarms is not null && eventToUpdate.HasAlarms)
-			{
-				foreach (var alarm in eventToUpdate.Alarms)
-				{
-					eventToUpdate.RemoveAlarm(alarm);
-				}
-			}
-
 			foreach (var reminder in reminders)
 			{
 				eventToUpdate.AddAlarm(ToAlarm(reminder));

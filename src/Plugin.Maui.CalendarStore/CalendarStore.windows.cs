@@ -204,6 +204,13 @@ partial class CalendarStoreImplementation : ICalendarStore
 			AllDay = isAllDay,
 		};
 
+		if (reminders is not null)
+		{
+			// Windows supports only one reminder, take the first one provided.
+			eventToSave.Reminder = eventToSave.StartTime.Subtract(
+				reminders[0].DateTime.LocalDateTime);
+		}
+
 		await platformCalendar.SaveAppointmentAsync(eventToSave)
 			.AsTask().ConfigureAwait(false);
 
@@ -220,7 +227,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	/// <inheritdoc/>
 	public async Task UpdateEvent(string eventId, string title, string description,
-		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -236,6 +244,17 @@ partial class CalendarStoreImplementation : ICalendarStore
 		eventToUpdate.Duration = endDateTime.Subtract(startDateTime);
 		eventToUpdate.AllDay = isAllDay;
 
+		if (reminders is not null)
+		{
+			// Windows supports only one reminder, take the first one provided.
+			eventToUpdate.Reminder = eventToUpdate.StartTime.Subtract(
+				reminders[0].DateTime.LocalDateTime);
+		}
+		else
+		{
+			eventToUpdate.Reminder = null;
+		}
+
 		await platformCalendar.SaveAppointmentAsync(eventToUpdate)
 			.AsTask().ConfigureAwait(false);
 	}
@@ -243,7 +262,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
 		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
-			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.IsAllDay);
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.IsAllDay,
+			eventToUpdate.Reminders.ToArray());
 
 	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
