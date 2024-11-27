@@ -55,7 +55,7 @@ public static partial class CalendarStore
 	public static async Task<CalendarEvent> GetEvent(string eventId) =>
 		await Default.GetEvent(eventId);
 
-	/// <inheritdoc cref="ICalendarStore.CreateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool)"/>
+	/// <inheritdoc cref="ICalendarStore.CreateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool, Reminder[])"/>
 	public static async Task<string> CreateEvent(string calendarId, string title, string description, string location,
 		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false, Reminder[]? reminders = null) =>
 		await Default.CreateEvent(calendarId, title, description, location, startDateTime,
@@ -71,7 +71,7 @@ public static partial class CalendarStore
 		await Default.CreateAllDayEvent(calendarId, title, description, location,
 			startDate, endDate);
 
-	/// <inheritdoc cref="ICalendarStore.UpdateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool)"/>
+	/// <inheritdoc cref="ICalendarStore.UpdateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool, Reminder[])"/>
 	public static async Task UpdateEvent(string eventId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
 		Reminder[]? reminders = null) =>

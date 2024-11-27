@@ -16,8 +16,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	readonly ContentResolver platformContentResolver;
 
-	readonly List<string> calendarColumns = [
-		
+	readonly List<string> calendarColumns =
+		[
 			CalendarContract.Calendars.InterfaceConsts.Id,
 			CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName,
 			CalendarContract.Calendars.InterfaceConsts.CalendarColor,
@@ -37,7 +37,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 			CalendarContract.Events.InterfaceConsts.EventTimezone,
 		];
 
-	readonly List<string> attendeesColumns = [
+	readonly List<string> attendeesColumns =
+		[
 			CalendarContract.Attendees.InterfaceConsts.EventId,
 			CalendarContract.Attendees.InterfaceConsts.AttendeeEmail,
 			CalendarContract.Attendees.InterfaceConsts.AttendeeName,
@@ -327,7 +328,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	/// <inheritdoc/>
 	public async Task UpdateEvent(string eventId, string title, string description,
-		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, Reminder[]? reminders=null)
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, 
+		Reminder[]? reminders = null)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -395,7 +397,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 			AddMultipleReminders(platformEventId,reminders);
 		}
 	}
-	void RemoveAllReminders(long eventId)
+	//void RemoveAllReminders(long eventId)
+	void UpdateOrAddReminder(long eventId, int reminderMinutes)
 	{
 		var reminderSelection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
 		var reminderSelectionArgs = new[] { eventId.ToString() };
@@ -451,6 +454,26 @@ partial class CalendarStoreImplementation : ICalendarStore
 		//if it returns here, then reminder was removed.
 		//if you need a confirmation of sorts, make it return int for count or so
 	}
+	void RemoveAllReminders(long eventId)
+	{
+		var selection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
+		var selectionArgs = new[] { eventId.ToString() };
+
+		var rowsDeleted = platformContentResolver?.Delete(
+			CalendarContract.Reminders.ContentUri,
+			selection,
+			selectionArgs);
+
+		if (rowsDeleted == null || rowsDeleted <= 0)
+		{
+			Console.WriteLine("No reminders were found to delete, or an error occurred.");
+		}
+		else
+		{
+			Console.WriteLine($"Deleted {rowsDeleted} reminder(s) for event ID {eventId}.");
+		}
+	}
+
 	void AddSingleReminder(long eventId, int reminderMinutes)
 	{
 		var reminderValues = new ContentValues();
@@ -755,6 +778,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty).ToList(),
 			Reminders = GetAllReminderTimes(eventId)
+			//// Retrieve reminder minutes for the event
+			//MinutesBeforeReminder = GetReminderMinutes(
+			//	cursor.GetString(projection.IndexOf(
+			//		 CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty)
 		};
 	}
 
