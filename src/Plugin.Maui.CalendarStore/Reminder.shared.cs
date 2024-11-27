@@ -5,15 +5,15 @@ namespace Plugin.Maui.CalendarStore;
 /// </summary>
 public class Reminder
 {
-	/// <summary>
-	/// Initializes a new instance of the <see cref="Reminder"/> class.
-	/// </summary>
-	/// <param name="dateTime">The date and time this reminder should notify the user of an <see cref="CalendarEvent"/>.</param>
-	public Reminder(DateTimeOffset dateTime)
-	{
-		DateTime = dateTime;
-	}
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Reminder"/> class.
+    /// </summary>
+    /// <param name="dateTime">The date and time this reminder should notify the user of an <see cref="CalendarEvent"/>.</param>
+    public Reminder(DateTimeOffset dateTime)
+    {
+        DateTime = dateTime;
+    }
 
 	public int ReminderInMinutes { get; set; }
-	public DateTimeOffset DateTime { get; set; }
+    public DateTimeOffset DateTime { get; set; }
 }

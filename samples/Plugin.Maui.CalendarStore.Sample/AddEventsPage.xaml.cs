@@ -111,10 +111,19 @@ public partial class AddEventsPage : ContentPage
 
 			// Check if we're updating an event
 			if (eventToUpdate is not null)
-			{	
-				await calendarStore.UpdateEvent(eventToUpdate.Id, EventTitle, EventDescription,
-						EventLocation, startDateTime, startEndDateTime, EventIsAllDay, EventReminders.ToArray());
-				
+			{
+				if (HasReminder)
+				{
+					//best to add another check here to confirm if user wants to save with reminder - for this example
+
+					await calendarStore.UpdateEventWithReminder(eventToUpdate.Id, EventTitle, EventDescription,
+						EventLocation, startDateTime, startEndDateTime, EventIsAllDay, MinsBeforeReminder);
+				}
+				else
+				{
+					await calendarStore.UpdateEvent(eventToUpdate.Id, EventTitle, EventDescription,
+						EventLocation, startDateTime, startEndDateTime, EventIsAllDay);
+				}
 
 				await DisplayAlert("Event saved", $"The event has been successfully updated!", "OK");
 			}
@@ -125,6 +134,11 @@ public partial class AddEventsPage : ContentPage
 				{
 					savedEventId = await calendarStore.CreateAllDayEvent(SelectedCalendar.Id, EventTitle,
 						EventDescription, EventLocation, startDateTime, startEndDateTime);
+				}
+				if(HasReminder)
+				{
+					savedEventId = await calendarStore.CreateEventWithReminder(SelectedCalendar.Id, EventTitle,
+						EventDescription, EventLocation, startDateTime, startEndDateTime, MinsBeforeReminder);
 				}
 				else
 				{

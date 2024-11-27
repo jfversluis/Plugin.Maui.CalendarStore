@@ -398,6 +398,46 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 	}
 	//void RemoveAllReminders(long eventId)
+	public async Task UpdateEventWithReminder(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, int reminderMinutes)
+	{
+		await EnsureWriteCalendarPermission();
+
+		var selection = $"{CalendarContract.Events.InterfaceConsts.Id} = ?";
+		var selectionArgs = new[] { eventId };
+
+		using var cursor = platformContentResolver.Query(
+			eventsTableUri, calendarColumns.ToArray(), selection, selectionArgs, null)
+			?? throw new CalendarStoreException("Error while querying events");
+
+		if (!cursor.MoveToFirst())
+		{
+			throw new CalendarStoreException($"Event with ID {eventId} was not found.");
+		}
+
+		long platformEventId = cursor.GetLong(cursor.GetColumnIndex(calendarColumns[0]));
+
+		ContentValues eventToUpdate = new();
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
+			startDateTime.ToUnixTimeMilliseconds());
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtend,
+			endDateTime.ToUnixTimeMilliseconds());
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.AllDay, isAllDay);
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Title, title);
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Description, description);
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.EventLocation, location);
+
+		var updateCount = platformContentResolver?.Update(
+			ContentUris.WithAppendedId(eventsTableUri, platformEventId), eventToUpdate, null, null);
+
+		if (updateCount != 1)
+		{
+			throw new CalendarStoreException($"Failed to update event with ID {eventId}.");
+		}
+
+		UpdateOrAddReminder(platformEventId, reminderMinutes);
+	}
+
 	void UpdateOrAddReminder(long eventId, int reminderMinutes)
 	{
 		var reminderSelection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
@@ -737,10 +777,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		while (cur.MoveToNext())
 		{
-			yield return ToEvent(cur, projection);
-		}
-	}
-
+			Reminders = GetAllReminderTimes(eventId)
+			//// Retrieve reminder minutes for the event
+			//MinutesBeforeReminder = GetReminderMinutes(
+			//	cursor.GetString(projection.IndexOf(
+			//		 CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty)
 	CalendarEvent ToEvent(ICursor cursor, List<string> projection)
 	{
 		var timezone = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventTimezone));
@@ -777,11 +818,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 			EndDate = timezone is null ? end : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(end, timezone),
 			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty).ToList(),
-			Reminders = GetAllReminderTimes(eventId)
-			//// Retrieve reminder minutes for the event
-			//MinutesBeforeReminder = GetReminderMinutes(
-			//	cursor.GetString(projection.IndexOf(
-			//		 CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty)
+			// Retrieve reminder minutes for the event
+			MinutesBeforeReminder = GetReminderMinutes(
+				cursor.GetString(projection.IndexOf(
+					 CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty)
 		};
 	}
 
