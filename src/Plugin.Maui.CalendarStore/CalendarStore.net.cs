@@ -12,7 +12,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	public Task<string> CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
-		bool isAllDay = false)
+		bool isAllDay = false, Reminder[]? reminders = null)
 	{
 		throw new NotImplementedException();
 	}
@@ -74,22 +74,13 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	public Task UpdateEvent(string eventId, string title, string description,
-		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders = null)
 	{
 		throw new NotImplementedException();
 	}
 
 	public Task UpdateEvent(CalendarEvent eventToUpdate)
-	{
-		throw new NotImplementedException();
-	}
-
-	public Task<string> CreateEventWithReminder(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, int reminderMinutes, bool isAllDay = false)
-	{
-		throw new NotImplementedException();
-	}
-
-	public Task UpdateEventWithReminder(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, int reminderMinutes)
 	{
 		throw new NotImplementedException();
 	}

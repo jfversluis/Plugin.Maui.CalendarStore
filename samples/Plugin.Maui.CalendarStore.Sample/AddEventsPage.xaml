@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
 			 xmlns:local="clr-namespace:Plugin.Maui.CalendarStore.Sample"
+			 xmlns:calendar="clr-namespace:Plugin.Maui.CalendarStore;assembly=Plugin.Maui.CalendarStore"
              x:Class="Plugin.Maui.CalendarStore.Sample.AddEventsPage"
 			 x:DataType="local:AddEventsPage"
              Title="Add Event">
@@ -14,7 +15,7 @@
 	<ScrollView>
 		<Grid Margin="20" HorizontalOptions="Center"
 			  ColumnDefinitions="100, 300"
-			  RowDefinitions="50,50,100,50,50,50,50,50,50,50,50,*"
+			  RowDefinitions="50,50,100,50,50,50,50,50,50,50,150,*"
 			  RowSpacing="5" ColumnSpacing="10">
 
 			<Label Grid.Column="0" Grid.Row="0"
@@ -76,26 +77,48 @@
 						Time="{Binding EventEndTime}"
 						HorizontalOptions="FillAndExpand"
 						VerticalOptions="CenterAndExpand" />
-			<HorizontalStackLayout Grid.Column="0" Grid.Row="8">
-				<CheckBox IsChecked="{Binding HasReminder}" x:Name="HasReminderChkbx"
-				  HorizontalOptions="Start" CheckedChanged="HasReminderChkbx_CheckedChanged"
-					  Grid.Row="8" />
-				<Label  Text="Has Reminder:" />
+			<HorizontalStackLayout Grid.Column="0" Grid.Row="8">				
+				<Label  Text="Reminder :" />
 			</HorizontalStackLayout>				
 			<!--<TimePicker />  will add time picker later. thinking if we can leave both normal mins option and TP options-->
-			<Entry Placeholder="Enter Time in Minutes" WidthRequest="160"
-					Text="{Binding MinsBeforeReminder}" Keyboard="Numeric"
-					Grid.Column="1" Grid.Row="8" />
+
+			<HorizontalStackLayout Grid.Column="1" Grid.Row="8" >
+				
+				<Entry Placeholder="Enter Time in Minutes" WidthRequest="160" Focused="ReminderMinsEntry_Focused" x:Name="ReminderMinsEntry"
+		Text="{Binding MinsBeforeReminder}" Keyboard="Numeric"
+					   TextChanged="ReminderMinsEntry_TextChanged"
+		/>
+				<Button Text="Add" x:Name="AddReminderBtn" Clicked="AddReminderBtn_Clicked"
+						IsVisible="True"/>
+			</HorizontalStackLayout>
+			
 
 			<HorizontalStackLayout Grid.Column="0" Grid.Row="9" HorizontalOptions="Fill" x:Name="IsAllDaySection">
 				<Label  Text="All day:" />
 				<CheckBox IsChecked="{Binding EventIsAllDay}" 
 						  HorizontalOptions="Start" />
-				<Label Text="{Binding MinsBeforeReminder}"/>
 			</HorizontalStackLayout>
-			
 
-			<Button Grid.Column="0" Grid.Row="10" Grid.ColumnSpan="2"
+			<CollectionView 
+				Grid.ColumnSpan="2"
+				Grid.Column="0" Grid.Row="10"
+			x:Name="RemindersColView"
+			SelectionChanged="RemindersColView_SelectionChanged"
+				ItemsSource="{Binding EventReminders}" EmptyView="No Reminders"
+							>
+				<CollectionView.ItemTemplate>
+					<DataTemplate x:DataType="calendar:Reminder">
+						<HorizontalStackLayout HorizontalOptions="End">							
+							<Label Text="{Binding DateTime, StringFormat='{0:ddd, dd MMM yyyy} at {0:hh:mm:ss}'}"/>
+							<Button Text="Delete" FontSize="18" WidthRequest="140"
+									Clicked="DltReminderBtn_Clicked" x:Name="DltReminderBtn" CommandParameter="{Binding .}"/>
+						</HorizontalStackLayout>
+						
+					</DataTemplate>
+				</CollectionView.ItemTemplate>
+			</CollectionView>
+
+			<Button Grid.Column="0" Grid.Row="11" Grid.ColumnSpan="2"
 				Text="Save"
 				VerticalOptions="Center" 
 				HorizontalOptions="Center"

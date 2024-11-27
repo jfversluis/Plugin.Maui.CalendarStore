@@ -23,11 +23,11 @@ public static partial class CalendarStore
 
 	/// <inheritdoc cref="ICalendarStore.GetCalendars"/>
 	public static async Task<IEnumerable<Calendar>> GetCalendars() =>
-        await Default.GetCalendars();
+		await Default.GetCalendars();
 
 	/// <inheritdoc cref="ICalendarStore.GetCalendar(string)"/>
 	public static async Task<Calendar> GetCalendar(string calendarId) =>
-        await Default.GetCalendar(calendarId);
+		await Default.GetCalendar(calendarId);
 
 	/// <inheritdoc cref="ICalendarStore.CreateCalendar(string, Color?)"/>
 	public static async Task<string> CreateCalendar(string name, Color? color = null) =>
@@ -48,18 +48,18 @@ public static partial class CalendarStore
 
 	/// <inheritdoc cref="ICalendarStore.GetEvents(string?, DateTimeOffset?, DateTimeOffset?)"/>
 	public static async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
-        DateTimeOffset? startDate = null, DateTimeOffset? endDate = null) =>
-        await Default.GetEvents(calendarId, startDate, endDate);
+		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null) =>
+		await Default.GetEvents(calendarId, startDate, endDate);
 
 	/// <inheritdoc cref="ICalendarStore.GetEvent(string)"/>
 	public static async Task<CalendarEvent> GetEvent(string eventId) =>
-        await Default.GetEvent(eventId);
+		await Default.GetEvent(eventId);
 
 	/// <inheritdoc cref="ICalendarStore.CreateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool)"/>
 	public static async Task<string> CreateEvent(string calendarId, string title, string description, string location,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false) =>
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false, Reminder[]? reminders = null) =>
 		await Default.CreateEvent(calendarId, title, description, location, startDateTime,
-			endDateTime, isAllDay);
+			endDateTime, isAllDay, reminders);
 
 	/// <inheritdoc cref="ICalendarStore.CreateEvent(CalendarEvent)"/>
 	public static async Task<string> CreateEvent(CalendarEvent calendarEvent) =>
@@ -73,8 +73,9 @@ public static partial class CalendarStore
 
 	/// <inheritdoc cref="ICalendarStore.UpdateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool)"/>
 	public static async Task UpdateEvent(string eventId, string title, string description,
-		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay) =>
-		await Default.UpdateEvent(eventId, title, description, location, startDateTime, endDateTime, isAllDay);
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders = null) =>
+		await Default.UpdateEvent(eventId, title, description, location, startDateTime, endDateTime, isAllDay, reminders);
 
 	/// <inheritdoc cref="ICalendarStore.UpdateEvent(CalendarEvent)"/>
 	public static async Task UpdateEvent(CalendarEvent eventToUpdate) =>
@@ -89,8 +90,8 @@ public static partial class CalendarStore
 		DeleteEvent(eventToDelete.Id);
 
 	internal static ArgumentException InvalidCalendar(string calendarId) =>
-        new($"No calendar exists with ID '{calendarId}'.", nameof(calendarId));
+		new($"No calendar exists with ID '{calendarId}'.", nameof(calendarId));
 
-    internal static ArgumentException InvalidEvent(string eventId) =>
-        new($"No event exists with ID '{eventId}'.", nameof(eventId));
+	internal static ArgumentException InvalidEvent(string eventId) =>
+		new($"No event exists with ID '{eventId}'.", nameof(eventId));
 }

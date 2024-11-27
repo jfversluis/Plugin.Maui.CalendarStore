@@ -62,15 +62,19 @@ public class CalendarEvent
 	/// Gets the total duration for this event.
 	/// </summary>
     public TimeSpan Duration => EndDate - StartDate;
-	/// <summary>
-	/// Gets whether this event has a reminder or not
-	/// </summary>
-	public bool HasReminder { get; internal set; } = false;
 
 	/// <summary>
-	/// Gets how long in minutes before reminder starts ex: 30mins before
-	/// </summary>	
-	public int MinutesBeforeReminder { get; internal set; }
+	/// Gets the list of reminders for this event.
+	/// </summary>
+	/// <remarks>
+	/// On Windows only 1 reminder is supported. Therefore on Windows, this collection will always only contain 1 item.
+	/// </remarks>
+	public List<Reminder> Reminders { get; internal set; } = [];
+
+	/// <summary>
+	/// Gets whether this event has at least one reminder.
+	/// </summary>
+	public bool HasReminders => Reminders?.Count > 0;
 
 	/// <summary>
 	/// Gets the list of attendees for this event.

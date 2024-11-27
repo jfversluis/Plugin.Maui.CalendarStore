@@ -18,8 +18,8 @@
 			<VerticalStackLayout BindableLayout.ItemsSource="{Binding Events}" Spacing="5">
 				<BindableLayout.ItemTemplate>
 					<DataTemplate x:DataType="calendar:CalendarEvent">
-						<Grid ColumnDefinitions="*, 100">
-							<VerticalStackLayout Grid.Column="0">
+						<Grid ColumnDefinitions="*,100" RowDefinitions="Auto,*">
+							<VerticalStackLayout Grid.Column="0" Grid.Row="0">
 								<Label Text="{Binding Title, StringFormat='Title: {0}'}" FontSize="25" />
 								<Label Text="{Binding Id, StringFormat='ID: {0}'}" />
 								<Label Text="{Binding CalendarId, StringFormat='Calendar ID: {0}'}" />
@@ -28,10 +28,10 @@
 								<Label Text="{Binding StartDate, StringFormat='Start Date: {0}'}" />
 								<Label Text="{Binding EndDate, StringFormat='End Date: {0}'}" />
 								<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
-								<Label Text="{Binding MinutesBeforeReminder, StringFormat='Mins before Reminder: {0}'}" />
+								<Label Text="{Binding HasReminders, StringFormat='Has Reminder: {0}'}" />
 							</VerticalStackLayout>
-
-							<VerticalStackLayout Grid.Column="1" Spacing="5">
+							
+							<VerticalStackLayout Grid.Column="2" Spacing="5" Grid.Row="0">
 								<Button Text="Update"
 										Clicked="Update_Clicked"
 										VerticalOptions="Center"/>
@@ -41,6 +41,18 @@
 										Clicked="Delete_Clicked"
 										VerticalOptions="Center"/>
 							</VerticalStackLayout>
+
+							<CollectionView ItemsSource="{Binding Reminders}"
+											Grid.Row="1" Header="Event Reminders:">
+								<CollectionView.ItemTemplate>
+									<DataTemplate x:DataType="calendar:Reminder">
+										<HorizontalStackLayout>
+											<Label Text="{Binding DateTime, StringFormat='{0:dd MMM yyyy : hh:mm:ss}'}" IsVisible="False"/>
+											<Label Text="{Binding ReminderInMinutes, StringFormat='{0} Minutes Before'}"/>
+										</HorizontalStackLayout>
+									</DataTemplate>
+								</CollectionView.ItemTemplate>
+							</CollectionView>
 						</Grid>
 					</DataTemplate>
 				</BindableLayout.ItemTemplate>
