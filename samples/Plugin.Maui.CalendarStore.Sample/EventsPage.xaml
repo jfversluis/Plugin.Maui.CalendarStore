@@ -28,7 +28,7 @@
 								<Label Text="{Binding StartDate, StringFormat='Start Date: {0}'}" />
 								<Label Text="{Binding EndDate, StringFormat='End Date: {0}'}" />
 								<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
-								<Label Text="{Binding MinutesBeforeReminder, StringFormat='Mins before Reminder: {0}'}" />
+								<!--<Label Text="{Binding MinutesBeforeReminder, StringFormat='Mins before Reminder: {0}'}" />-->
 							</VerticalStackLayout>
 
 							<VerticalStackLayout Grid.Column="1" Spacing="5">

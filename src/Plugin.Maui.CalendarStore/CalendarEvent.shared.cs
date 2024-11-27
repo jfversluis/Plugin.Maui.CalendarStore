@@ -66,6 +66,9 @@ public class CalendarEvent
 	/// <summary>
 	/// Gets the list of reminders for this event.
 	/// </summary>
+	/// <remarks>
+	/// On Windows only 1 reminder is supported. Therefore on Windows, this collection will always only contain 1 item.
+	/// </remarks>
 	public List<Reminder> Reminders { get; internal set;} = [];
 
 	/// <summary>

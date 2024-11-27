@@ -54,7 +54,7 @@ public partial class AddEventsPage : ContentPage
 			EventEndDate = eventToUpdate.EndDate.LocalDateTime;
 			EventEndTime = eventToUpdate.EndDate.LocalDateTime.TimeOfDay;
 			EventIsAllDay = eventToUpdate.IsAllDay;
-			MinsBeforeReminder = eventToUpdate.MinutesBeforeReminder;
+			//MinsBeforeReminder = eventToUpdate.MinutesBeforeReminder;
 			SelectedCalendar = Calendars
 				.Where(c => c.Id.Equals(eventToUpdate.CalendarId)).Single();
 
@@ -113,8 +113,8 @@ public partial class AddEventsPage : ContentPage
 				{
 					//best to add another check here to confirm if user wants to save with reminder - for this example
 
-					await calendarStore.UpdateEventWithReminder(eventToUpdate.Id, EventTitle, EventDescription,
-						EventLocation, startDateTime, startEndDateTime, EventIsAllDay, MinsBeforeReminder);
+					//await calendarStore.UpdateEventWithReminder(eventToUpdate.Id, EventTitle, EventDescription,
+					//	EventLocation, startDateTime, startEndDateTime, EventIsAllDay, MinsBeforeReminder);
 				}
 				else
 				{
@@ -134,8 +134,8 @@ public partial class AddEventsPage : ContentPage
 				}
 				if(HasReminder)
 				{
-					savedEventId = await calendarStore.CreateEventWithReminder(SelectedCalendar.Id, EventTitle,
-						EventDescription, EventLocation, startDateTime, startEndDateTime, MinsBeforeReminder);
+					//savedEventId = await calendarStore.CreateEventWithReminder(SelectedCalendar.Id, EventTitle,
+					//	EventDescription, EventLocation, startDateTime, startEndDateTime, MinsBeforeReminder);
 				}
 				else
 				{
