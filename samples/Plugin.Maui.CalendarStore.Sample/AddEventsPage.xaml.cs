@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace Plugin.Maui.CalendarStore.Sample;
 
@@ -55,8 +56,7 @@ public partial class AddEventsPage : ContentPage
 			EventEndDate = eventToUpdate.EndDate.LocalDateTime;
 			EventEndTime = eventToUpdate.EndDate.LocalDateTime.TimeOfDay;
 			EventIsAllDay = eventToUpdate.IsAllDay;
-			EventHasReminder = eventToUpdate.Reminders.Count > 0;
-			EventReminders =new ObservableCollection<Reminder>(eventToUpdate.Reminders);
+			EventReminders = new ObservableCollection<Reminder>(eventToUpdate.Reminders);
 			//MinsBeforeReminder = eventToUpdate.MinutesBeforeReminder;
 			SelectedCalendar = Calendars
 				.Where(c => c.Id.Equals(eventToUpdate.CalendarId)).Single();
@@ -111,41 +111,18 @@ public partial class AddEventsPage : ContentPage
 
 			// Check if we're updating an event
 			if (eventToUpdate is not null)
-			{
-				if (HasReminder)
-				{
-					//best to add another check here to confirm if user wants to save with reminder - for this example
-
-					await calendarStore.UpdateEventWithReminder(eventToUpdate.Id, EventTitle, EventDescription,
-						EventLocation, startDateTime, startEndDateTime, EventIsAllDay, MinsBeforeReminder);
-				}
-				else
-				{
-					await calendarStore.UpdateEvent(eventToUpdate.Id, EventTitle, EventDescription,
-						EventLocation, startDateTime, startEndDateTime, EventIsAllDay);
-				}
-
+		{
+				await calendarStore.UpdateEvent(eventToUpdate.Id, EventTitle, EventDescription,
+					EventLocation, startDateTime, startEndDateTime, EventIsAllDay, EventReminders.ToArray());
+				
 				await DisplayAlert("Event saved", $"The event has been successfully updated!", "OK");
 			}
 			else
 			{
-				// We could also not use this overload and just provide EventIsAllDay as a parameter
-				if (EventIsAllDay)
-				{
-					savedEventId = await calendarStore.CreateAllDayEvent(SelectedCalendar.Id, EventTitle,
-						EventDescription, EventLocation, startDateTime, startEndDateTime);
-				}
-				if(HasReminder)
-				{
-					savedEventId = await calendarStore.CreateEventWithReminder(SelectedCalendar.Id, EventTitle,
-						EventDescription, EventLocation, startDateTime, startEndDateTime, MinsBeforeReminder);
-				}
-				else
-				{
-					savedEventId = await calendarStore.CreateEvent(SelectedCalendar.Id, EventTitle,
-						EventDescription, EventLocation, startDateTime, startEndDateTime, reminders: EventReminders.ToArray());
-				}
-
+				savedEventId = await calendarStore.CreateEvent(SelectedCalendar.Id, EventTitle,
+					EventDescription, EventLocation, startDateTime, startEndDateTime, EventIsAllDay, EventReminders.ToArray());
+				
+				
 				await DisplayAlert("Event saved", $"The event has been successfully saved with ID: {savedEventId}!", "OK");
 			}
 
@@ -245,8 +222,12 @@ public partial class AddEventsPage : ContentPage
 
 	public void DltReminderBtn_Clicked(object sender, EventArgs e)
 	{
-		var _reminder = (Reminder)AddReminderBtn.CommandParameter;
+		var send = (Button)sender;
+		var _reminder = (Reminder)send.BindingContext;
 		EventReminders.Remove(_reminder);
-		OnPropertyChanged(nameof(EventReminders)); //doesn't update the UI hence why i clear up top
+		OnPropertyChanged(nameof(EventReminders)); 
 	}
+
+	
+
 }

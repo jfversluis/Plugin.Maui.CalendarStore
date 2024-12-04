@@ -24,7 +24,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			CalendarContract.Calendars.InterfaceConsts.CalendarAccessLevel,
 		];
 
-	readonly List<string> eventsColumns =[
+	readonly List<string> eventsColumns = [
 			CalendarContract.Events.InterfaceConsts.Id,
 			CalendarContract.Events.InterfaceConsts.CalendarId,
 			CalendarContract.Events.InterfaceConsts.Title,
@@ -194,7 +194,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 
 		var sDate = startDate ?? DateTimeOffset.Now.Add(defaultStartTimeFromNow);
-		var eDate = endDate ?? sDate.Add(defaultEndTimeFromStartTime);		
+		var eDate = endDate ?? sDate.Add(defaultEndTimeFromStartTime);
 
 		var calendarSpecificEvent =
 			$"{CalendarContract.Events.InterfaceConsts.Dtend} >= " +
@@ -307,7 +307,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		return savedId.ToString();
 
-		
+
 	}
 
 	/// <inheritdoc/>
@@ -328,7 +328,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	/// <inheritdoc/>
 	public async Task UpdateEvent(string eventId, string title, string description,
-		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, 
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
 		Reminder[]? reminders = null)
 	{
 		await EnsureWriteCalendarPermission();
@@ -383,7 +383,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		var updateCount = platformContentResolver?.Update(
 			ContentUris.WithAppendedId(eventsTableUri, platformEventId), eventToUpdate, null, null);
-		
+
 		if (updateCount != 1)
 		{
 			throw new CalendarStoreException(
@@ -394,7 +394,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (reminders is not null)
 		{
-			AddMultipleReminders(platformEventId,reminders);
+			AddMultipleReminders(platformEventId, reminders);
 		}
 	}
 	//void RemoveAllReminders(long eventId)
@@ -466,7 +466,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		foreach (var reminder in reminders)
 		{
 			// Add a new reminder
-			AddSingleReminder(eventId, reminder.ReminderInMinutes);			
+			AddSingleReminder(eventId, reminder.ReminderInMinutes);
 		}
 
 		// Remove any extra existing reminders not present in the new list
@@ -527,8 +527,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw new CalendarStoreException("There was an error adding a reminder to the event.");
 		}
 	}
-		
-	List<Reminder> GetAllReminderTimes(long eventId)
+
+	List<Reminder> GetAllEventReminders(long eventId)
 	{
 		// Query to fetch all reminders for the event
 		var selection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
@@ -554,7 +554,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 				Reminder remindr = new(eventStartTime.AddMinutes(-reminderMinutes))
 				{
 					ReminderInMinutes = reminderMinutes,
-				};				
+				};
 				reminderTimes.Add(remindr);
 			}
 			while (cursor.MoveToNext());
@@ -588,9 +588,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 			//var startTimeMillis = cursor.GetLong(cursor.GetColumnIndexOrThrow(CalendarContract.Events.InterfaceConsts.Dtstart));
 
 			var startTimeMillis = cursor.GetLong(cursor.GetColumnIndexOrThrow(CalendarContract.Events.InterfaceConsts.Dtstart));
-			return  DateTimeOffset.FromUnixTimeMilliseconds(startTimeMillis)
+			return DateTimeOffset.FromUnixTimeMilliseconds(startTimeMillis)
 										   .ToLocalTime(); // Convert to local time
-			
+
 		}
 
 		throw new CalendarStoreException($"Failed to retrieve start time for event with ID {eventId}.");
@@ -759,7 +759,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	// See: https://github.com/aosp-mirror/platform_packages_apps_calendar/blob/66d2a697bb910421d4958073be16a0237faf3531/src/com/android/calendar/Utils.kt#L730
 	static Android.Graphics.Color GetDisplayColorFromColor(Android.Graphics.Color color)
 	{
-        if (!OperatingSystem.IsAndroidVersionAtLeast(4, 1))
+		if (!OperatingSystem.IsAndroidVersionAtLeast(4, 1))
 		{
 			return color;
 		}
@@ -771,17 +771,16 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		hsv[2] = hsv[2] * 0.8f;
 		return Android.Graphics.Color.HSVToColor(hsv);
-    }
+	}
+
 
 	IEnumerable<CalendarEvent> ToEvents(ICursor cur, List<string> projection)
 	{
 		while (cur.MoveToNext())
 		{
-			Reminders = GetAllReminderTimes(eventId)
-			//// Retrieve reminder minutes for the event
-			//MinutesBeforeReminder = GetReminderMinutes(
-			//	cursor.GetString(projection.IndexOf(
-			//		 CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty)
+			yield return ToEvent(cur, projection);
+		}
+	}
 	CalendarEvent ToEvent(ICursor cursor, List<string> projection)
 	{
 		var timezone = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventTimezone));
@@ -819,12 +818,32 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty).ToList(),
 			// Retrieve reminder minutes for the event
-			MinutesBeforeReminder = GetReminderMinutes(
-				cursor.GetString(projection.IndexOf(
-					 CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty)
+			MinutesBeforeReminder = GetEventReminderInMinutes(cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty),
+			Reminders = GetAllEventReminders(eventId),
 		};
 	}
+	int GetEventReminderInMinutes(string eventId)
+	{
+		var reminderProjection = new[] { CalendarContract.Reminders.InterfaceConsts.Minutes };
+		var reminderSelection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
+		var reminderSelectionArgs = new[] { eventId };
+		var reminderCursor = platformContentResolver?.Query(
+			CalendarContract.Reminders.ContentUri,
+			reminderProjection,
+			reminderSelection,
+			reminderSelectionArgs,
+			null);
 
+		int minutes = 0; // Default to 0 if no reminder is found
+
+		if (reminderCursor != null && reminderCursor.MoveToFirst())
+		{
+			minutes = reminderCursor.GetInt(reminderCursor.GetColumnIndex(reminderProjection[0]));
+			reminderCursor.Close();
+		}
+
+		return minutes;
+	}
 	static IEnumerable<CalendarEventAttendee> ToAttendees(ICursor cur, List<string> projection)
 	{
 		while (cur.MoveToNext())

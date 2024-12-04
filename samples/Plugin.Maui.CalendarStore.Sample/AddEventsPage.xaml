@@ -108,10 +108,12 @@
 							>
 				<CollectionView.ItemTemplate>
 					<DataTemplate x:DataType="calendar:Reminder">
-						<HorizontalStackLayout HorizontalOptions="End">							
+						<HorizontalStackLayout HorizontalOptions="End">
+							
 							<Label Text="{Binding DateTime, StringFormat='{0:ddd, dd MMM yyyy} at {0:hh:mm:ss}'}"/>
+							
 							<Button Text="Delete" FontSize="18" WidthRequest="140"
-									Clicked="DltReminderBtn_Clicked" x:Name="DltReminderBtn" CommandParameter="{Binding .}"/>
+									Clicked="DltReminderBtn_Clicked" x:Name="DltReminderBtn" CommandParameter="{Binding}"/>
 						</HorizontalStackLayout>
 						
 					</DataTemplate>
