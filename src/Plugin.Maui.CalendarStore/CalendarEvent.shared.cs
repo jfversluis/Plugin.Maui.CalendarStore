@@ -71,10 +71,6 @@ public class CalendarEvent
 	/// </remarks>
 	public List<Reminder> Reminders { get; internal set; } = [];
 
-	/// <summary>
-	/// Gets whether this event has at least one reminder.
-	/// </summary>
-	public bool HasReminders => Reminders?.Count > 0;
 	public int MinutesBeforeReminder { get; internal set; }
 
 	/// <summary>

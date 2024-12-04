@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 
 namespace Plugin.Maui.CalendarStore.Sample;
 
@@ -57,7 +56,6 @@ public partial class AddEventsPage : ContentPage
 			EventEndTime = eventToUpdate.EndDate.LocalDateTime.TimeOfDay;
 			EventIsAllDay = eventToUpdate.IsAllDay;
 			EventReminders = new ObservableCollection<Reminder>(eventToUpdate.Reminders);
-			//MinsBeforeReminder = eventToUpdate.MinutesBeforeReminder;
 			SelectedCalendar = Calendars
 				.Where(c => c.Id.Equals(eventToUpdate.CalendarId)).Single();
 

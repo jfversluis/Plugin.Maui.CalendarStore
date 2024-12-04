@@ -28,7 +28,6 @@
 								<Label Text="{Binding StartDate, StringFormat='Start Date: {0}'}" />
 								<Label Text="{Binding EndDate, StringFormat='End Date: {0}'}" />
 								<Label Text="{Binding Duration, StringFormat='Duration: {0}'}" />
-								<Label Text="{Binding HasReminders, StringFormat='Has Reminder: {0}'}" />
 							</VerticalStackLayout>
 							
 							<VerticalStackLayout Grid.Column="2" Spacing="5" Grid.Row="0">

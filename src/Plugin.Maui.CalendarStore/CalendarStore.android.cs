@@ -303,7 +303,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 				"There was an error saving the event.");
 		}
 		// Add all reminders
-		AddMultipleReminders(savedId, reminders);
+		AddReminders(savedId, reminders);
 
 		return savedId.ToString();
 
@@ -394,7 +394,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		if (reminders is not null)
 		{
-			AddMultipleReminders(platformEventId, reminders);
+			AddReminders(platformEventId, reminders);
 		}
 	}
 	//void RemoveAllReminders(long eventId)
@@ -446,13 +446,12 @@ partial class CalendarStoreImplementation : ICalendarStore
 		platformContentResolver?.Delete(CalendarContract.Reminders.ContentUri, reminderSelection, reminderSelectionArgs);
 	}
 
-	/// <inheritdoc/>
+
 	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
 		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
 			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.IsAllDay, eventToUpdate.Reminders.ToArray());
 
-	/// <inheritdoc/>
-	void AddMultipleReminders(long eventId, Reminder[]? reminders)
+	void AddReminders(long eventId, Reminder[]? reminders)
 	{
 		if (reminders is null && reminders?.Length < 1)
 		{
@@ -463,12 +462,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		int index = 0;
 
-		foreach (var reminder in reminders)
-		{
-			// Add a new reminder
-			AddSingleReminder(eventId, reminder.ReminderInMinutes);
-		}
-
+		AddReminders(eventId,reminders);
+		
 		// Remove any extra existing reminders not present in the new list
 		for (int i = index; i < existingReminders.Count; i++)
 		{
@@ -585,8 +580,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 		if (cursor != null && cursor.MoveToFirst())
 		{
-			//var startTimeMillis = cursor.GetLong(cursor.GetColumnIndexOrThrow(CalendarContract.Events.InterfaceConsts.Dtstart));
-
+			
 			var startTimeMillis = cursor.GetLong(cursor.GetColumnIndexOrThrow(CalendarContract.Events.InterfaceConsts.Dtstart));
 			return DateTimeOffset.FromUnixTimeMilliseconds(startTimeMillis)
 										   .ToLocalTime(); // Convert to local time
