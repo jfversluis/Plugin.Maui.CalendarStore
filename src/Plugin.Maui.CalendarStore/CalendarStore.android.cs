@@ -82,7 +82,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<Calendar> GetCalendar(string calendarId)
 	{
-		var cursor = await GetPlatformCalendar(calendarId);
+		using var cursor = await GetPlatformCalendar(calendarId);
 
 		return ToCalendar(cursor, calendarColumns);
 	}
@@ -123,8 +123,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		ContentValues calendarToUpdate = new();
 
-		// We just want to know a calendar with this ID exists
-		_ = await GetPlatformCalendar(calendarId);
+		// We just want to know a calendar with this ID exists,
+		// but we also need to dispose the returned cursor.
+		using var cursor = await GetPlatformCalendar(calendarId);
 
 		calendarToUpdate.Put(CalendarContract.Calendars.InterfaceConsts.Id, calendarId);
 
@@ -195,7 +196,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 
 		var sDate = startDate ?? DateTimeOffset.Now.Add(defaultStartTimeFromNow);
-		var eDate = endDate ?? sDate.Add(defaultEndTimeFromStartTime);		
+		var eDate = endDate ?? sDate.Add(defaultEndTimeFromStartTime);
 
 		var calendarSpecificEvent =
 			$"{CalendarContract.Events.InterfaceConsts.Dtend} >= " +
@@ -260,8 +261,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await EnsureWriteCalendarPermission();
 
-		// We just want to know a calendar with this ID exists
-		_ = await GetPlatformCalendar(calendarId);
+		// We just want to know a calendar with this ID exists,
+		// but we also need to dispose the returned cursor.
+		using var cursor = await GetPlatformCalendar(calendarId);
 
 		ContentValues eventToInsert = new();
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
@@ -459,18 +461,26 @@ partial class CalendarStoreImplementation : ICalendarStore
 			$"{CalendarContract.Calendars.InterfaceConsts.Deleted} != 1 AND " +
 			$"{CalendarContract.Calendars.InterfaceConsts.Id} = {calendarId}";
 
-		using var cursor = platformContentResolver.Query(calendarsTableUri,
+		var cursor = platformContentResolver.Query(calendarsTableUri,
 			calendarColumns.ToArray(), queryConditions, null, null)
 			?? throw new CalendarStoreException("Error while querying calendars");
 
-		if (cursor.Count <= 0)
+		try
 		{
-			throw InvalidCalendar(calendarId);
+			if (cursor.Count <= 0)
+			{
+				throw InvalidCalendar(calendarId);
+			}
+
+			cursor.MoveToNext();
+			
+			return cursor;
 		}
-
-		cursor.MoveToNext();
-
-		return cursor;
+		catch
+		{
+			cursor.Dispose();
+			throw;
+		}
 	}
 
 	static IEnumerable<Calendar> ToCalendars(ICursor cursor, List<string> projection)
@@ -506,7 +516,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 	// See: https://github.com/aosp-mirror/platform_packages_apps_calendar/blob/66d2a697bb910421d4958073be16a0237faf3531/src/com/android/calendar/Utils.kt#L730
 	static Android.Graphics.Color GetDisplayColorFromColor(Android.Graphics.Color color)
 	{
-        if (!OperatingSystem.IsAndroidVersionAtLeast(4, 1))
+		if (!OperatingSystem.IsAndroidVersionAtLeast(4, 1))
 		{
 			return color;
 		}
@@ -518,7 +528,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		hsv[2] = hsv[2] * 0.8f;
 		return Android.Graphics.Color.HSVToColor(hsv);
-    }
+	}
 
 	IEnumerable<CalendarEvent> ToEvents(ICursor cur, List<string> projection)
 	{
