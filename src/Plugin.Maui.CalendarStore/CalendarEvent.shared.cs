@@ -71,8 +71,6 @@ public class CalendarEvent
 	/// </remarks>
 	public List<Reminder> Reminders { get; internal set; } = [];
 
-	public int MinutesBeforeReminder { get; internal set; }
-
 	/// <summary>
 	/// Gets the list of attendees for this event.
 	/// </summary>

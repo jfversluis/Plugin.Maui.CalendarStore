@@ -14,6 +14,5 @@ public class Reminder
         DateTime = dateTime;
     }
 
-	public int ReminderInMinutes { get; set; }
     public DateTimeOffset DateTime { get; set; }
 }
