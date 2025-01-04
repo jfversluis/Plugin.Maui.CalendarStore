@@ -92,13 +92,20 @@ public interface ICalendarStore
 	/// <param name="startDateTime">The start date and time for the event.</param>
 	/// <param name="endDateTime">The end date and time for the event.</param>
 	/// <param name="isAllDay">Indicates whether or not this event should be marked as an all-day event.</param>
+	/// <param name="reminders">
+	/// <para>Reminders for this event.</para>
+	/// <para>Note: on Windows only 1 reminder is supported. Only the first reminder in the collection will be used.</para>
+	/// </param>
 	/// <returns>The unique identifier of the newly created event.</returns>
-	/// <remarks>When <paramref name="isAllDay"/> is set to <see langword="true"/>, any time information in <paramref name="startDateTime"/> and <paramref name="endDateTime"/> is omitted.</remarks>
+	/// <remarks>
+	/// <para>When <paramref name="isAllDay"/> is set to <see langword="true"/>, any time information in <paramref name="startDateTime"/> and <paramref name="endDateTime"/> is omitted.</para>
+	/// <para>Note: on Windows only 1 reminder is supported. Only the first reminder in the <paramref name="reminders"/> collection will be used.</para>
+	/// </remarks>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="ArgumentException">Thrown when the calendar corresponding with the value in <paramref name="calendarId"/> cannot be found.</exception>
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task<string> CreateEvent(string calendarId, string title, string description, string location,
-		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false);
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false, Reminder[]? reminders = null);
 
 	/// <summary>
 	/// Creates a new event based on the provided <paramref name="calendarEvent"/> object.
@@ -135,12 +142,20 @@ public interface ICalendarStore
 	/// <param name="startDateTime">The updated start date and time for the event.</param>
 	/// <param name="endDateTime">The updated end date and time for the event.</param>
 	/// <param name="isAllDay">The updated value that indicates whether or not this event should be marked as an all-day event.</param>
+	/// <param name="reminders">
+	/// <para>Reminders for this event.</para>
+	/// <para>Note: on Windows only 1 reminder is supported. Only the first reminder in the collection will be used.</para>
+	/// </param>
 	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <remarks>
+	/// <para>Updating <paramref name="reminders"/> will clear all reminders not present in the provided collection. If <paramref name="reminders"/> is <see langword="null"/>, all reminders will be cleared.</para>
+	/// <para>Note: on Windows only 1 reminder is supported. Only the first reminder in the <paramref name="reminders"/> collection will be used.</para>
+	/// </remarks>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="ArgumentException">Thrown when the event corresponding with the value in <paramref name="eventId"/> cannot be found.</exception>
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task UpdateEvent(string eventId, string title, string description,
-		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay);
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, Reminder[]? reminders = null);
 
 	/// <summary>
 	/// Updates a event based on the provided <paramref name="eventToUpdate"/> object. 

@@ -15,12 +15,12 @@ public class Calendar
 	/// <param name="color">The color associated with this calendar.</param>
 	/// <param name="isReadOnly">Indicates whether this calendar is read-only.</param>
 	public Calendar(string id, string name, Color color, bool isReadOnly)
-    {
-        Id = id;
-        Name = name;
+	{
+		Id = id;
+		Name = name;
 		Color = color;
 		IsReadOnly = isReadOnly;
-    }
+	}
 
 	/// <summary>
 	/// Gets unique identifier for this calendar.

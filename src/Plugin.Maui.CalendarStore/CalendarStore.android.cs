@@ -13,19 +13,19 @@ partial class CalendarStoreImplementation : ICalendarStore
 	readonly Android.Net.Uri calendarsTableUri;
 	readonly Android.Net.Uri eventsTableUri;
 	readonly Android.Net.Uri attendeesTableUri;
+	readonly Android.Net.Uri remindersTableUri;
 
 	readonly ContentResolver platformContentResolver;
 
-	readonly List<string> calendarColumns = new()
-		{
+	readonly List<string> calendarColumns =
+		[
 			CalendarContract.Calendars.InterfaceConsts.Id,
 			CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName,
 			CalendarContract.Calendars.InterfaceConsts.CalendarColor,
 			CalendarContract.Calendars.InterfaceConsts.CalendarAccessLevel,
-		};
+		];
 
-	readonly List<string> eventsColumns = new()
-		{
+	readonly List<string> eventsColumns = [
 			CalendarContract.Events.InterfaceConsts.Id,
 			CalendarContract.Events.InterfaceConsts.CalendarId,
 			CalendarContract.Events.InterfaceConsts.Title,
@@ -36,14 +36,14 @@ partial class CalendarStoreImplementation : ICalendarStore
 			CalendarContract.Events.InterfaceConsts.Dtend,
 			CalendarContract.Events.InterfaceConsts.Deleted,
 			CalendarContract.Events.InterfaceConsts.EventTimezone,
-		};
+		];
 
-	readonly List<string> attendeesColumns = new()
-		{
+	readonly List<string> attendeesColumns =
+		[
 			CalendarContract.Attendees.InterfaceConsts.EventId,
 			CalendarContract.Attendees.InterfaceConsts.AttendeeEmail,
 			CalendarContract.Attendees.InterfaceConsts.AttendeeName,
-		};
+		];
 
 	public CalendarStoreImplementation()
 	{
@@ -58,6 +58,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 		attendeesTableUri = CalendarContract.Attendees.ContentUri
 			?? throw new CalendarStoreException(
 				"Could not determine Android attendees table URI.");
+
+		remindersTableUri = CalendarContract.Reminders.ContentUri
+			??  throw new CalendarStoreException(
+				"Could not determine Android reminders table URI.");
 
 		platformContentResolver = Platform.AppContext.ApplicationContext?.ContentResolver
 			?? throw new CalendarStoreException(
@@ -257,8 +261,18 @@ partial class CalendarStoreImplementation : ICalendarStore
 	/// <inheritdoc/>
 	public async Task<string> CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
-		bool isAllDay = false)
+		bool isAllDay = false, Reminder[]? reminders = null)
 	{
+		if (string.IsNullOrEmpty(calendarId))
+		{
+			throw new CalendarStoreException("Calendar ID cannot be null or empty.");
+		}
+
+		if (string.IsNullOrEmpty(title))
+		{
+			throw new CalendarStoreException("Event title cannot be null or empty.");
+		}
+
 		await EnsureWriteCalendarPermission();
 
 		// We just want to know a calendar with this ID exists,
@@ -298,6 +312,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 				"There was an error saving the event.");
 		}
 
+		// Add all reminders
+		AddReminders(savedId, startDateTime, reminders);
+
 		return savedId.ToString();
 	}
 
@@ -306,7 +323,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title,
 			calendarEvent.Description, calendarEvent.Location,
-			calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.IsAllDay);
+			calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.IsAllDay,
+			calendarEvent.Reminders.ToArray());
 	}
 
 	/// <inheritdoc/>
@@ -319,7 +337,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	/// <inheritdoc/>
 	public async Task UpdateEvent(string eventId, string title, string description,
-		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders = null)
 	{
 		await EnsureWriteCalendarPermission();
 
@@ -379,12 +398,165 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw new CalendarStoreException(
 				"There was an error updating the event.");
 		}
+
+		RemoveAllReminders(platformEventId);
+
+		if (reminders is not null)
+		{
+			AddReminders(platformEventId, startDateTime, reminders);
+		}
 	}
 
-	/// <inheritdoc/>
 	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
 		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
-			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate, eventToUpdate.IsAllDay);
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate,
+			eventToUpdate.IsAllDay, eventToUpdate.Reminders.ToArray());
+
+	void AddReminders(long eventId, DateTimeOffset eventStartDateTime, Reminder[]? reminders)
+	{
+		if (reminders is null || reminders.Length < 1)
+		{
+			return;
+		}
+
+		for (int i = 0; i < reminders.Length; i++)
+		{
+			var reminderValues = new ContentValues();
+			reminderValues.Put(CalendarContract.Reminders.InterfaceConsts.EventId, eventId);
+			reminderValues.Put(CalendarContract.Reminders.InterfaceConsts.Method, (int)RemindersMethod.Alert);
+			reminderValues.Put(CalendarContract.Reminders.InterfaceConsts.Minutes,
+				(int)eventStartDateTime.Subtract(reminders[i].DateTime).TotalMinutes);
+
+			_ = (platformContentResolver?.Insert(remindersTableUri, reminderValues))
+				?? throw new CalendarStoreException("There was an error adding a reminder to the event.");
+		}
+	}
+
+	void RemoveAllReminders(long eventId)
+	{
+		var selection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
+		var selectionArgs = new[] { eventId.ToString() };
+
+		var rowsDeleted = platformContentResolver?.Delete(
+			remindersTableUri,
+			selection,
+			selectionArgs);
+
+		if (rowsDeleted is null || rowsDeleted <= 0)
+		{
+			Console.WriteLine("No reminders were found to delete, or an error occurred.");
+		}
+		else
+		{
+			Console.WriteLine($"Deleted {rowsDeleted} reminder(s) for event ID {eventId}.");
+		}
+	}
+
+	List<Reminder> GetAllEventReminders(long eventId)
+	{
+		// Query to fetch all reminders for the event
+		var selection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
+		var selectionArgs = new[] { eventId.ToString() };
+
+		var reminderTimes = new List<Reminder>();
+
+		using var cursor = platformContentResolver?.Query(
+			remindersTableUri,
+			new[] { CalendarContract.Reminders.InterfaceConsts.Minutes },
+			selection,
+			selectionArgs,
+			null);
+		int reminderMinutes = 0;
+		if (cursor is not null && cursor.MoveToFirst())
+		{
+			// Retrieve the event start time
+			var eventStartTime = GetEventStartTime(eventId);
+
+			do
+			{
+				reminderMinutes = cursor.GetInt(cursor.GetColumnIndexOrThrow(CalendarContract.Reminders.InterfaceConsts.Minutes));
+				Reminder reminder = new(eventStartTime.AddMinutes(-reminderMinutes));
+				reminderTimes.Add(reminder);
+			}
+			while (cursor.MoveToNext());
+		}
+
+		return reminderTimes;
+	}
+	DateTimeOffset GetEventStartTime(long eventId)
+	{
+		var selection = $"{CalendarContract.Events.InterfaceConsts.Id} = ?";
+		var selectionArgs = new[] { eventId.ToString() };
+
+		using var cursor = platformContentResolver?.Query(
+			eventsTableUri,
+			new[] { CalendarContract.Events.InterfaceConsts.Dtstart },
+			selection,
+			selectionArgs,
+			null);
+
+		if (cursor is not null && cursor.MoveToFirst())
+		{
+			do
+			{
+				for (int i = 0; i < cursor.ColumnCount; i++)
+				{
+					Console.WriteLine($"{cursor.GetColumnName(i)}: {cursor.GetString(i)}");
+				}
+			} while (cursor.MoveToNext());
+		}
+
+		if (cursor is not null && cursor.MoveToFirst())
+		{
+			var startTimeMillis = cursor.GetLong(cursor.GetColumnIndexOrThrow(
+				CalendarContract.Events.InterfaceConsts.Dtstart));
+			
+			return DateTimeOffset.FromUnixTimeMilliseconds(startTimeMillis)
+				.ToLocalTime(); // Convert to local time
+
+		}
+
+		throw new CalendarStoreException($"Failed to retrieve start time for event with ID {eventId}.");
+	}
+
+	List<long> GetExistingReminders(long eventId)
+	{
+		if (platformContentResolver is null)
+		{
+			throw new InvalidOperationException("PlatformContentResolver is not initialized.");
+		}
+
+		var reminderIds = new List<long>();
+		var selection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
+		var selectionArgs = new[] { eventId.ToString() };
+
+		using var cursor = platformContentResolver.Query(
+			remindersTableUri,
+			new[] { CalendarContract.Reminders.InterfaceConsts.Id },
+			selection,
+			selectionArgs,
+			null);
+
+		if (cursor is not null && cursor.MoveToFirst())
+		{
+			do
+			{
+				try
+				{
+					var reminderId = cursor.GetLong(cursor.GetColumnIndexOrThrow(CalendarContract.Reminders.InterfaceConsts.Id));
+					reminderIds.Add(reminderId);
+				}
+				catch (Exception ex)
+				{
+					// Log or handle the exception if needed
+					Console.WriteLine($"Error retrieving reminder ID: {ex.Message}");
+				}
+			}
+			while (cursor.MoveToNext());
+		}
+
+		return reminderIds;
+	}
 
 	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
@@ -427,7 +599,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 	}
 
-	IEnumerable<CalendarEventAttendee> GetAttendees(string eventId)
+	List<CalendarEventAttendee> GetAttendees(string eventId)
 	{
 		// Android ids are always integers
 		if (!string.IsNullOrEmpty(eventId) && !long.TryParse(eventId, out _))
@@ -545,7 +717,23 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var start = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtstart)));
 		var end = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtend)));
 
-		return new(cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty,
+		DateTimeOffset SafeConvertTime(DateTimeOffset time, string tz)
+		{
+			try
+			{
+				return tz is null ? time : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(time, tz);
+			}
+			catch (TimeZoneNotFoundException)
+			{
+				return time; // Fallback if timezone is invalid
+			}
+		}
+		var EventIDString = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty;
+		if (!long.TryParse(EventIDString, out var eventId))
+		{
+			throw new CalendarStoreException($"Invalid Event ID: {EventIDString}");
+		}
+		return new(EventIDString,
 			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.CalendarId)) ?? string.Empty,
 			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Title)) ?? string.Empty)
 		{
@@ -557,10 +745,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 			StartDate = timezone is null ? start : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(start, timezone),
 			EndDate = timezone is null ? end : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(end, timezone),
 			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(
-				CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty).ToList()
+				CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty).ToList(),
+			Reminders = GetAllEventReminders(eventId),
 		};
 	}
-
+	
 	static IEnumerable<CalendarEventAttendee> ToAttendees(ICursor cur, List<string> projection)
 	{
 		while (cur.MoveToNext())
