@@ -10,6 +10,8 @@ namespace Plugin.Maui.CalendarStore;
 
 partial class CalendarStoreImplementation : ICalendarStore
 {
+	readonly Color defaultColor = Color.FromRgb(0x51, 0x2B, 0xD4);
+
 	readonly Android.Net.Uri calendarsTableUri;
 	readonly Android.Net.Uri eventsTableUri;
 	readonly Android.Net.Uri attendeesTableUri;
@@ -60,7 +62,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 				"Could not determine Android attendees table URI.");
 
 		remindersTableUri = CalendarContract.Reminders.ContentUri
-			??  throw new CalendarStoreException(
+			?? throw new CalendarStoreException(
 				"Could not determine Android reminders table URI.");
 
 		platformContentResolver = Platform.AppContext.ApplicationContext?.ContentResolver
@@ -98,23 +100,29 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		ContentValues calendarToCreate = new();
 
-		calendarToCreate.Put(
-			CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName,
-			name);
+		// Mandatory fields when inserting a calendar.
+		// See https://developer.android.com/reference/android/provider/CalendarContract.Calendars#operations.
+		calendarToCreate.Put(CalendarContract.Calendars.InterfaceConsts.AccountName, name);
+		calendarToCreate.Put(CalendarContract.Calendars.InterfaceConsts.AccountType, CalendarContract.AccountTypeLocal);
+		calendarToCreate.Put(CalendarContract.Calendars.Name, name);
+		calendarToCreate.Put(CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName, name);
+		calendarToCreate.Put(CalendarContract.Calendars.InterfaceConsts.CalendarColor, (color ?? defaultColor).AsColor());
+		calendarToCreate.Put(CalendarContract.Calendars.InterfaceConsts.CalendarAccessLevel, (int)CalendarAccess.AccessOwner);
+		calendarToCreate.Put(CalendarContract.Calendars.InterfaceConsts.OwnerAccount, name);
 
-		if (color is not null)
-		{
-			calendarToCreate.Put(CalendarContract.Calendars.InterfaceConsts.CalendarColor,
-				color.AsColor());
-		}
+		// Inserting new calendars should be done as a sync adapter.
+		var insertCalendarUri = calendarsTableUri.BuildUpon()
+		   ?.AppendQueryParameter(CalendarContract.CallerIsSyncadapter, "true")
+		   ?.AppendQueryParameter(CalendarContract.Calendars.InterfaceConsts.AccountName, name)
+		   ?.AppendQueryParameter(CalendarContract.Calendars.InterfaceConsts.AccountType, CalendarContract.AccountTypeLocal)
+		   ?.Build()
+		   ?? throw new CalendarStoreException("There was an error saving the calendar.");
 
-		var idUrl = platformContentResolver?.Insert(calendarsTableUri,
-			calendarToCreate);
+		var idUrl = platformContentResolver?.Insert(insertCalendarUri, calendarToCreate);
 
 		if (!long.TryParse(idUrl?.LastPathSegment, out var savedId))
 		{
-			throw new CalendarStoreException(
-				"There was an error saving the calendar.");
+			throw new CalendarStoreException("There was an error saving the calendar.");
 		}
 
 		return savedId.ToString();
@@ -157,34 +165,35 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 	}
 
-	///// <inheritdoc/>
-	//public async Task DeleteCalendar(string calendarId)
-	//{
-	//	await EnsureWriteCalendarPermission();
+	/// <inheritdoc/>
+	public async Task DeleteCalendar(string calendarId)
+	{
+		await EnsureWriteCalendarPermission();
 
-	//	// Android ids are always integers
-	//	if (string.IsNullOrEmpty(calendarId) ||
-	//		!long.TryParse(calendarId, out long platformCalendarId))
-	//	{
-	//		throw InvalidCalendar(calendarId);
-	//	}
+		// Android ids are always integers
+		if (string.IsNullOrEmpty(calendarId) ||
+			!long.TryParse(calendarId, out long platformCalendarId))
+		{
+			throw InvalidCalendar(calendarId);
+		}
 
-	//	// We just want to know a calendar with this ID exists
-	//	_ = await GetPlatformCalendar(calendarId);
+		// We just want to know a calendar with this ID exists,
+		// but we also need to dispose the returned cursor.
+		using var cursor = await GetPlatformCalendar(calendarId);
 
-	//	var deleteEventUri = ContentUris.WithAppendedId(calendarsTableUri, platformCalendarId);
-	//	var deleteCount = platformContentResolver?.Delete(deleteEventUri, null, null);
+		var deleteEventUri = ContentUris.WithAppendedId(calendarsTableUri, platformCalendarId);
+		var deleteCount = platformContentResolver?.Delete(deleteEventUri, null, null);
 
-	//	if (deleteCount != 1)
-	//	{
-	//		throw new CalendarStoreException(
-	//			"There was an error deleting the calendar.");
-	//	}
-	//}
+		if (deleteCount != 1)
+		{
+			throw new CalendarStoreException(
+				"There was an error deleting the calendar.");
+		}
+	}
 
-	///// <inheritdoc/>
-	//public Task DeleteCalendar(Calendar calendarToDelete) =>
-	//	DeleteCalendar(calendarToDelete.Id);
+	/// <inheritdoc/>
+	public Task DeleteCalendar(Calendar calendarToDelete) =>
+		DeleteCalendar(calendarToDelete.Id);
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(

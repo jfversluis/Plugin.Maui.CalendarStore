@@ -1,6 +1,4 @@
-﻿using Microsoft.Maui.Graphics;
-
-namespace Plugin.Maui.CalendarStore;
+﻿namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
 /// The CalendarStore API lets a user access information about the device's calendar and associated data.
@@ -38,13 +36,13 @@ public static partial class CalendarStore
 		Color? newColor = null) =>
 		await Default.UpdateCalendar(calendarId, newName, newColor);
 
-	///// <inheritdoc cref="ICalendarStore.DeleteCalendar(string)"/>
-	//public static async Task DeleteCalendar(string calendarId) =>
-	//	await Default.DeleteCalendar(calendarId);
+	/// <inheritdoc cref="ICalendarStore.DeleteCalendar(string)"/>
+	public static async Task DeleteCalendar(string calendarId) =>
+		await Default.DeleteCalendar(calendarId);
 
-	///// <inheritdoc cref="ICalendarStore.DeleteCalendar(Calendar)"/>
-	//public static async Task DeleteCalendar(Calendar calendarToDelete) =>
-	//	await Default.DeleteCalendar(calendarToDelete);
+	/// <inheritdoc cref="ICalendarStore.DeleteCalendar(Calendar)"/>
+	public static async Task DeleteCalendar(Calendar calendarToDelete) =>
+		await Default.DeleteCalendar(calendarToDelete);
 
 	/// <inheritdoc cref="ICalendarStore.GetEvents(string?, DateTimeOffset?, DateTimeOffset?)"/>
 	public static async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
