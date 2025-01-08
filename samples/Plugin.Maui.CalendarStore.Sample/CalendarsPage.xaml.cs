@@ -15,7 +15,7 @@ public partial class CalendarsPage : ContentPage
 		BindingContext = this;
 
 		InitializeComponent();
-		
+
 		this.calendarStore = calendarStore;
 	}
 
@@ -69,28 +69,26 @@ public partial class CalendarsPage : ContentPage
 
 	async void Delete_Clicked(object sender, EventArgs e)
 	{
-		await DisplayAlert("Oops", "This is still being worked on!", "OK");
+		if ((sender as BindableObject)?.
+			BindingContext is not Calendar calendarToRemove)
+		{
+			await DisplayAlert("Error", "Could not determine calendar to delete.", "OK");
+			return;
+		}
 
-		//if ((sender as BindableObject)?.
-		//	BindingContext is not Calendar calendarToRemove)
-		//{
-		//	await DisplayAlert("Error", "Could not determine calendar to delete.", "OK");
-		//	return;
-		//}
+		var promptResult = await DisplayActionSheet(
+			$"Are you sure you want to delete calendar \"{calendarToRemove.Name}\"?",
+			"Cancel", "Remove");
 
-		//var promptResult = await DisplayActionSheet(
-		//	$"Are you sure you want to delete calendar \"{calendarToRemove.Name}\"?",
-		//	"Cancel", "Remove");
+		if (promptResult.Equals("Cancel", StringComparison.OrdinalIgnoreCase))
+		{
+			return;
+		}
 
-		//if (promptResult.Equals("Cancel", StringComparison.OrdinalIgnoreCase))
-		//{
-		//	return;
-		//}
+		await CalendarStore.Default.DeleteCalendar(calendarToRemove.Id);
+		Calendars.Remove(calendarToRemove);
 
-		//await CalendarStore.Default.DeleteCalendar(calendarToRemove.Id);
-		//Calendars.Remove(calendarToRemove);
-
-		//await DisplayAlert("Success", "Calendar deleted!", "OK");
+		await DisplayAlert("Success", "Calendar deleted!", "OK");
 	}
 
 	async Task LoadCalendars()
