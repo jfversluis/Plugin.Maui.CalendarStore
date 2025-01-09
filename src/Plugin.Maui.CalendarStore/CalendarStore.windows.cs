@@ -1,7 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Graphics;
-using Windows.ApplicationModel.Appointments;
+﻿using Windows.ApplicationModel.Appointments;
 
 namespace Plugin.Maui.CalendarStore;
 
@@ -12,7 +9,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	async Task<AppointmentStore> GetAppointmentStore(bool requestWrite = false)
 	{
-		if(store is not null &&
+		if (store is not null &&
 			(canWriteToStore || !requestWrite))
 		{
 			return store;
@@ -22,7 +19,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			requestWrite ? AppointmentStoreAccessType.AllCalendarsReadWrite
 			: AppointmentStoreAccessType.AllCalendarsReadOnly).AsTask();
 		canWriteToStore = requestWrite;
-		return store; 
+		return store;
 	}
 
 	/// <inheritdoc/>
@@ -57,14 +54,14 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var platformCalendarManager = await GetAppointmentStore(true)
 			.ConfigureAwait(false);
 
-		var calendarToCreate = 
+		var calendarToCreate =
 			await platformCalendarManager.CreateAppointmentCalendarAsync(name)
 			.AsTask().ConfigureAwait(false);
 
 		if (color is not null)
 		{
 			calendarToCreate.DisplayColor = AsPlatform(color);
-			
+
 			await calendarToCreate.SaveAsync()
 				.AsTask().ConfigureAwait(false);
 		}
@@ -90,25 +87,25 @@ partial class CalendarStoreImplementation : ICalendarStore
 			.AsTask().ConfigureAwait(false);
 	}
 
-	///// <inheritdoc/>
-	//public async Task DeleteCalendar(string calendarId)
-	//{
-	//	await EnsureWriteCalendarPermission();
+	/// <inheritdoc/>
+	public async Task DeleteCalendar(string calendarId)
+	{
+		await EnsureWriteCalendarPermission();
 
-	//	var platformCalendarManager = await GetAppointmentStore(true)
-	//		.ConfigureAwait(false);
+		var platformCalendarManager = await GetAppointmentStore(true)
+			.ConfigureAwait(false);
 
-	//	var calendarToDelete =
-	//		await platformCalendarManager.GetAppointmentCalendarAsync(calendarId)
-	//		.AsTask().ConfigureAwait(false);
+		var calendarToDelete =
+			await platformCalendarManager.GetAppointmentCalendarAsync(calendarId)
+			.AsTask().ConfigureAwait(false);
 
-	//	await calendarToDelete.DeleteAsync()
-	//		.AsTask().ConfigureAwait(false);
-	//}
+		await calendarToDelete.DeleteAsync()
+			.AsTask().ConfigureAwait(false);
+	}
 
-	///// <inheritdoc/>
-	//public Task DeleteCalendar(Calendar calendarToDelete) =>
-	//	DeleteCalendar(calendarToDelete.Id);
+	/// <inheritdoc/>
+	public Task DeleteCalendar(Calendar calendarToDelete) =>
+		DeleteCalendar(calendarToDelete.Id);
 
 	/// <inheritdoc/>
 	public async Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,
@@ -136,7 +133,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// dates
 		var sDate = startDate ?? DateTimeOffset.Now.Add(CalendarStore.defaultStartTimeFromNow);
 		var eDate = endDate ?? sDate.Add(CalendarStore.defaultEndTimeFromStartTime);
-		
+
 		if (eDate < sDate)
 		{
 			eDate = sDate;
@@ -272,7 +269,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		var e = await GetPlatformEvent(eventId)
 			?? throw CalendarStore.InvalidEvent(eventId);
-		
+
 		var platformCalendarManager = await GetAppointmentStore(true);
 
 		var calendar = await platformCalendarManager
@@ -290,7 +287,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	static async Task EnsureWriteCalendarPermission()
 	{
-		var permissionResult = 
+		var permissionResult =
 			await Permissions.RequestAsync<Permissions.CalendarWrite>();
 
 		if (permissionResult != PermissionStatus.Granted)

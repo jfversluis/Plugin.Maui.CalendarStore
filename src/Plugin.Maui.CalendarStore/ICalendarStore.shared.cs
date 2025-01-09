@@ -1,7 +1,4 @@
-﻿using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Graphics;
-
-namespace Plugin.Maui.CalendarStore;
+﻿namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
 /// The CalendarStore API lets a user access information about the device's calendar and associated data.
@@ -45,21 +42,21 @@ public interface ICalendarStore
 	/// <exception cref="ArgumentException">Thrown when the calendar corresponding with the value in <paramref name="calendarId"/> cannot be found.</exception>
 	Task UpdateCalendar(string calendarId, string newName, Color? newColor = null);
 
-	///// <summary>
-	///// Deletes a calendar, specified by its unique ID, from the device.
-	///// </summary>
-	///// <param name="calendarId">The unique identifier of the calendar to be deleted.</param>
-	///// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
-	///// <remarks>If the calendar is part of a cloud service, the calendar might also be deleted from all other devices where the calendar is used.</remarks>
-	//Task DeleteCalendar(string calendarId);
+	/// <summary>
+	/// Deletes a calendar, specified by its unique ID, from the device.
+	/// </summary>
+	/// <param name="calendarId">The unique identifier of the calendar to be deleted.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <remarks>If the calendar is part of a cloud service, the calendar might also be deleted from all other devices where the calendar is used.</remarks>
+	Task DeleteCalendar(string calendarId);
 
-	///// <summary>
-	///// Deletes the given calendar from the device.
-	///// </summary>
-	///// <param name="calendarToDelete">The calendar object that is to be deleted.</param>
-	///// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
-	///// <remarks>If the calendar is part of a cloud service, the calendar might also be deleted from all other devices where the calendar is used.</remarks>
-	//Task DeleteCalendar(Calendar calendarToDelete);
+	/// <summary>
+	/// Deletes the given calendar from the device.
+	/// </summary>
+	/// <param name="calendarToDelete">The calendar object that is to be deleted.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <remarks>If the calendar is part of a cloud service, the calendar might also be deleted from all other devices where the calendar is used.</remarks>
+	Task DeleteCalendar(Calendar calendarToDelete);
 
 	/// <summary>
 	/// Retrieves events from a specific calendar or all calendars from the device.
