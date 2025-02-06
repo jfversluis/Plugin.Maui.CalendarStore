@@ -7,48 +7,50 @@
 			 x:DataType="local:CalendarsPage"
 			 Title="Calendars">
 
-	<VerticalStackLayout Spacing="10" Margin="10">
-		<Label Text="Note: any action you take here on calendar, will have effect on the calendars on this device." />
+	<ScrollView>
+		<VerticalStackLayout Spacing="10" Margin="10">
+			<Label Text="Note: any action you take here on calendar, will have effect on the calendars on this device." />
 
-		<HorizontalStackLayout Spacing="10">
-			<Button Text="Create Calendar..." Clicked="CreateCalendar_Clicked" />
-			<Button Text="Load Calendars" Clicked="LoadCalendars_Clicked" />
-		</HorizontalStackLayout>
+			<HorizontalStackLayout Spacing="10">
+				<Button Text="Create Calendar..." Clicked="CreateCalendar_Clicked" />
+				<Button Text="Load Calendars" Clicked="LoadCalendars_Clicked" />
+			</HorizontalStackLayout>
 
-		<VerticalStackLayout BindableLayout.ItemsSource="{Binding Calendars}"
-							 Spacing="5">
-			<BindableLayout.ItemTemplate>
-				<DataTemplate x:DataType="calendars:Calendar">
-					<Grid ColumnDefinitions="*, 100">
-						<VerticalStackLayout Grid.Column="0">
-							<HorizontalStackLayout Spacing="10">
-								<BoxView Color="{Binding Color}"
-										 WidthRequest="20"
-										 HeightRequest="20" />
+			<VerticalStackLayout BindableLayout.ItemsSource="{Binding Calendars}"
+								 Spacing="5">
+				<BindableLayout.ItemTemplate>
+					<DataTemplate x:DataType="calendars:Calendar">
+						<Grid ColumnDefinitions="*, 100">
+							<VerticalStackLayout Grid.Column="0">
+								<HorizontalStackLayout Spacing="10">
+									<BoxView Color="{Binding Color}"
+											 WidthRequest="20"
+											 HeightRequest="20" />
 
-								<Label Text="{Binding Name, StringFormat='Name: {0}'}"
-									   FontSize="25" />
-							</HorizontalStackLayout>
+									<Label Text="{Binding Name, StringFormat='Name: {0}'}"
+										   FontSize="25" />
+								</HorizontalStackLayout>
 
-							<HorizontalStackLayout Margin="30,0,0,0">
-								<Label Text="{Binding Id, StringFormat='ID: {0}, '}" />
-								<Label Text="{Binding IsReadOnly, StringFormat='Read-only: {0}'}" />
-							</HorizontalStackLayout>
-						</VerticalStackLayout>
+								<HorizontalStackLayout Margin="30,0,0,0">
+									<Label Text="{Binding Id, StringFormat='ID: {0}, '}" />
+									<Label Text="{Binding IsReadOnly, StringFormat='Read-only: {0}'}" />
+								</HorizontalStackLayout>
+							</VerticalStackLayout>
 
-						<VerticalStackLayout Grid.Column="1" Spacing="5">
-						<Button Text="Update"
-								Clicked="Update_Clicked"
-								VerticalOptions="Center"/>
-							
-						<Button Text="Delete"
-								BackgroundColor="OrangeRed"
-								Clicked="Delete_Clicked"
-								VerticalOptions="Center"/>
-						</VerticalStackLayout>
-					</Grid>
-				</DataTemplate>
-			</BindableLayout.ItemTemplate>
+							<VerticalStackLayout Grid.Column="1" Spacing="5">
+								<Button Text="Update"
+										Clicked="Update_Clicked"
+										VerticalOptions="Center"/>
+
+								<Button Text="Delete"
+										BackgroundColor="OrangeRed"
+										Clicked="Delete_Clicked"
+										VerticalOptions="Center"/>
+							</VerticalStackLayout>
+						</Grid>
+					</DataTemplate>
+				</BindableLayout.ItemTemplate>
+			</VerticalStackLayout>
 		</VerticalStackLayout>
-	</VerticalStackLayout>
+	</ScrollView>
 </ContentPage>
