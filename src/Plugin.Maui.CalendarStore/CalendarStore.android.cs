@@ -247,7 +247,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// Android ids are always integers
 		if (!string.IsNullOrEmpty(eventId) && !long.TryParse(eventId, out _))
 		{
-			throw InvalidCalendar(eventId);
+			throw InvalidEvent(eventId);
 		}
 
 		var calendarSpecificEvent =
@@ -296,7 +296,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			endDateTime.ToUnixTimeMilliseconds());
 
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.EventTimezone,
-			TimeZoneInfo.Local.StandardName);
+			TimeZoneInfo.Local.Id);
 
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.AllDay,
 			isAllDay);
@@ -613,7 +613,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// Android ids are always integers
 		if (!string.IsNullOrEmpty(eventId) && !long.TryParse(eventId, out _))
 		{
-			throw InvalidCalendar(eventId);
+			throw InvalidEvent(eventId);
 		}
 
 		var attendeeFilter =
