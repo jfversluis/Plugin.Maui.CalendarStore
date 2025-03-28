@@ -289,6 +289,13 @@ partial class CalendarStoreImplementation : ICalendarStore
 		using var cursor = await GetPlatformCalendar(calendarId);
 
 		ContentValues eventToInsert = new();
+		if (isAllDay)
+		{
+			// Set the time component to midnight in UTC for all-day events
+			startDateTime = new DateTimeOffset(startDateTime.Date, TimeSpan.Zero).ToUniversalTime();
+			endDateTime = new DateTimeOffset(endDateTime.Date, TimeSpan.Zero).ToUniversalTime();
+		}
+
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
 			startDateTime.ToUnixTimeMilliseconds());
 
@@ -296,7 +303,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			endDateTime.ToUnixTimeMilliseconds());
 
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.EventTimezone,
-			TimeZoneInfo.Local.Id);
+			isAllDay ? "UTC" : TimeZoneInfo.Local.Id);
 
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.AllDay,
 			isAllDay);
@@ -519,7 +526,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			var startTimeMillis = cursor.GetLong(cursor.GetColumnIndexOrThrow(
 				CalendarContract.Events.InterfaceConsts.Dtstart));
-			
+
 			return DateTimeOffset.FromUnixTimeMilliseconds(startTimeMillis)
 				.ToLocalTime(); // Convert to local time
 
@@ -654,7 +661,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			}
 
 			cursor.MoveToNext();
-			
+
 			return cursor;
 		}
 		catch
@@ -758,7 +765,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Reminders = GetAllEventReminders(eventId),
 		};
 	}
-	
+
 	static IEnumerable<CalendarEventAttendee> ToAttendees(ICursor cur, List<string> projection)
 	{
 		while (cur.MoveToNext())
