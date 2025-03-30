@@ -535,45 +535,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 		throw new CalendarStoreException($"Failed to retrieve start time for event with ID {eventId}.");
 	}
 
-	List<long> GetExistingReminders(long eventId)
-	{
-		if (platformContentResolver is null)
-		{
-			throw new InvalidOperationException("PlatformContentResolver is not initialized.");
-		}
-
-		var reminderIds = new List<long>();
-		var selection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
-		var selectionArgs = new[] { eventId.ToString() };
-
-		using var cursor = platformContentResolver.Query(
-			remindersTableUri,
-			new[] { CalendarContract.Reminders.InterfaceConsts.Id },
-			selection,
-			selectionArgs,
-			null);
-
-		if (cursor is not null && cursor.MoveToFirst())
-		{
-			do
-			{
-				try
-				{
-					var reminderId = cursor.GetLong(cursor.GetColumnIndexOrThrow(CalendarContract.Reminders.InterfaceConsts.Id));
-					reminderIds.Add(reminderId);
-				}
-				catch (Exception ex)
-				{
-					// Log or handle the exception if needed
-					Console.WriteLine($"Error retrieving reminder ID: {ex.Message}");
-				}
-			}
-			while (cursor.MoveToNext());
-		}
-
-		return reminderIds;
-	}
-
 	/// <inheritdoc/>
 	public async Task DeleteEvent(string eventId)
 	{
