@@ -21,50 +21,72 @@ public partial class CalendarsPage : ContentPage
 
 	async void LoadCalendars_Clicked(object sender, EventArgs e)
 	{
-		await LoadCalendars();
+		try
+		{
+			await LoadCalendars();
+		}
+		catch (Exception ex)
+		{
+			await DisplayAlert("Error", ex.Message, "OK");
+		}
+		
 	}
 
 	async void CreateCalendar_Clicked(object sender, EventArgs e)
 	{
-		var createResult = await DisplayPromptAsync("Create Calendar",
-			"What do you want to name the calendar?");
-
-		if (string.IsNullOrWhiteSpace(createResult))
+		try
 		{
-			return;
+			var createResult = await DisplayPromptAsync("Create Calendar",
+				"What do you want to name the calendar?");
+
+			if (string.IsNullOrWhiteSpace(createResult))
+			{
+				return;
+			}
+
+			await calendarStore.CreateCalendar(createResult);
+
+			await LoadCalendars();
+
+			await DisplayAlert("Calendar Created",
+				$"Calendar \"{createResult}\" created successfully.", "OK");
 		}
-
-		await calendarStore.CreateCalendar(createResult);
-
-		await LoadCalendars();
-
-		await DisplayAlert("Calendar Created",
-			$"Calendar \"{createResult}\" created successfully.", "OK");
+		catch (Exception ex)
+		{
+			await DisplayAlert("Error", ex.Message, "OK");
+		}
 	}
 
 	async void Update_Clicked(object sender, EventArgs e)
 	{
-		if ((sender as BindableObject)?.
-			BindingContext is not Calendar calendarToUpdate)
+		try
 		{
-			await DisplayAlert("Error", "Could not determine calendar to update.", "OK");
-			return;
+			if ((sender as BindableObject)?.
+				BindingContext is not Calendar calendarToUpdate)
+			{
+				await DisplayAlert("Error", "Could not determine calendar to update.", "OK");
+				return;
+			}
+
+			var updateResult = await DisplayPromptAsync("Update Calendar",
+				"Enter the updated calendar name:", placeholder: calendarToUpdate.Name);
+
+			if (string.IsNullOrWhiteSpace(updateResult))
+			{
+				return;
+			}
+
+			await calendarStore.UpdateCalendar(calendarToUpdate.Id, updateResult);
+
+			await LoadCalendars();
+
+			await DisplayAlert("Calendar Updated",
+				$"Calendar \"{updateResult}\" updated successfully.", "OK");
 		}
-
-		var updateResult = await DisplayPromptAsync("Update Calendar",
-			"Enter the updated calendar name:", placeholder: calendarToUpdate.Name);
-
-		if (string.IsNullOrWhiteSpace(updateResult))
+		catch (Exception ex)
 		{
-			return;
+			await DisplayAlert("Error", ex.Message, "OK");
 		}
-
-		await calendarStore.UpdateCalendar(calendarToUpdate.Id, updateResult);
-
-		await LoadCalendars();
-
-		await DisplayAlert("Calendar Updated",
-			$"Calendar \"{updateResult}\" updated successfully.", "OK");
 	}
 
 	async void Delete_Clicked(object sender, EventArgs e)
