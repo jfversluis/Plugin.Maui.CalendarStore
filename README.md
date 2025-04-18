@@ -57,7 +57,7 @@ See an example of a complete `Entitlements.plist` file below.
 <dict>
     <key>com.apple.security.app-sandbox</key>
     <true/>
-    <key>com.apple.security.personal-information.calendar</key>
+    <key>com.apple.security.personal-information.calendars</key>
     <true/>
 </dict>
 </plist>
