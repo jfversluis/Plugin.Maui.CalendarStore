@@ -772,3 +772,4 @@ partial class CalendarStoreImplementation : ICalendarStore
 			cursor.Close();
 		}
 	}
+}
