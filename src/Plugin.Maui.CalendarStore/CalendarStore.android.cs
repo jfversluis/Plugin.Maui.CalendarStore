@@ -22,30 +22,30 @@ partial class CalendarStoreImplementation : ICalendarStore
 	readonly List<string> calendarColumns =
 		[
 			CalendarContract.Calendars.InterfaceConsts.Id,
-			CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName,
-			CalendarContract.Calendars.InterfaceConsts.CalendarColor,
-			CalendarContract.Calendars.InterfaceConsts.CalendarAccessLevel,
-		];
+				CalendarContract.Calendars.InterfaceConsts.CalendarDisplayName,
+				CalendarContract.Calendars.InterfaceConsts.CalendarColor,
+				CalendarContract.Calendars.InterfaceConsts.CalendarAccessLevel,
+			];
 
 	readonly List<string> eventsColumns = [
 			CalendarContract.Events.InterfaceConsts.Id,
-			CalendarContract.Events.InterfaceConsts.CalendarId,
-			CalendarContract.Events.InterfaceConsts.Title,
-			CalendarContract.Events.InterfaceConsts.Description,
-			CalendarContract.Events.InterfaceConsts.EventLocation,
-			CalendarContract.Events.InterfaceConsts.AllDay,
-			CalendarContract.Events.InterfaceConsts.Dtstart,
-			CalendarContract.Events.InterfaceConsts.Dtend,
-			CalendarContract.Events.InterfaceConsts.Deleted,
-			CalendarContract.Events.InterfaceConsts.EventTimezone,
-		];
+				CalendarContract.Events.InterfaceConsts.CalendarId,
+				CalendarContract.Events.InterfaceConsts.Title,
+				CalendarContract.Events.InterfaceConsts.Description,
+				CalendarContract.Events.InterfaceConsts.EventLocation,
+				CalendarContract.Events.InterfaceConsts.AllDay,
+				CalendarContract.Events.InterfaceConsts.Dtstart,
+				CalendarContract.Events.InterfaceConsts.Dtend,
+				CalendarContract.Events.InterfaceConsts.Deleted,
+				CalendarContract.Events.InterfaceConsts.EventTimezone,
+			];
 
 	readonly List<string> attendeesColumns =
 		[
 			CalendarContract.Attendees.InterfaceConsts.EventId,
-			CalendarContract.Attendees.InterfaceConsts.AttendeeEmail,
-			CalendarContract.Attendees.InterfaceConsts.AttendeeName,
-		];
+				CalendarContract.Attendees.InterfaceConsts.AttendeeEmail,
+				CalendarContract.Attendees.InterfaceConsts.AttendeeName,
+			];
 
 	public CalendarStoreImplementation()
 	{
@@ -90,7 +90,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		using var cursor = await GetPlatformCalendar(calendarId);
 
-		return ToCalendar(cursor, calendarColumns);
+		var calendar = ToCalendar(cursor, calendarColumns);
+
+		SafeCloseCursor(cursor);
+
+		return calendar;
 	}
 
 	/// <inheritdoc/>
@@ -112,11 +116,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		// Inserting new calendars should be done as a sync adapter.
 		var insertCalendarUri = calendarsTableUri.BuildUpon()
-		   ?.AppendQueryParameter(CalendarContract.CallerIsSyncadapter, "true")
-		   ?.AppendQueryParameter(CalendarContract.Calendars.InterfaceConsts.AccountName, name)
-		   ?.AppendQueryParameter(CalendarContract.Calendars.InterfaceConsts.AccountType, CalendarContract.AccountTypeLocal)
-		   ?.Build()
-		   ?? throw new CalendarStoreException("There was an error saving the calendar.");
+		?.AppendQueryParameter(CalendarContract.CallerIsSyncadapter, "true")
+		?.AppendQueryParameter(CalendarContract.Calendars.InterfaceConsts.AccountName, name)
+		?.AppendQueryParameter(CalendarContract.Calendars.InterfaceConsts.AccountType, CalendarContract.AccountTypeLocal)
+		?.Build()
+		?? throw new CalendarStoreException("There was an error saving the calendar.");
 
 		var idUrl = platformContentResolver?.Insert(insertCalendarUri, calendarToCreate);
 
@@ -158,6 +162,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var updateCount = platformContentResolver?.Update(calendarToUpdateUri,
 			calendarToUpdate, null, null);
 
+		SafeCloseCursor(cursor);
+
 		if (updateCount != 1)
 		{
 			throw new CalendarStoreException(
@@ -183,6 +189,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		var deleteEventUri = ContentUris.WithAppendedId(calendarsTableUri, platformCalendarId);
 		var deleteCount = platformContentResolver?.Delete(deleteEventUri, null, null);
+
+		SafeCloseCursor(cursor);
 
 		if (deleteCount != 1)
 		{
@@ -263,8 +271,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 		}
 
 		cursor.MoveToNext();
+		var _event = ToEvent(cursor, eventsColumns);
+		SafeCloseCursor(cursor);
 
-		return ToEvent(cursor, eventsColumns);
+		return _event;
 	}
 
 	/// <inheritdoc/>
@@ -331,6 +341,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// Add all reminders
 		AddReminders(savedId, startDateTime, reminders);
 
+		SafeCloseCursor(cursor);
+
 		return savedId.ToString();
 	}
 
@@ -381,6 +393,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 				break;
 			}
 		}
+
+		SafeCloseCursor(cursor);
 
 		if (platformEventId <= 0)
 		{
@@ -495,6 +509,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 				reminderTimes.Add(reminder);
 			}
 			while (cursor.MoveToNext());
+
+			SafeCloseCursor(cursor);
 		}
 
 		return reminderTimes;
@@ -526,6 +542,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			var startTimeMillis = cursor.GetLong(cursor.GetColumnIndexOrThrow(
 				CalendarContract.Events.InterfaceConsts.Dtstart));
+
+			SafeCloseCursor(cursor);
 
 			return DateTimeOffset.FromUnixTimeMilliseconds(startTimeMillis)
 				.ToLocalTime(); // Convert to local time
@@ -638,6 +656,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			yield return ToCalendar(cursor, projection);
 		}
+
+		SafeCloseCursor(cursor);
 	}
 
 	static Calendar ToCalendar(ICursor cursor, List<string> projection)
@@ -685,6 +705,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			yield return ToEvent(cur, projection);
 		}
+
+		SafeCloseCursor(cur);
 	}
 
 	CalendarEvent ToEvent(ICursor cursor, List<string> projection)
@@ -733,6 +755,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			yield return ToAttendee(cur, projection);
 		}
+
+		SafeCloseCursor(cur);
 	}
 
 	static CalendarEventAttendee ToAttendee(ICursor cur, List<string> attendeesProjection) =>
@@ -740,4 +764,12 @@ partial class CalendarStoreImplementation : ICalendarStore
 			CalendarContract.Attendees.InterfaceConsts.AttendeeName)) ?? string.Empty,
 			cur.GetString(attendeesProjection.IndexOf(
 				CalendarContract.Attendees.InterfaceConsts.AttendeeEmail)) ?? string.Empty);
+
+	static void SafeCloseCursor(ICursor? cursor)
+	{
+		if (cursor is not null && !cursor.IsClosed)
+		{
+			cursor.Close();
+		}
+	}
 }
