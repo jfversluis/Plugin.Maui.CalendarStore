@@ -244,11 +244,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var instancesUri = builder.Build()
 			?? throw new CalendarStoreException("Could not build Instances query URI.");
 
-		var selection = $"{CalendarContract.Events.InterfaceConsts.Deleted} != 1";
-		if (!string.IsNullOrEmpty(calendarId))
-		{
-			selection += $" AND {CalendarContract.Events.InterfaceConsts.CalendarId} = {calendarId}";
-		}
+		var selection = CalendarStore.BuildInstancesSelection(
+			CalendarContract.Events.InterfaceConsts.Deleted,
+			CalendarContract.Events.InterfaceConsts.CalendarId,
+			calendarId);
 
 		var sortOrder = $"{CalendarContract.Instances.Begin} ASC";
 
@@ -827,31 +826,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 			IsAllDay = allDay,
 			StartDate = SafeConvertTime(start, timezone),
 			EndDate = SafeConvertTime(end, timezone),
-			Attendees = GetCachedAttendees(eventIdString, attendeesCache),
-			Reminders = GetCachedReminders(eventId, remindersCache),
+			Attendees = CalendarStore.GetOrAdd(attendeesCache, eventIdString,
+				id => GetAttendees(id).ToList()),
+			Reminders = CalendarStore.GetOrAdd(remindersCache, eventId,
+				id => GetAllEventReminders(id)),
 		};
-	}
-
-	List<CalendarEventAttendee> GetCachedAttendees(string eventId,
-		Dictionary<string, List<CalendarEventAttendee>> cache)
-	{
-		if (!cache.TryGetValue(eventId, out var attendees))
-		{
-			attendees = GetAttendees(eventId).ToList();
-			cache[eventId] = attendees;
-		}
-		return attendees;
-	}
-
-	List<Reminder> GetCachedReminders(long eventId,
-		Dictionary<long, List<Reminder>> cache)
-	{
-		if (!cache.TryGetValue(eventId, out var reminders))
-		{
-			reminders = GetAllEventReminders(eventId);
-			cache[eventId] = reminders;
-		}
-		return reminders;
 	}
 
 	static IEnumerable<CalendarEventAttendee> ToAttendees(ICursor cur, List<string> projection)

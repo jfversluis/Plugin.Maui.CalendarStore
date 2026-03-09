@@ -61,4 +61,72 @@ public class DateFilterTests
 		// Assert
 		Assert.Equal(expectedMillis, actual);
 	}
+
+	[Fact]
+	public void BuildInstancesSelection_AlwaysExcludesDeleted()
+	{
+		var result = CalendarStore.BuildInstancesSelection("deleted", "calendar_id");
+
+		Assert.Equal("deleted != 1", result);
+	}
+
+	[Fact]
+	public void BuildInstancesSelection_WithCalendarId_AppendsFilter()
+	{
+		var result = CalendarStore.BuildInstancesSelection("deleted", "calendar_id", "42");
+
+		Assert.Equal("deleted != 1 AND calendar_id = 42", result);
+	}
+
+	[Fact]
+	public void BuildInstancesSelection_WithNullCalendarId_ExcludesDeletedOnly()
+	{
+		var result = CalendarStore.BuildInstancesSelection("deleted", "calendar_id", null);
+
+		Assert.Equal("deleted != 1", result);
+	}
+
+	[Fact]
+	public void BuildInstancesSelection_WithEmptyCalendarId_ExcludesDeletedOnly()
+	{
+		var result = CalendarStore.BuildInstancesSelection("deleted", "calendar_id", "");
+
+		Assert.Equal("deleted != 1", result);
+	}
+
+	[Fact]
+	public void GetOrAdd_ReturnsCachedValue_OnSecondCall()
+	{
+		var cache = new Dictionary<string, List<string>>();
+		int factoryCalls = 0;
+
+		var first = CalendarStore.GetOrAdd(cache, "key1", _ =>
+		{
+			factoryCalls++;
+			return new List<string> { "a", "b" };
+		});
+
+		var second = CalendarStore.GetOrAdd(cache, "key1", _ =>
+		{
+			factoryCalls++;
+			return new List<string> { "should not be called" };
+		});
+
+		Assert.Equal(1, factoryCalls);
+		Assert.Same(first, second);
+		Assert.Equal(new[] { "a", "b" }, first);
+	}
+
+	[Fact]
+	public void GetOrAdd_CallsFactory_ForDifferentKeys()
+	{
+		var cache = new Dictionary<string, int>();
+
+		var val1 = CalendarStore.GetOrAdd(cache, "a", _ => 1);
+		var val2 = CalendarStore.GetOrAdd(cache, "b", _ => 2);
+
+		Assert.Equal(1, val1);
+		Assert.Equal(2, val2);
+		Assert.Equal(2, cache.Count);
+	}
 }
