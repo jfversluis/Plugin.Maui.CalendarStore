@@ -82,8 +82,4 @@
 		<None Include="..\..\README.md" PackagePath="README.md" Pack="true" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<InternalsVisibleTo Include="Plugin.Maui.CalendarStore.Tests" />
-	</ItemGroup>
-
 </Project>

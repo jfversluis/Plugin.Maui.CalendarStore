@@ -40,18 +40,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 				CalendarContract.Events.InterfaceConsts.EventTimezone,
 			];
 
-	readonly List<string> instancesColumns = [
-			CalendarContract.Instances.EventId,
-				CalendarContract.Events.InterfaceConsts.CalendarId,
-				CalendarContract.Events.InterfaceConsts.Title,
-				CalendarContract.Events.InterfaceConsts.Description,
-				CalendarContract.Events.InterfaceConsts.EventLocation,
-				CalendarContract.Events.InterfaceConsts.AllDay,
-				CalendarContract.Instances.Begin,
-				CalendarContract.Instances.End,
-				CalendarContract.Events.InterfaceConsts.EventTimezone,
-			];
-
 	readonly List<string> attendeesColumns =
 		[
 			CalendarContract.Attendees.InterfaceConsts.EventId,
@@ -231,29 +219,23 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var sDate = startDate ?? DateTimeOffset.Now.Add(defaultStartTimeFromNow);
 		var eDate = endDate ?? sDate.Add(defaultEndTimeFromStartTime);
 
-		var startMillis = sDate.ToUnixTimeMilliseconds();
-		var endMillis = eDate.ToUnixTimeMilliseconds();
+		var calendarSpecificEvent =
+			$"{CalendarContract.Events.InterfaceConsts.Dtend} >= " +
+			$"{sDate.AddMilliseconds(sDate.Offset.TotalMilliseconds).ToUnixTimeMilliseconds()} AND " +
+			$"{CalendarContract.Events.InterfaceConsts.Dtstart} <= " +
+			$"{eDate.AddMilliseconds(sDate.Offset.TotalMilliseconds).ToUnixTimeMilliseconds()} AND " +
+			$"{CalendarContract.Events.InterfaceConsts.Deleted} != 1 ";
 
-		// Build the Instances URI with date range encoded in the path.
-		// This is the Android-recommended way to query events by date range,
-		// as the Instances table expands recurring events and reflects
-		// externally synced changes (fixes stale data from issue #51).
-		var builder = CalendarContract.Instances.ContentUri!.BuildUpon()!;
-		ContentUris.AppendId(builder, startMillis);
-		ContentUris.AppendId(builder, endMillis);
-		var instancesUri = builder.Build()
-			?? throw new CalendarStoreException("Could not build Instances query URI.");
-
-		string? selection = null;
 		if (!string.IsNullOrEmpty(calendarId))
 		{
-			selection = $"{CalendarContract.Events.InterfaceConsts.CalendarId} = {calendarId}";
+			calendarSpecificEvent += $" AND {CalendarContract.Events.InterfaceConsts.CalendarId}" +
+				$" = {calendarId}";
 		}
 
-		var sortOrder = $"{CalendarContract.Instances.Begin} ASC";
+		var sortOrder = $"{CalendarContract.Events.InterfaceConsts.Dtstart} ASC";
 
-		using var cursor = platformContentResolver.Query(instancesUri,
-			instancesColumns.ToArray(), selection, null, sortOrder)
+		using var cursor = platformContentResolver.Query(eventsTableUri,
+			eventsColumns.ToArray(), calendarSpecificEvent, null, sortOrder)
 			?? throw new CalendarStoreException("Error while querying events");
 
 		// Confirm the calendar exists if no events were found
@@ -262,7 +244,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			await GetCalendar(calendarId).ConfigureAwait(false);
 		}
 
-		return ToEventsFromInstances(cursor, instancesColumns).ToList();
+		return ToEvents(cursor, eventsColumns).ToList();
 	}
 
 	/// <inheritdoc/>
@@ -734,7 +716,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var start = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtstart)));
 		var end = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtend)));
 
-		DateTimeOffset SafeConvertTime(DateTimeOffset time, string? tz)
+		DateTimeOffset SafeConvertTime(DateTimeOffset time, string tz)
 		{
 			try
 			{
@@ -759,68 +741,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Location = cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.EventLocation)) ?? string.Empty,
 			IsAllDay = allDay,
-			StartDate = SafeConvertTime(start, timezone),
-			EndDate = SafeConvertTime(end, timezone),
+			StartDate = timezone is null ? start : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(start, timezone),
+			EndDate = timezone is null ? end : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(end, timezone),
 			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty).ToList(),
-			Reminders = GetAllEventReminders(eventId),
-		};
-	}
-
-	IEnumerable<CalendarEvent> ToEventsFromInstances(ICursor cur, List<string> projection)
-	{
-		while (cur.MoveToNext())
-		{
-			yield return ToEventFromInstance(cur, projection);
-		}
-
-		SafeCloseCursor(cur);
-	}
-
-	CalendarEvent ToEventFromInstance(ICursor cursor, List<string> projection)
-	{
-		var timezone = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventTimezone));
-		var allDay = cursor.GetInt(projection.IndexOf(CalendarContract.Events.InterfaceConsts.AllDay)) != 0;
-
-		// Use Instances.Begin/End which reflect the actual occurrence times
-		// (including recurring event expansions and externally synced changes)
-		var start = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(
-			projection.IndexOf(CalendarContract.Instances.Begin)));
-		var end = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(
-			projection.IndexOf(CalendarContract.Instances.End)));
-
-		var eventIdString = cursor.GetString(projection.IndexOf(
-			CalendarContract.Instances.EventId)) ?? string.Empty;
-
-		if (!long.TryParse(eventIdString, out var eventId))
-		{
-			throw new CalendarStoreException($"Invalid Event ID: {eventIdString}");
-		}
-
-		DateTimeOffset SafeConvertTime(DateTimeOffset time, string? tz)
-		{
-			try
-			{
-				return tz is null ? time : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(time, tz);
-			}
-			catch (TimeZoneNotFoundException)
-			{
-				return time;
-			}
-		}
-
-		return new(eventIdString,
-			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.CalendarId)) ?? string.Empty,
-			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Title)) ?? string.Empty)
-		{
-			Description = cursor.GetString(projection.IndexOf(
-				CalendarContract.Events.InterfaceConsts.Description)) ?? string.Empty,
-			Location = cursor.GetString(projection.IndexOf(
-				CalendarContract.Events.InterfaceConsts.EventLocation)) ?? string.Empty,
-			IsAllDay = allDay,
-			StartDate = SafeConvertTime(start, timezone),
-			EndDate = SafeConvertTime(end, timezone),
-			Attendees = GetAttendees(eventIdString).ToList(),
 			Reminders = GetAllEventReminders(eventId),
 		};
 	}
