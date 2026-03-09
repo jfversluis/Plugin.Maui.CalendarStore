@@ -132,7 +132,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		EventStore.Reset();
 
-		var startDateToConvert= startDate ?? DateTimeOffset.Now.Add(
+		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(
 			defaultStartTimeFromNow);
 
 		// NOTE: 4 years is the maximum period that a iOS calendar events can search
