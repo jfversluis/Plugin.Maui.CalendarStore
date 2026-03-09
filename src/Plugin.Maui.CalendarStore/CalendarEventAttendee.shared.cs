@@ -3,7 +3,6 @@ namespace Plugin.Maui.CalendarStore;
 /// <summary>
 /// Represents an attendee that is part of a calendar event from the device's calendar store.
 /// </summary>
-/// <remarks>On iOS <see cref="Email"/> is equal to <see cref="Name"/> as there is no obvious way to retrieve the email data from an attendee.</remarks>
 public class CalendarEventAttendee
 {
 	/// <summary>
