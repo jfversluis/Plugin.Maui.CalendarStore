@@ -41,14 +41,14 @@ partial class CalendarStoreImplementation : ICalendarStore
 			];
 
 	readonly List<string> instancesColumns = [
-			CalendarContract.Instances.InterfaceConsts.EventId,
+			CalendarContract.Instances.EventId,
 				CalendarContract.Events.InterfaceConsts.CalendarId,
 				CalendarContract.Events.InterfaceConsts.Title,
 				CalendarContract.Events.InterfaceConsts.Description,
 				CalendarContract.Events.InterfaceConsts.EventLocation,
 				CalendarContract.Events.InterfaceConsts.AllDay,
-				CalendarContract.Instances.InterfaceConsts.Begin,
-				CalendarContract.Instances.InterfaceConsts.End,
+				CalendarContract.Instances.Begin,
+				CalendarContract.Instances.End,
 				CalendarContract.Events.InterfaceConsts.EventTimezone,
 			];
 
@@ -250,7 +250,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 			selection = $"{CalendarContract.Events.InterfaceConsts.CalendarId} = {calendarId}";
 		}
 
-		var sortOrder = $"{CalendarContract.Instances.InterfaceConsts.Begin} ASC";
+		var sortOrder = $"{CalendarContract.Instances.Begin} ASC";
 
 		using var cursor = platformContentResolver.Query(instancesUri,
 			instancesColumns.ToArray(), selection, null, sortOrder)
@@ -734,7 +734,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var start = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtstart)));
 		var end = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtend)));
 
-		DateTimeOffset SafeConvertTime(DateTimeOffset time, string tz)
+		DateTimeOffset SafeConvertTime(DateTimeOffset time, string? tz)
 		{
 			try
 			{
@@ -785,19 +785,19 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// Use Instances.Begin/End which reflect the actual occurrence times
 		// (including recurring event expansions and externally synced changes)
 		var start = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(
-			projection.IndexOf(CalendarContract.Instances.InterfaceConsts.Begin)));
+			projection.IndexOf(CalendarContract.Instances.Begin)));
 		var end = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(
-			projection.IndexOf(CalendarContract.Instances.InterfaceConsts.End)));
+			projection.IndexOf(CalendarContract.Instances.End)));
 
 		var eventIdString = cursor.GetString(projection.IndexOf(
-			CalendarContract.Instances.InterfaceConsts.EventId)) ?? string.Empty;
+			CalendarContract.Instances.EventId)) ?? string.Empty;
 
 		if (!long.TryParse(eventIdString, out var eventId))
 		{
 			throw new CalendarStoreException($"Invalid Event ID: {eventIdString}");
 		}
 
-		DateTimeOffset SafeConvertTime(DateTimeOffset time, string tz)
+		DateTimeOffset SafeConvertTime(DateTimeOffset time, string? tz)
 		{
 			try
 			{
