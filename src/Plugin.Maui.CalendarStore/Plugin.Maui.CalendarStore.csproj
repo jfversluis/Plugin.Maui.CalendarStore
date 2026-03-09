@@ -35,6 +35,7 @@
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<DebugType>portable</DebugType>
 		<PackageIcon>icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<!-- iOS & MacCatalyst -->
@@ -78,6 +79,7 @@
 	<!-- Package additions -->
 	<ItemGroup>
 		<None Include="..\..\nuget.png" PackagePath="icon.png" Pack="true" />
+		<None Include="..\..\README.md" PackagePath="README.md" Pack="true" />
 	</ItemGroup>
 
 </Project>
