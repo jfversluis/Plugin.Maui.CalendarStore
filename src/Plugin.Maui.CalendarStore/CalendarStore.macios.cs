@@ -18,6 +18,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await Permissions.RequestAsync<FullAccessCalendar>();
 
+		EventStore.Reset();
+
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
 		return ToCalendars(calendars).ToList();
@@ -128,7 +130,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await Permissions.RequestAsync<FullAccessCalendar>();
 
-		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(
+		EventStore.Reset();
+
+		var startDateToConvert= startDate ?? DateTimeOffset.Now.Add(
 			defaultStartTimeFromNow);
 
 		// NOTE: 4 years is the maximum period that a iOS calendar events can search
@@ -358,6 +362,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		await Permissions.RequestAsync<FullAccessCalendar>();
 
+		EventStore.Reset();
+
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
 		return calendars.FirstOrDefault(c => c.CalendarIdentifier == calendarId);
@@ -368,6 +374,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		ArgumentException.ThrowIfNullOrEmpty(eventId);
 
 		await Permissions.RequestAsync<FullAccessCalendar>();
+
+		EventStore.Reset();
 
 		if (EventStore.GetCalendarItem(eventId) is not EKEvent calendarEvent)
 		{
