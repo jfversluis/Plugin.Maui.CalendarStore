@@ -231,8 +231,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var sDate = startDate ?? DateTimeOffset.Now.Add(defaultStartTimeFromNow);
 		var eDate = endDate ?? sDate.Add(defaultEndTimeFromStartTime);
 
-		var startMillis = sDate.ToUnixTimeMilliseconds();
-		var endMillis = eDate.ToUnixTimeMilliseconds();
+		var startMillis = CalendarStore.ToFilterTimestampMillis(sDate);
+		var endMillis = CalendarStore.ToFilterTimestampMillis(eDate);
 
 		// Build the Instances URI with date range encoded in the path.
 		// This is the Android-recommended way to query events by date range,
@@ -769,15 +769,22 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	IEnumerable<CalendarEvent> ToEventsFromInstances(ICursor cur, List<string> projection)
 	{
+		// Cache attendees and reminders by EventId to avoid redundant queries
+		// for recurring events (which share the same EventId across occurrences).
+		var attendeesCache = new Dictionary<string, List<CalendarEventAttendee>>();
+		var remindersCache = new Dictionary<long, List<Reminder>>();
+
 		while (cur.MoveToNext())
 		{
-			yield return ToEventFromInstance(cur, projection);
+			yield return ToEventFromInstance(cur, projection, attendeesCache, remindersCache);
 		}
 
 		SafeCloseCursor(cur);
 	}
 
-	CalendarEvent ToEventFromInstance(ICursor cursor, List<string> projection)
+	CalendarEvent ToEventFromInstance(ICursor cursor, List<string> projection,
+		Dictionary<string, List<CalendarEventAttendee>> attendeesCache,
+		Dictionary<long, List<Reminder>> remindersCache)
 	{
 		var timezone = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventTimezone));
 		var allDay = cursor.GetInt(projection.IndexOf(CalendarContract.Events.InterfaceConsts.AllDay)) != 0;
@@ -820,9 +827,31 @@ partial class CalendarStoreImplementation : ICalendarStore
 			IsAllDay = allDay,
 			StartDate = SafeConvertTime(start, timezone),
 			EndDate = SafeConvertTime(end, timezone),
-			Attendees = GetAttendees(eventIdString).ToList(),
-			Reminders = GetAllEventReminders(eventId),
+			Attendees = GetCachedAttendees(eventIdString, attendeesCache),
+			Reminders = GetCachedReminders(eventId, remindersCache),
 		};
+	}
+
+	List<CalendarEventAttendee> GetCachedAttendees(string eventId,
+		Dictionary<string, List<CalendarEventAttendee>> cache)
+	{
+		if (!cache.TryGetValue(eventId, out var attendees))
+		{
+			attendees = GetAttendees(eventId).ToList();
+			cache[eventId] = attendees;
+		}
+		return attendees;
+	}
+
+	List<Reminder> GetCachedReminders(long eventId,
+		Dictionary<long, List<Reminder>> cache)
+	{
+		if (!cache.TryGetValue(eventId, out var reminders))
+		{
+			reminders = GetAllEventReminders(eventId);
+			cache[eventId] = reminders;
+		}
+		return reminders;
 	}
 
 	static IEnumerable<CalendarEventAttendee> ToAttendees(ICursor cur, List<string> projection)
