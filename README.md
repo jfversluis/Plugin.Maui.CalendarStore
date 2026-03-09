@@ -190,9 +190,9 @@ Retrieves events from a specific calendar or all calendars from the device.
 
 Retrieves a specific event from the calendar store on the device.
 
-##### `string CreateEvent(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false)`
+##### `string CreateEvent(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false, Reminder[]? reminders = null)`
 
-Creates an event in the specified calendar with the provided information. Returns the ID of the newly created event.
+Creates an event in the specified calendar with the provided information. Optionally, one or more reminders can be attached to the event (see [Reminders](#reminders)). Returns the ID of the newly created event.
 
 ##### `string CreateEvent(CalendarEvent calendarEvent)`
 
@@ -204,14 +204,47 @@ Returns the ID of the newly created event.
 Creates an all-day event in the specified calendar with the provided information. This is basically just a convenience method that calls `CreateEvent` with `isAllDay` set to true.
 Returns the ID of the newly created event.
 
-##### `UpdateEvent(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay)`
+##### `UpdateEvent(string eventId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, Reminder[]? reminders = null)`
 
-Updates an event, specified by the unique identifier, on the device calendar.
+Updates an event, specified by the unique identifier, on the device calendar. If `reminders` is provided, all existing reminders on the event will be replaced with the ones in the provided collection. If `reminders` is `null`, all existing reminders will be cleared.
 
 ##### `UpdateEvent(CalendarEvent eventToUpdate)`
 
 Updates an event on the device calendar.
 This is basically just a convenience method that calls `UpdateEvent` with all the details provided from `eventToUpdate`.
+
+#### Reminders
+
+Events can have reminders attached to them. A `Reminder` represents a notification that alerts the user before an event starts. Each reminder has a `DateTime` property that specifies when the reminder should fire.
+
+```csharp
+// Create an event with two reminders: 1 hour and 15 minutes before
+var eventStart = new DateTimeOffset(2025, 6, 15, 14, 0, 0, TimeSpan.Zero);
+var eventEnd = eventStart.AddHours(1);
+
+var reminders = new[]
+{
+    new Reminder(eventStart.AddHours(-1)),   // 1 hour before
+    new Reminder(eventStart.AddMinutes(-15)) // 15 minutes before
+};
+
+var eventId = await calendarStore.CreateEvent(
+    calendarId, "Team Meeting", "Weekly sync", "Conference Room",
+    eventStart, eventEnd, reminders: reminders);
+```
+
+Reminders attached to an event can be read back through the `CalendarEvent.Reminders` property:
+
+```csharp
+var calendarEvent = await calendarStore.GetEvent(eventId);
+
+foreach (var reminder in calendarEvent.Reminders)
+{
+    Console.WriteLine($"Reminder at: {reminder.DateTime}");
+}
+```
+
+> **Note:** On Windows, only a single reminder per event is supported. If multiple reminders are provided, only the first one will be used.
 
 ##### `DeleteEvent(string eventId)`
 
