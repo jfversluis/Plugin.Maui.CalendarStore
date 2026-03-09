@@ -14,7 +14,15 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Install MAUI workload
+      run: dotnet workload install maui
 
     - name: Build
       run: dotnet build samples/Plugin.Maui.CalendarStore.Sample/Plugin.Maui.CalendarStore.Sample.csproj -c Release
