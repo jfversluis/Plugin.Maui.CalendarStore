@@ -1,10 +1,20 @@
 name: Create a (Pre)release on NuGet
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g., 1.2.3 or 1.2.3-preview1)'
+        required: true
   push:
     tags:
     - "v[0-9]+.[0-9]+.[0-9]+"
     - "v[0-9]+.[0-9]+.[0-9]+-preview[0-9]+"
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   release-nuget:
   
@@ -25,14 +35,27 @@ jobs:
       - name: Install MAUI workload
         run: dotnet workload install maui
 
-      - name: Get version information from tag
+      - name: Get version information
         id: get_version
         run: |
-          $version="${{github.ref_name}}".TrimStart("v")
+          $rawVersion = if ("${{ inputs.version }}" -ne "") { "${{ inputs.version }}" } else { "${{ github.ref_name }}" }
+          $version = $rawVersion.TrimStart("v")
           "version-without-v=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
       - name: Pack
-        run: dotnet pack src/Plugin.Maui.CalendarStore/Plugin.Maui.CalendarStore.csproj -c Release -p:PackageVersion=${{ steps.get_version.outputs.version-without-v }}
-      - name: Push
-        run: dotnet nuget push src\Plugin.Maui.CalendarStore\bin\Release\Plugin.Maui.CalendarStore.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet pack src/Plugin.Maui.CalendarStore/Plugin.Maui.CalendarStore.csproj -c Release -p:PackageVersion=${{ steps.get_version.outputs.version-without-v }} -o artifacts
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget
+          path: artifacts/*.nupkg
+
+      - name: NuGet login (OIDC)
+        uses: nuget/login@v1
+        id: nuget-login
+        with:
+          user: jfversluis
+
+      - name: Push to NuGet
+        run: dotnet nuget push artifacts\*.nupkg --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
