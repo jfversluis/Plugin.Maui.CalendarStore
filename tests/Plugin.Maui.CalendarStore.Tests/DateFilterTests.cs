@@ -26,10 +26,9 @@ public class DateFilterTests
 		var expectedUtcMillis = date.ToUnixTimeMilliseconds();
 
 		// Act
-		var actual = CalendarStore.ToFilterTimestampMillis(date, date.Offset);
+		var actual = CalendarStore.ToFilterTimestampMillis(date);
 
-		// Assert — this FAILS with the current implementation because
-		// it adds the offset a second time, shifting the result.
+		// Assert
 		Assert.Equal(expectedUtcMillis, actual);
 	}
 
@@ -42,11 +41,10 @@ public class DateFilterTests
 
 		var expectedEndUtcMillis = endDate.ToUnixTimeMilliseconds();
 
-		// Act — current code passes startDate.Offset for the endDate too
-		var actual = CalendarStore.ToFilterTimestampMillis(endDate, startDate.Offset);
+		// Act — previously the bug was that startDate.Offset was applied to endDate
+		var actual = CalendarStore.ToFilterTimestampMillis(endDate);
 
-		// Assert — this FAILS because the startDate's offset (-5h) is applied
-		// to endDate instead of endDate's own offset (-4h), shifting it by 1 hour.
+		// Assert
 		Assert.Equal(expectedEndUtcMillis, actual);
 	}
 
@@ -58,9 +56,9 @@ public class DateFilterTests
 		var expectedMillis = date.ToUnixTimeMilliseconds();
 
 		// Act
-		var actual = CalendarStore.ToFilterTimestampMillis(date, date.Offset);
+		var actual = CalendarStore.ToFilterTimestampMillis(date);
 
-		// Assert — this passes even with the bug since offset is 0
+		// Assert
 		Assert.Equal(expectedMillis, actual);
 	}
 }

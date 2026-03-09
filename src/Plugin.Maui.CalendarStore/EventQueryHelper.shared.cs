@@ -9,9 +9,8 @@ static partial class CalendarStore
 	/// Computes the UTC timestamp in milliseconds for use in date range filters.
 	/// </summary>
 	/// <param name="date">The date to compute the filter timestamp for.</param>
-	/// <param name="referenceOffset">Unused. Kept for source compatibility during transition.</param>
 	/// <returns>The UTC timestamp in milliseconds since Unix epoch.</returns>
-	internal static long ToFilterTimestampMillis(DateTimeOffset date, TimeSpan referenceOffset)
+	internal static long ToFilterTimestampMillis(DateTimeOffset date)
 	{
 		// DateTimeOffset.ToUnixTimeMilliseconds() already returns UTC-based epoch
 		// milliseconds regardless of the offset, so no additional adjustment is needed.
