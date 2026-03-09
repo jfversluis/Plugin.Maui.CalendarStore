@@ -362,8 +362,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		await Permissions.RequestAsync<FullAccessCalendar>();
 
-		EventStore.Reset();
-
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
 		return calendars.FirstOrDefault(c => c.CalendarIdentifier == calendarId);
@@ -374,8 +372,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 		ArgumentException.ThrowIfNullOrEmpty(eventId);
 
 		await Permissions.RequestAsync<FullAccessCalendar>();
-
-		EventStore.Reset();
 
 		if (EventStore.GetCalendarItem(eventId) is not EKEvent calendarEvent)
 		{

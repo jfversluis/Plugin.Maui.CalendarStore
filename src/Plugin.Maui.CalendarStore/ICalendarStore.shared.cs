@@ -65,6 +65,12 @@ public interface ICalendarStore
 	/// <param name="startDate">The start date of the range to retrieve events for.</param>
 	/// <param name="endDate">The end date of the range to retrieve events for.</param>
 	/// <returns>A list of events from the calendars on the device.</returns>
+	/// <remarks>
+	/// Recurring events are expanded into individual occurrences within the specified date range.
+	/// This means multiple <see cref="CalendarEvent"/> objects may be returned with the same
+	/// <see cref="CalendarEvent.Id"/> but different <see cref="CalendarEvent.StartDate"/> and
+	/// <see cref="CalendarEvent.EndDate"/> values.
+	/// </remarks>
 	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
 	/// <exception cref="ArgumentException">Thrown when a calendar with the value specified in <paramref name="calendarId"/> could not be found.</exception>
 	Task<IEnumerable<CalendarEvent>> GetEvents(string? calendarId = null,

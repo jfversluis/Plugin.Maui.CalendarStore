@@ -244,10 +244,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var instancesUri = builder.Build()
 			?? throw new CalendarStoreException("Could not build Instances query URI.");
 
-		string? selection = null;
+		var selection = $"{CalendarContract.Events.InterfaceConsts.Deleted} != 1";
 		if (!string.IsNullOrEmpty(calendarId))
 		{
-			selection = $"{CalendarContract.Events.InterfaceConsts.CalendarId} = {calendarId}";
+			selection += $" AND {CalendarContract.Events.InterfaceConsts.CalendarId} = {calendarId}";
 		}
 
 		var sortOrder = $"{CalendarContract.Instances.Begin} ASC";
