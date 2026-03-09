@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using EventKit;
+﻿using EventKit;
 using Foundation;
 using Microsoft.Maui.Graphics.Platform;
 using UIKit;
@@ -420,12 +419,15 @@ partial class CalendarStoreImplementation : ICalendarStore
 		{
 			// There is no obvious way to get the attendees email address on iOS?
 			yield return new(attendee.Name ?? string.Empty,
-				ToEmailAddress(attendee.Url) ?? string.Empty);
+				ToEmailAddress(attendee.Url));
 		}
 	}
 	
-	static string ToEmailAddress(NSUrl url)
+	static string ToEmailAddress(NSUrl? url)
 	{
+		if (url is null)
+			return string.Empty;
+		
 		var urlString = url.AbsoluteString;
 		if (string.IsNullOrEmpty(urlString))
 			return string.Empty;
