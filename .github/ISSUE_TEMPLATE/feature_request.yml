@@ -1,0 +1,54 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe what you'd like and why.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of the feature you'd like.
+      placeholder: Describe the feature and the problem it solves.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform(s)
+      description: Which platform(s) would this apply to?
+      multiple: true
+      options:
+        - Android
+        - iOS
+        - macOS (Catalyst)
+        - Windows
+        - All / Cross-platform
+    validations:
+      required: true
+
+  - type: textarea
+    id: api-proposal
+    attributes:
+      label: Proposed API
+      description: If you have an idea for the API shape, share it here.
+      render: csharp
+      placeholder: |
+        // Example:
+        Task<IEnumerable<Calendar>> GetSharedCalendars();
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative approaches?
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, or references.
