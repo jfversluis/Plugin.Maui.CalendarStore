@@ -1,3 +1,5 @@
+using Microsoft.Maui.Graphics;
+
 namespace Plugin.Maui.CalendarStore;
 
 /// <summary>
@@ -70,6 +72,16 @@ public class CalendarEvent
 	/// On Windows only 1 reminder is supported. Therefore on Windows, this collection will always only contain 1 item.
 	/// </remarks>
 	public List<Reminder> Reminders { get; internal set; } = [];
+
+	/// <summary>
+	/// Gets the color associated with this event, if any.
+	/// </summary>
+	/// <remarks>
+	/// On Android, events can have a custom color that overrides the calendar color.
+	/// On iOS, macOS, and Windows this will always be <see langword="null"/> as those
+	/// platforms do not support per-event colors (events inherit their calendar's color).
+	/// </remarks>
+	public Color? EventColor { get; internal set; }
 
 	/// <summary>
 	/// Gets the list of attendees for this event.
