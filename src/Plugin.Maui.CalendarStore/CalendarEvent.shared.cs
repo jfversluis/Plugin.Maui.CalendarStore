@@ -74,12 +74,12 @@ public class CalendarEvent
 	public List<Reminder> Reminders { get; internal set; } = [];
 
 	/// <summary>
-	/// Gets the color associated with this event, if any.
+	/// Gets the display color for this event.
 	/// </summary>
 	/// <remarks>
-	/// On Android, events can have a custom color that overrides the calendar color.
-	/// On iOS, macOS, and Windows this will always be <see langword="null"/> as those
-	/// platforms do not support per-event colors (events inherit their calendar's color).
+	/// On Android, this returns the event's custom color if one is set, otherwise <see langword="null"/>.
+	/// On iOS and macOS, this returns the calendar's color (which is the color used to display the event).
+	/// On Windows, this will be <see langword="null"/>; use the <see cref="Calendar.Color"/> from the parent calendar instead.
 	/// </remarks>
 	public Color? EventColor { get; internal set; }
 
