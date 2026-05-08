@@ -334,7 +334,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	static Calendar ToCalendar(AppointmentCalendar calendar) =>
 		new(calendar.LocalId, calendar.SourceDisplayName, calendar.DisplayName, AsColor(calendar.DisplayColor),
-			calendar.CanCreateOrUpdateAppointments);
+			!calendar.CanCreateOrUpdateAppointments);
 
 	// For some reason can't find the .NET MAUI built-in one?
 	static Color AsColor(Windows.UI.Color platformColor) =>
