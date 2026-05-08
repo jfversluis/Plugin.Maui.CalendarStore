@@ -118,7 +118,7 @@ public partial class CalendarsPage : ContentPage
 		var calendars = await calendarStore.GetCalendars();
 
 		Calendars.Clear();
-		foreach (var calendar in calendars)
+		foreach (var calendar in calendars.OrderBy(c => c.AccountName).ThenBy(c => c.Name))
 		{
 			Calendars.Add(calendar);
 		}

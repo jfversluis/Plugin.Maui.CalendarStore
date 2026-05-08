@@ -11,12 +11,14 @@ public class Calendar
 	/// Initializes a new instance of the <see cref="Calendar"/> class.
 	/// </summary>
 	/// <param name="id">The unique identifier for this calendar.</param>
+	/// <param name="accountName">The account name providing this calendar.</param>
 	/// <param name="name">The (display) name for this calendar.</param>
 	/// <param name="color">The color associated with this calendar.</param>
 	/// <param name="isReadOnly">Indicates whether this calendar is read-only.</param>
-	public Calendar(string id, string name, Color color, bool isReadOnly)
+	public Calendar(string id, string accountName, string name, Color color, bool isReadOnly)
 	{
 		Id = id;
+		AccountName = accountName;
 		Name = name;
 		Color = color;
 		IsReadOnly = isReadOnly;
@@ -26,6 +28,11 @@ public class Calendar
 	/// Gets unique identifier for this calendar.
 	/// </summary>
 	public string Id { get; }
+
+	/// <summary>
+	/// Gets the account name for this calendar.
+	/// </summary>
+	public string AccountName { get; }
 
 	/// <summary>
 	/// Gets the (display) name for this calendar.

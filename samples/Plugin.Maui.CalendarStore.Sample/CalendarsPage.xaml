@@ -27,8 +27,12 @@
 											 WidthRequest="20"
 											 HeightRequest="20" />
 
-									<Label Text="{Binding Name, StringFormat='Name: {0}'}"
-										   FontSize="25" />
+									<VerticalStackLayout>
+										<Label Text="{Binding AccountName, StringFormat='Account: {0}'}"
+										       FontSize="18" />
+										<Label Text="{Binding Name, StringFormat='Name: {0}'}"
+										       FontSize="18" />
+									</VerticalStackLayout>
 								</HorizontalStackLayout>
 
 								<HorizontalStackLayout Margin="30,0,0,0">
