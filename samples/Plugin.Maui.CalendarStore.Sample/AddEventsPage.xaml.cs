@@ -138,14 +138,16 @@ public partial class AddEventsPage : ContentPage
 			return;
 		}
 		
-		if (EventStartTime.CompareTo(ReminderTime.Time) <= 0)
+		var reminderTimeSpan = ReminderTime.Time ?? TimeSpan.Zero;
+
+		if (EventStartTime.CompareTo(reminderTimeSpan) <= 0)
 		{
 			DisplayAlert("Error", "Reminder time has to be earlier than event start time.", "OK");
 			return;
 		}
 
 		var reminderDateTime = new DateTime(EventStartDate.Year, EventStartDate.Month, EventStartDate.Day,
-			ReminderTime.Time.Hours, ReminderTime.Time.Minutes, ReminderTime.Time.Seconds);
+			reminderTimeSpan.Hours, reminderTimeSpan.Minutes, reminderTimeSpan.Seconds);
 		 
 		Reminder newReminder = new(reminderDateTime);
 
