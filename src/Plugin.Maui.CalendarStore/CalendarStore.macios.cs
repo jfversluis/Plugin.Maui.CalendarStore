@@ -18,6 +18,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 	{
 		await Permissions.RequestAsync<FullAccessCalendar>();
 
+		EventStore.Reset();
+
 		var calendars = EventStore.GetCalendars(EKEntityType.Event);
 
 		return ToCalendars(calendars).ToList();
@@ -127,6 +129,8 @@ partial class CalendarStoreImplementation : ICalendarStore
 		DateTimeOffset? startDate = null, DateTimeOffset? endDate = null)
 	{
 		await Permissions.RequestAsync<FullAccessCalendar>();
+
+		EventStore.Reset();
 
 		var startDateToConvert = startDate ?? DateTimeOffset.Now.Add(
 			defaultStartTimeFromNow);
