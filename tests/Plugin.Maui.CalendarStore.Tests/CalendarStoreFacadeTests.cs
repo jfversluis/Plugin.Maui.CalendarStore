@@ -82,7 +82,7 @@ public sealed class CalendarStoreFacadeTests : IDisposable
 	[Fact]
 	public async Task GetCalendars_DelegatesCallToImplementation()
 	{
-		var expectedCalendar = new Calendar("cal1", "Work", Colors.Blue, false);
+		var expectedCalendar = new Calendar("cal1", "", "Work", Colors.Blue, false);
 
 		var mock = new MockCalendarStore
 		{
