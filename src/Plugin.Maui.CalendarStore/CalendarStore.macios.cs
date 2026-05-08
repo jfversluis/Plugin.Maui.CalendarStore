@@ -408,6 +408,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 			IsAllDay = platform.AllDay,
 			StartDate = ToDateTimeOffsetWithTimezone(platform.StartDate, platform.TimeZone),
 			EndDate = ToDateTimeOffsetWithTimezone(platform.EndDate, platform.TimeZone),
+			EventColor = platform.Calendar?.CGColor is not null
+				? new UIColor(platform.Calendar.CGColor).AsColor()
+				: null,
 			Attendees = platform.Attendees != null
 				? ToAttendees(platform.Attendees).ToList()
 				: new List<CalendarEventAttendee>()

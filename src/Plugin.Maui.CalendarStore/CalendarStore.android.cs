@@ -39,6 +39,7 @@ partial class CalendarStoreImplementation : ICalendarStore
 				CalendarContract.Events.InterfaceConsts.Dtend,
 				CalendarContract.Events.InterfaceConsts.Deleted,
 				CalendarContract.Events.InterfaceConsts.EventTimezone,
+				CalendarContract.Events.InterfaceConsts.EventColor,
 			];
 
 	readonly List<string> attendeesColumns =
@@ -746,10 +747,28 @@ partial class CalendarStoreImplementation : ICalendarStore
 			IsAllDay = allDay,
 			StartDate = timezone is null ? start : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(start, timezone),
 			EndDate = timezone is null ? end : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(end, timezone),
+			EventColor = GetEventColor(cursor, projection),
 			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty).ToList(),
 			Reminders = GetAllEventReminders(eventId),
 		};
+	}
+
+	static Color? GetEventColor(ICursor cursor, List<string> projection)
+	{
+		var colorIndex = projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventColor);
+		if (colorIndex < 0)
+		{
+			return null;
+		}
+
+		var eventColorInt = cursor.GetInt(colorIndex);
+		if (eventColorInt == 0)
+		{
+			return null;
+		}
+
+		return GetDisplayColorFromColor(new Android.Graphics.Color(eventColorInt)).AsColor();
 	}
 
 	static IEnumerable<CalendarEventAttendee> ToAttendees(ICursor cur, List<string> projection)
