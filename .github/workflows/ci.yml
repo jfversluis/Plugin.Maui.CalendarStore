@@ -26,3 +26,14 @@ jobs:
 
     - name: Build
       run: dotnet build src/Plugin.Maui.CalendarStore/Plugin.Maui.CalendarStore.csproj -c Release
+
+    - name: Pack pull request artifact
+      if: github.event_name == 'pull_request'
+      run: dotnet pack src/Plugin.Maui.CalendarStore/Plugin.Maui.CalendarStore.csproj -c Release --no-build -o artifacts -p:PackageVersion=5.0.1-pr.${{ github.event.pull_request.number }}.${{ github.run_number }}
+
+    - name: Upload pull request artifact
+      if: github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget
+        path: artifacts/*.nupkg
