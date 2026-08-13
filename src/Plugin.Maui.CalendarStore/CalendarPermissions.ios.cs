@@ -13,7 +13,7 @@ public class WriteOnlyCalendar : Permissions.BasePlatformPermission
 	{
 		EnsureDeclared();
 
-		return Task.FromResult(EventPermission.CheckPermissionStatus(EKEntityType.Event));
+		return Task.FromResult(EventPermission.CheckWritePermissionStatus(EKEntityType.Event));
 	}
 
 	/// <inheritdoc/>
@@ -22,7 +22,7 @@ public class WriteOnlyCalendar : Permissions.BasePlatformPermission
 	{
 		EnsureDeclared();
 
-		var status = EventPermission.CheckPermissionStatus(EKEntityType.Event);
+		var status = EventPermission.CheckWritePermissionStatus(EKEntityType.Event);
 		if (status == PermissionStatus.Granted)
 		{
 			return status;
@@ -56,7 +56,7 @@ public class FullAccessCalendar : Permissions.BasePlatformPermission
 	{
 		EnsureDeclared();
 
-		return Task.FromResult(EventPermission.CheckPermissionStatus(EKEntityType.Event));
+		return Task.FromResult(EventPermission.CheckFullAccessPermissionStatus(EKEntityType.Event));
 	}
 
 	/// <inheritdoc/>
@@ -64,7 +64,7 @@ public class FullAccessCalendar : Permissions.BasePlatformPermission
 	{
 		EnsureDeclared();
 
-		var status = EventPermission.CheckPermissionStatus(EKEntityType.Event);
+		var status = EventPermission.CheckFullAccessPermissionStatus(EKEntityType.Event);
 		if (status == PermissionStatus.Granted)
 		{
 			return status;
@@ -97,7 +97,7 @@ public class RemindersCalendar : Permissions.BasePlatformPermission
 	{
 		EnsureDeclared();
 
-		var status = EventPermission.CheckPermissionStatus(EKEntityType.Event);
+		var status = EventPermission.CheckFullAccessPermissionStatus(EKEntityType.Event);
 		if (status == PermissionStatus.Granted)
 		{
 			return status;
@@ -123,11 +123,23 @@ public class RemindersCalendar : Permissions.BasePlatformPermission
 
 static class EventPermission
 {
-	internal static PermissionStatus CheckPermissionStatus(EKEntityType entityType)
+	internal static PermissionStatus CheckFullAccessPermissionStatus(EKEntityType entityType)
+	{
+		return CheckPermissionStatus(entityType, allowWriteOnly: false);
+	}
+
+	internal static PermissionStatus CheckWritePermissionStatus(EKEntityType entityType)
+	{
+		return CheckPermissionStatus(entityType, allowWriteOnly: true);
+	}
+
+	static PermissionStatus CheckPermissionStatus(EKEntityType entityType, bool allowWriteOnly)
 	{
 		var status = EKEventStore.GetAuthorizationStatus(entityType);
 		return status switch
 		{
+			EKAuthorizationStatus.WriteOnly when allowWriteOnly => PermissionStatus.Granted,
+			// Apple's FullAccess status is bound as Authorized because both use the value 3.
 			EKAuthorizationStatus.Authorized => PermissionStatus.Granted,
 			EKAuthorizationStatus.Denied => PermissionStatus.Denied,
 			EKAuthorizationStatus.Restricted => PermissionStatus.Restricted,
