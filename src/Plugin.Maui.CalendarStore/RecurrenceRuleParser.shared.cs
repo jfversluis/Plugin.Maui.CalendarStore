@@ -8,12 +8,9 @@ namespace Plugin.Maui.CalendarStore;
 /// Converts between the cross-platform <see cref="CalendarRecurrence"/> model and
 /// iCalendar (RFC 5545) <c>RRULE</c> values, and parses RFC 2445 durations.
 /// </summary>
-internal static class RecurrenceRuleParser
+internal static partial class RecurrenceRuleParser
 {
 	const string rrulePrefix = "RRULE:";
-	static readonly Regex durationRegex = new(
-		@"^P(?:(?<weeks>\d+)W|(?:(?<days>\d+)D)?(?:T(?:(?<hours>\d+)H)?(?:(?<minutes>\d+)M)?(?:(?<seconds>\d+)S)?)?)$",
-		RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
 	internal static void Validate(CalendarRecurrence recurrence)
 	{
@@ -58,6 +55,11 @@ internal static class RecurrenceRuleParser
 			}
 		}
 	}
+
+	[GeneratedRegex(
+		@"^P(?:(?<weeks>\d+)W|(?:(?<days>\d+)D)?(?:T(?:(?<hours>\d+)H)?(?:(?<minutes>\d+)M)?(?:(?<seconds>\d+)S)?)?)$",
+		RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+	private static partial Regex DurationRegex();
 
 	/// <summary>
 	/// Serializes the provided recurrence rule to an iCalendar <c>RRULE</c> value
@@ -326,7 +328,7 @@ internal static class RecurrenceRuleParser
 			return false;
 		}
 
-		var match = durationRegex.Match(raw.Trim());
+		var match = DurationRegex().Match(raw.Trim());
 
 		if (!match.Success)
 		{

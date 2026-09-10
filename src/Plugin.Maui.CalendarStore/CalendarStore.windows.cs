@@ -647,11 +647,22 @@ partial class CalendarStoreImplementation : ICalendarStore
 			_ => AppointmentDaysOfWeek.None,
 		};
 
+	static readonly AppointmentDaysOfWeek[] appointmentDaysOfWeek =
+	[
+		AppointmentDaysOfWeek.Sunday,
+		AppointmentDaysOfWeek.Monday,
+		AppointmentDaysOfWeek.Tuesday,
+		AppointmentDaysOfWeek.Wednesday,
+		AppointmentDaysOfWeek.Thursday,
+		AppointmentDaysOfWeek.Friday,
+		AppointmentDaysOfWeek.Saturday,
+	];
+
 	static void AddDaysOfWeek(CalendarRecurrence recurrence, AppointmentDaysOfWeek daysOfWeek)
 	{
-		foreach (var day in Enum.GetValues<AppointmentDaysOfWeek>())
+		foreach (var day in appointmentDaysOfWeek)
 		{
-			if (day != AppointmentDaysOfWeek.None && daysOfWeek.HasFlag(day))
+			if (daysOfWeek.HasFlag(day))
 			{
 				recurrence.DaysOfWeek.Add(new(ToDayOfWeek(day)));
 			}
@@ -661,9 +672,9 @@ partial class CalendarStoreImplementation : ICalendarStore
 	static void AddOrdinalDay(CalendarRecurrence recurrence, AppointmentDaysOfWeek daysOfWeek,
 		int weekNumber)
 	{
-		foreach (var day in Enum.GetValues<AppointmentDaysOfWeek>())
+		foreach (var day in appointmentDaysOfWeek)
 		{
-			if (day != AppointmentDaysOfWeek.None && daysOfWeek.HasFlag(day))
+			if (daysOfWeek.HasFlag(day))
 			{
 				recurrence.DaysOfWeek.Add(new(ToDayOfWeek(day), weekNumber));
 				return;
