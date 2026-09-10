@@ -322,6 +322,39 @@ Removes an event, specified by the unique identifier, from the device calendar.
 Removes an event from the device calendar.
 This is basically just a convenience method that calls `DeleteEvent` with `eventToDelete.Id`.
 
+## Testing
+
+### Unit tests
+
+Shared, platform-independent logic (recurrence parsing, time-zone helpers and the static facade) is covered by host tests:
+
+```bash
+dotnet test tests/Plugin.Maui.CalendarStore.Tests/Plugin.Maui.CalendarStore.Tests.csproj
+```
+
+### Device tests
+
+The platform implementations are validated on a real device or simulator with [DeviceRunners](https://mattleibow.github.io/DeviceRunners/). The test app in `tests/Plugin.Maui.CalendarStore.DeviceTests` exercises calendars and recurring-event CRUD, including single-occurrence exceptions.
+
+Calendar access is required, so grant the permission before running headlessly.
+
+iOS simulator:
+
+```bash
+xcrun simctl boot "iPhone 16"
+xcrun simctl privacy booted grant calendar com.jfversluis.pluginmauicalendarstore.devicetests
+dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-ios
+```
+
+Android emulator:
+
+```bash
+adb install -r -g <path-to-signed.apk>
+dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-android
+```
+
+The same runs are executed in CI by `.github/workflows/ci-device-tests.yml`.
+
 # Acknowledgements
 
 This project could not have came to be without these projects and people, thank you! <3

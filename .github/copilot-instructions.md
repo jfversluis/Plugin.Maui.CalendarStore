@@ -116,6 +116,28 @@ When making changes:
 4. Implement on all platforms (android, macios, windows) and add a `NotImplementedException` stub in `.net.cs`
 5. Update the sample app to demonstrate the new feature
 6. Update `README.md` if the change affects the public API
+7. Add or update platform behaviour tests in `tests/Plugin.Maui.CalendarStore.DeviceTests`
+
+### Unit tests
+
+`tests/Plugin.Maui.CalendarStore.Tests` covers shared/platform-independent logic
+(recurrence parsing, time-zone helpers, the static facade):
+
+```
+dotnet test tests/Plugin.Maui.CalendarStore.Tests/Plugin.Maui.CalendarStore.Tests.csproj
+```
+
+### Device tests
+
+`tests/Plugin.Maui.CalendarStore.DeviceTests` is a [DeviceRunners](https://mattleibow.github.io/DeviceRunners/)
+MAUI app that exercises the real platform `CalendarStore` implementations (calendars
+and recurring-event CRUD, including single-occurrence exceptions). It requires calendar
+permission, which CI pre-grants (see `.github/workflows/ci-device-tests.yml`).
+
+```
+dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-ios
+dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-android
+```
 
 ## Project Structure
 
@@ -139,4 +161,7 @@ samples/Plugin.Maui.CalendarStore.Sample/  # Demo MAUI app
   CalendarsPage.xaml[.cs]               # Calendar listing
   EventsPage.xaml[.cs]                  # Event listing
   AddEventsPage.xaml[.cs]               # Event creation
+
+tests/Plugin.Maui.CalendarStore.Tests/         # Host unit tests (shared logic)
+tests/Plugin.Maui.CalendarStore.DeviceTests/   # DeviceRunners MAUI app (platform tests)
 ```

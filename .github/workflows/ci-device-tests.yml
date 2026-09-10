@@ -1,0 +1,108 @@
+name: Device Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    branches: [ "main", "update/net10" ]
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  device-tests-ios:
+    name: Device Tests (iOS Simulator)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui
+
+      - name: Select latest Xcode
+        run: |
+          ls /Applications | grep -i Xcode || true
+          LATEST=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$LATEST" ]; then sudo xcode-select -s "$LATEST"; fi
+
+      - name: Boot iOS simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j \
+            | jq -r '[.devices | to_entries[].value[] | select(.isAvailable == true and (.name | startswith("iPhone")))][0].udid')
+          echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+
+      # DeviceRunners installs and launches the app during `dotnet test`, but the OS
+      # calendar permission dialog cannot be dismissed headlessly. Build and install
+      # once, pre-grant calendar access, then run the tests (permissions persist across
+      # the reinstall performed by `dotnet test`).
+      - name: Build and pre-grant calendar access
+        run: |
+          dotnet build tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-ios
+          APP=$(find tests/Plugin.Maui.CalendarStore.DeviceTests/bin -type d -name '*.app' | head -1)
+          xcrun simctl install "$SIMULATOR_UDID" "$APP"
+          xcrun simctl privacy "$SIMULATOR_UDID" grant calendar com.jfversluis.pluginmauicalendarstore.devicetests
+
+      - name: Run device tests
+        run: >
+          dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj
+          -f net10.0-ios
+          -p:DeviceRunnersDevice=$SIMULATOR_UDID
+          --logger "trx;LogFileName=ios-device-tests.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-test-results-ios
+          path: "**/*.trx"
+
+  device-tests-android:
+    name: Device Tests (Android Emulator)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Run device tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-audio -no-boot-anim
+          disable-animations: true
+          script: |
+            dotnet build tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-android
+            APK=$(find tests/Plugin.Maui.CalendarStore.DeviceTests/bin -name '*-Signed.apk' | head -1)
+            # -g grants the runtime calendar permissions at install time.
+            adb install -r -g "$APK"
+            # Belt-and-braces: keep granting while DeviceRunners reinstalls and launches.
+            ( for i in $(seq 1 60); do
+                adb shell pm grant com.jfversluis.pluginmauicalendarstore.devicetests android.permission.READ_CALENDAR 2>/dev/null || true
+                adb shell pm grant com.jfversluis.pluginmauicalendarstore.devicetests android.permission.WRITE_CALENDAR 2>/dev/null || true
+                sleep 2
+              done ) &
+            dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-android
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-test-results-android
+          path: "**/*.trx"
