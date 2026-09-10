@@ -12,6 +12,8 @@ internal class MockCalendarStore : ICalendarStore
 	public Func<string, Task<Calendar>>? OnGetCalendar { get; set; }
 	public Func<string?, DateTimeOffset?, DateTimeOffset?, Task<IEnumerable<CalendarEvent>>>? OnGetEvents { get; set; }
 	public Func<string, Task<CalendarEvent>>? OnGetEvent { get; set; }
+	public Func<string, RecurrenceScope, Task>? OnUpdateEventScoped { get; set; }
+	public Func<string, RecurrenceScope, Task>? OnDeleteEventScoped { get; set; }
 
 	public Task<IEnumerable<Calendar>> GetCalendars() =>
 		OnGetCalendars?.Invoke() ?? Task.FromResult<IEnumerable<Calendar>>(Array.Empty<Calendar>());
@@ -32,6 +34,9 @@ internal class MockCalendarStore : ICalendarStore
 	public Task DeleteCalendar(Calendar calendarToDelete) => Task.CompletedTask;
 	public Task<string> CreateEvent(string calendarId, string title, string description, string location,
 		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false, Reminder[]? reminders = null) => Task.FromResult("mock-event-id");
+	public Task<string> CreateEvent(string calendarId, string title, string description, string location,
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, Reminder[]? reminders,
+		CalendarRecurrence? recurrence, string? timeZoneId = null) => Task.FromResult("mock-event-id");
 	public Task<string> CreateEvent(CalendarEvent calendarEvent) => Task.FromResult("mock-event-id");
 	public Task<string> CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate) => Task.FromResult("mock-event-id");
@@ -40,4 +45,19 @@ internal class MockCalendarStore : ICalendarStore
 	public Task UpdateEvent(CalendarEvent eventToUpdate) => Task.CompletedTask;
 	public Task DeleteEvent(string eventId) => Task.CompletedTask;
 	public Task DeleteEvent(CalendarEvent eventToDelete) => Task.CompletedTask;
+
+	public Task UpdateEvent(string eventId, string title, string description, string location,
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, Reminder[]? reminders,
+		RecurrenceScope scope, DateTimeOffset? originalOccurrenceStart = null) =>
+		OnUpdateEventScoped?.Invoke(eventId, scope) ?? Task.CompletedTask;
+
+	public Task UpdateEvent(CalendarEvent eventToUpdate, RecurrenceScope scope) =>
+		OnUpdateEventScoped?.Invoke(eventToUpdate.Id, scope) ?? Task.CompletedTask;
+
+	public Task DeleteEvent(string eventId, RecurrenceScope scope,
+		DateTimeOffset? originalOccurrenceStart = null) =>
+		OnDeleteEventScoped?.Invoke(eventId, scope) ?? Task.CompletedTask;
+
+	public Task DeleteEvent(CalendarEvent eventToDelete, RecurrenceScope scope) =>
+		OnDeleteEventScoped?.Invoke(eventToDelete.Id, scope) ?? Task.CompletedTask;
 }

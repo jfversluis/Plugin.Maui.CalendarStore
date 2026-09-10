@@ -59,6 +59,13 @@ public static partial class CalendarStore
 		await Default.CreateEvent(calendarId, title, description, location, startDateTime,
 			endDateTime, isAllDay, reminders);
 
+	/// <inheritdoc cref="ICalendarStore.CreateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool, Reminder[], CalendarRecurrence, string?)"/>
+	public static async Task<string> CreateEvent(string calendarId, string title, string description, string location,
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders, CalendarRecurrence? recurrence, string? timeZoneId = null) =>
+		await Default.CreateEvent(calendarId, title, description, location, startDateTime,
+			endDateTime, isAllDay, reminders, recurrence, timeZoneId);
+
 	/// <inheritdoc cref="ICalendarStore.CreateEvent(CalendarEvent)"/>
 	public static async Task<string> CreateEvent(CalendarEvent calendarEvent) =>
 		await Default.CreateEvent(calendarEvent);
@@ -86,6 +93,26 @@ public static partial class CalendarStore
 	/// <inheritdoc cref="ICalendarStore.DeleteEvent(CalendarEvent)"/>
 	public static Task DeleteEvent(CalendarEvent eventToDelete) =>
 		DeleteEvent(eventToDelete.Id);
+
+	/// <inheritdoc cref="ICalendarStore.UpdateEvent(string, string, string, string, DateTimeOffset, DateTimeOffset, bool, Reminder[], RecurrenceScope, DateTimeOffset?)"/>
+	public static async Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders, RecurrenceScope scope, DateTimeOffset? originalOccurrenceStart = null) =>
+		await Default.UpdateEvent(eventId, title, description, location, startDateTime,
+			endDateTime, isAllDay, reminders, scope, originalOccurrenceStart);
+
+	/// <inheritdoc cref="ICalendarStore.UpdateEvent(CalendarEvent, RecurrenceScope)"/>
+	public static async Task UpdateEvent(CalendarEvent eventToUpdate, RecurrenceScope scope) =>
+		await Default.UpdateEvent(eventToUpdate, scope);
+
+	/// <inheritdoc cref="ICalendarStore.DeleteEvent(string, RecurrenceScope, DateTimeOffset?)"/>
+	public static async Task DeleteEvent(string eventId, RecurrenceScope scope,
+		DateTimeOffset? originalOccurrenceStart = null) =>
+		await Default.DeleteEvent(eventId, scope, originalOccurrenceStart);
+
+	/// <inheritdoc cref="ICalendarStore.DeleteEvent(CalendarEvent, RecurrenceScope)"/>
+	public static async Task DeleteEvent(CalendarEvent eventToDelete, RecurrenceScope scope) =>
+		await Default.DeleteEvent(eventToDelete, scope);
 
 	internal static ArgumentException InvalidCalendar(string calendarId) =>
 		new($"No calendar exists with ID '{calendarId}'.", nameof(calendarId));

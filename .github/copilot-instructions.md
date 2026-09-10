@@ -97,6 +97,16 @@ All code uses a single namespace: `Plugin.Maui.CalendarStore`
 - **Only 1 reminder supported per event** (platform limitation)
 - `SourceDisplayName` may be empty for local calendars
 
+### Recurrence
+
+- Cross-platform model: `CalendarRecurrence` (rule) and `RecurrenceScope` (operation scope, in `CalendarRecurrence.shared.cs`).
+- `RecurrenceRuleParser.shared.cs` converts rules to/from iCalendar `RRULE` and parses RFC 2445 `DURATION`. It is pure C# and unit-tested.
+- Recurring series are **wall-clock** anchored: the time-of-day of `CalendarEvent.StartDate` repeats in `CalendarEvent.TimeZoneId` (device-local when `null`). `UNTIL` is serialized in UTC.
+- Android stores recurring events with `RRULE` + `DURATION` (no `DTEND`); exceptions use `ORIGINAL_ID`/`ORIGINAL_INSTANCE_TIME` and cancellation uses `STATUS_CANCELED`.
+- iOS/macOS uses `EKRecurrenceRule`; a single occurrence is located by matching `EKEvent.OccurrenceDate` and saved/removed with the corresponding `EKSpan`.
+- Windows uses `AppointmentRecurrence`; single occurrences use `GetAppointmentInstanceAsync`/`DeleteAppointmentInstanceAsync`, and there is no time zone for non-recurring appointments.
+- The existing (non-scope) `UpdateEvent`/`DeleteEvent` overloads apply to the **whole series**.
+
 ## Testing
 
 When making changes:
@@ -122,6 +132,8 @@ src/Plugin.Maui.CalendarStore/          # Plugin library
   CalendarEvent.shared.cs               # Event model
   CalendarEventAttendee.shared.cs       # Attendee model
   Reminder.shared.cs                    # Reminder model
+  CalendarRecurrence.shared.cs          # Recurrence model (rule, frequency, scope)
+  RecurrenceRuleParser.shared.cs        # RRULE / RFC 2445 DURATION parse + serialize
 
 samples/Plugin.Maui.CalendarStore.Sample/  # Demo MAUI app
   CalendarsPage.xaml[.cs]               # Calendar listing

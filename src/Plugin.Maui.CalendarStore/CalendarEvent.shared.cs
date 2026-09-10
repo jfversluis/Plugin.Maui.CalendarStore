@@ -87,4 +87,43 @@ public class CalendarEvent
 	/// Gets the list of attendees for this event.
 	/// </summary>
 	public IEnumerable<CalendarEventAttendee> Attendees { get; internal set; } = [];
+
+	/// <summary>
+	/// Gets the identifier of the time zone this event is anchored to.
+	/// </summary>
+	/// <remarks>
+	/// The value is an IANA time zone identifier (for example <c>America/New_York</c>),
+	/// or <see langword="null"/> when the event is floating and follows the device's
+	/// local time zone.
+	/// </remarks>
+	public string? TimeZoneId { get; internal set; }
+
+	/// <summary>
+	/// Gets a value indicating whether this event is part of a recurring series.
+	/// </summary>
+	public bool IsRecurring => Recurrence is not null;
+
+	/// <summary>
+	/// Gets the recurrence rule for this event, or <see langword="null"/> when the event does not recur.
+	/// </summary>
+	public CalendarRecurrence? Recurrence { get; internal set; }
+
+	/// <summary>
+	/// Gets a value indicating whether this event is a detached occurrence of a recurring series.
+	/// </summary>
+	/// <remarks>
+	/// A detached occurrence is a single occurrence that has been modified or cancelled
+	/// independently of the rest of the series (an exception).
+	/// </remarks>
+	public bool IsDetached { get; internal set; }
+
+	/// <summary>
+	/// Gets the original start date and time of the occurrence within its recurring series.
+	/// </summary>
+	/// <remarks>
+	/// This value identifies a specific occurrence and remains stable even when the occurrence
+	/// has been moved by an exception. It is <see langword="null"/> for events that are not
+	/// returned as part of a recurring series.
+	/// </remarks>
+	public DateTimeOffset? OriginalOccurrenceStart { get; internal set; }
 }
