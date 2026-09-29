@@ -11,6 +11,9 @@ on:
     paths:
       - "tests/Plugin.Maui.CalendarStore.DeviceTests/**"
 
+permissions:
+  contents: read
+
 jobs:
   device-tests-ios:
     name: Device Tests (iOS Simulator)
