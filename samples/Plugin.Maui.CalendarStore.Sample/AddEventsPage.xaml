@@ -15,7 +15,7 @@
 	<ScrollView>
 		<Grid Margin="20" HorizontalOptions="Fill"
 			  ColumnDefinitions="100, *"
-			  RowDefinitions="50,50,100,50,50,50,50,50,50,50,50,150,*"
+			  RowDefinitions="50,50,100,50,50,50,50,50,50,50,50,150,50,50,50,50,50,50,*"
 			  RowSpacing="5" ColumnSpacing="10">
 
 			<Label Grid.Column="0" Grid.Row="0"
@@ -128,7 +128,49 @@
 				</CollectionView.ItemTemplate>
 			</CollectionView>
 
-			<Button Grid.Column="0" Grid.Row="12" Grid.ColumnSpan="2"
+			<HorizontalStackLayout Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="12"
+								   HorizontalOptions="Fill">
+				<Label Text="Repeats:" />
+				<Switch IsToggled="{Binding EventRepeats}" />
+			</HorizontalStackLayout>
+
+			<Label Grid.Column="0" Grid.Row="13"
+				   Text="Frequency:"
+				   IsVisible="{Binding EventRepeats}" />
+			<Picker Grid.Column="1" Grid.Row="13"
+					ItemsSource="{Binding RecurrenceFrequencies}"
+					SelectedItem="{Binding SelectedFrequency}"
+					HorizontalOptions="Fill"
+					IsVisible="{Binding EventRepeats}" />
+
+			<Label Grid.Column="0" Grid.Row="14"
+				   Text="Every (interval):"
+				   IsVisible="{Binding EventRepeats}" />
+			<Entry Grid.Column="1" Grid.Row="14"
+				   Text="{Binding RecurrenceInterval}"
+				   Keyboard="Numeric"
+				   Placeholder="1"
+				   IsVisible="{Binding EventRepeats}" />
+
+			<Label Grid.Column="0" Grid.Row="15"
+				   Text="End after (times):"
+				   IsVisible="{Binding EventRepeats}" />
+			<Entry Grid.Column="1" Grid.Row="15"
+				   Text="{Binding RecurrenceCount}"
+				   Keyboard="Numeric"
+				   Placeholder="Leave empty to never end"
+				   IsVisible="{Binding EventRepeats}" />
+
+			<Label Grid.Column="0" Grid.Row="16"
+				   Text="Apply to:"
+				   IsVisible="{Binding IsEditAction}" />
+			<Picker Grid.Column="1" Grid.Row="16"
+					ItemsSource="{Binding ScopeOptions}"
+					SelectedItem="{Binding SelectedScope}"
+					HorizontalOptions="Fill"
+					IsVisible="{Binding IsEditAction}" />
+
+			<Button Grid.Column="0" Grid.Row="17" Grid.ColumnSpan="2"
 				Text="Save"
 				VerticalOptions="Center" 
 				HorizontalOptions="Center"

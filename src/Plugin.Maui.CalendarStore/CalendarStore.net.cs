@@ -15,6 +15,13 @@ partial class CalendarStoreImplementation : ICalendarStore
 		throw new NotImplementedException();
 	}
 
+	public Task<string> CreateEvent(string calendarId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
+		bool isAllDay, Reminder[]? reminders, CalendarRecurrence? recurrence, string? timeZoneId = null)
+	{
+		throw new NotImplementedException();
+	}
+
 	public Task<string> CreateEvent(CalendarEvent calendarEvent)
 	{
 		throw new NotImplementedException();
@@ -79,6 +86,29 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	public Task UpdateEvent(CalendarEvent eventToUpdate)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders, RecurrenceScope scope, DateTimeOffset? originalOccurrenceStart = null)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task UpdateEvent(CalendarEvent eventToUpdate, RecurrenceScope scope)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task DeleteEvent(string eventId, RecurrenceScope scope,
+		DateTimeOffset? originalOccurrenceStart = null)
+	{
+		throw new NotImplementedException();
+	}
+
+	public Task DeleteEvent(CalendarEvent eventToDelete, RecurrenceScope scope)
 	{
 		throw new NotImplementedException();
 	}

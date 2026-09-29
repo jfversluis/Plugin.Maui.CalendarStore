@@ -61,16 +61,49 @@ public partial class EventsPage : ContentPage
 			return;
 		}
 
-		var promptResult = await DisplayActionSheet(
-			$"Are you sure you want to delete event \"{eventToRemove.Title}\"?",
-			"Cancel", "Remove");
+		var scope = RecurrenceScope.AllEvents;
 
-		if (promptResult.Equals("Cancel", StringComparison.OrdinalIgnoreCase))
+		if (eventToRemove.IsRecurring)
 		{
+			var scopeChoice = await DisplayActionSheet(
+				$"How much of \"{eventToRemove.Title}\" should be deleted?",
+				"Cancel", null, "This occurrence", "All events");
+
+			switch (scopeChoice)
+			{
+				case "This occurrence":
+					scope = RecurrenceScope.ThisEvent;
+					break;
+				case "All events":
+					scope = RecurrenceScope.AllEvents;
+					break;
+				default:
+					return;
+			}
+		}
+		else
+		{
+			var promptResult = await DisplayActionSheet(
+				$"Are you sure you want to delete event \"{eventToRemove.Title}\"?",
+				"Cancel", "Remove");
+
+			if (!promptResult.Equals("Remove", StringComparison.OrdinalIgnoreCase))
+			{
+				return;
+			}
+		}
+
+		try
+		{
+			await CalendarStore.Default.DeleteEvent(eventToRemove.Id, scope,
+				eventToRemove.OriginalOccurrenceStart);
+		}
+		catch (NotSupportedException ex)
+		{
+			await DisplayAlert("Not supported", ex.Message, "OK");
 			return;
 		}
 
-		await CalendarStore.Default.DeleteEvent(eventToRemove.Id);
 		Events.Remove(eventToRemove);
 
 		await DisplayAlert("Success", "Event deleted!", "OK");
