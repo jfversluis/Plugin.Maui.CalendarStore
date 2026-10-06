@@ -162,4 +162,55 @@ public sealed class CalendarStoreFacadeTests : IDisposable
 			EndDate = new DateTimeOffset(2025, endMonth, 15, 11, 0, 0, TimeSpan.Zero)
 		};
 	}
+
+	[Fact]
+	public async Task UpdateEvent_WithScope_DelegatesScopeToImplementation()
+	{
+		string? capturedId = null;
+		RecurrenceScope capturedScope = RecurrenceScope.AllEvents;
+
+		var mock = new MockCalendarStore
+		{
+			OnUpdateEventScoped = (id, scope) =>
+			{
+				capturedId = id;
+				capturedScope = scope;
+				return Task.CompletedTask;
+			}
+		};
+
+		CalendarStore.SetDefault(mock);
+
+		var start = new DateTimeOffset(2025, 1, 1, 9, 0, 0, TimeSpan.Zero);
+
+		await CalendarStore.UpdateEvent("e1", "title", "description", "location",
+			start, start.AddHours(1), false, null, RecurrenceScope.ThisEvent, start);
+
+		Assert.Equal("e1", capturedId);
+		Assert.Equal(RecurrenceScope.ThisEvent, capturedScope);
+	}
+
+	[Fact]
+	public async Task DeleteEvent_WithScope_DelegatesScopeToImplementation()
+	{
+		string? capturedId = null;
+		RecurrenceScope capturedScope = RecurrenceScope.AllEvents;
+
+		var mock = new MockCalendarStore
+		{
+			OnDeleteEventScoped = (id, scope) =>
+			{
+				capturedId = id;
+				capturedScope = scope;
+				return Task.CompletedTask;
+			}
+		};
+
+		CalendarStore.SetDefault(mock);
+
+		await CalendarStore.DeleteEvent("e1", RecurrenceScope.ThisEvent);
+
+		Assert.Equal("e1", capturedId);
+		Assert.Equal(RecurrenceScope.ThisEvent, capturedScope);
+	}
 }

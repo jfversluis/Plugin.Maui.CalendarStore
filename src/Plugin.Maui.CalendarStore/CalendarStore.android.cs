@@ -4,12 +4,15 @@ using Android.Provider;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Graphics.Platform;
+using System.Globalization;
 using static Plugin.Maui.CalendarStore.CalendarStore;
 
 namespace Plugin.Maui.CalendarStore;
 
 partial class CalendarStoreImplementation : ICalendarStore
 {
+	const string detachedUidPrefix = "plugin-maui-calendarstore-detached:";
+
 	readonly Color defaultColor = Color.FromRgb(0x51, 0x2B, 0xD4);
 
 	readonly Android.Net.Uri calendarsTableUri;
@@ -37,6 +40,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 				CalendarContract.Events.InterfaceConsts.AllDay,
 				CalendarContract.Events.InterfaceConsts.Dtstart,
 				CalendarContract.Events.InterfaceConsts.Dtend,
+				CalendarContract.Events.InterfaceConsts.Duration,
+				CalendarContract.Events.InterfaceConsts.Rrule,
+				CalendarContract.Events.InterfaceConsts.OriginalId,
+				CalendarContract.Events.InterfaceConsts.OriginalInstanceTime,
 				CalendarContract.Events.InterfaceConsts.Deleted,
 				CalendarContract.Events.InterfaceConsts.EventTimezone,
 				CalendarContract.Events.InterfaceConsts.EventColor,
@@ -52,6 +59,10 @@ partial class CalendarStoreImplementation : ICalendarStore
 				CalendarContract.Instances.Begin,
 				CalendarContract.Instances.End,
 				CalendarContract.Events.InterfaceConsts.EventTimezone,
+				CalendarContract.Events.InterfaceConsts.Rrule,
+				CalendarContract.Events.InterfaceConsts.OriginalId,
+				CalendarContract.Events.InterfaceConsts.OriginalInstanceTime,
+				CalendarContract.Events.InterfaceConsts.EventColor,
 			];
 
 	readonly List<string> attendeesColumns =
@@ -297,9 +308,29 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task<string> CreateEvent(string calendarId, string title, string description,
+	public Task<string> CreateEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
-		bool isAllDay = false, Reminder[]? reminders = null)
+		bool isAllDay = false, Reminder[]? reminders = null) =>
+		CreateEventCore(calendarId, title, description, location, startDateTime, endDateTime,
+			isAllDay, reminders, null, null);
+
+	/// <inheritdoc/>
+	public Task<string> CreateEvent(string calendarId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
+		bool isAllDay, Reminder[]? reminders, CalendarRecurrence? recurrence, string? timeZoneId = null) =>
+		CreateEventCore(calendarId, title, description, location, startDateTime, endDateTime,
+			isAllDay, reminders, recurrence, timeZoneId);
+
+	/// <inheritdoc/>
+	public Task<string> CreateEvent(CalendarEvent calendarEvent) =>
+		CreateEventCore(calendarEvent.CalendarId, calendarEvent.Title,
+			calendarEvent.Description, calendarEvent.Location,
+			calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.IsAllDay,
+			calendarEvent.Reminders.ToArray(), calendarEvent.Recurrence, calendarEvent.TimeZoneId);
+
+	async Task<string> CreateEventCore(string calendarId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime,
+		bool isAllDay, Reminder[]? reminders, CalendarRecurrence? recurrence, string? timeZoneId)
 	{
 		if (string.IsNullOrEmpty(calendarId))
 		{
@@ -311,31 +342,32 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw new CalendarStoreException("Event title cannot be null or empty.");
 		}
 
+		if (recurrence is not null && !isAllDay && endDateTime <= startDateTime)
+		{
+			throw new CalendarStoreException(
+				"The end date and time must be after the start date and time for a recurring event.");
+		}
+
 		await EnsureWriteCalendarPermission();
 
 		// We just want to know a calendar with this ID exists,
 		// but we also need to dispose the returned cursor.
 		using var cursor = await GetPlatformCalendar(calendarId);
 
+		var timeZone = isAllDay ? null : CalendarStore.ResolveEventTimeZone(timeZoneId);
+		(startDateTime, endDateTime) = CalendarStore.ResolveStoredTimes(
+			startDateTime, endDateTime, isAllDay, timeZone);
+
 		ContentValues eventToInsert = new();
-		if (isAllDay)
-		{
-			// Set the time component to midnight in UTC for all-day events
-			startDateTime = new DateTimeOffset(startDateTime.Date, TimeSpan.Zero).ToUniversalTime();
-			endDateTime = new DateTimeOffset(endDateTime.Date, TimeSpan.Zero).ToUniversalTime();
-		}
 
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
 			startDateTime.ToUnixTimeMilliseconds());
 
-		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtend,
-			endDateTime.ToUnixTimeMilliseconds());
-
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.EventTimezone,
-			isAllDay ? "UTC" : TimeZoneInfo.Local.Id);
+			isAllDay ? "UTC" : CalendarStore.ResolveTimeZone(timeZoneId).Id);
 
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.AllDay,
-			isAllDay);
+			isAllDay ? 1 : 0);
 
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Title,
 			title);
@@ -348,6 +380,29 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 		eventToInsert.Put(CalendarContract.Events.InterfaceConsts.CalendarId,
 			calendarId);
+
+		if (recurrence is not null)
+		{
+			// Recurring events use DURATION + RRULE instead of DTEND.
+			var duration = CalendarStore.ComputeDuration(startDateTime, endDateTime, isAllDay);
+
+			if (duration <= TimeSpan.Zero)
+			{
+				throw new CalendarStoreException(
+					"The duration of a recurring event must be greater than zero.");
+			}
+
+			eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Duration,
+				RecurrenceRuleParser.FormatDuration(duration));
+
+			eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Rrule,
+				RecurrenceRuleParser.ToRRule(recurrence));
+		}
+		else
+		{
+			eventToInsert.Put(CalendarContract.Events.InterfaceConsts.Dtend,
+				endDateTime.ToUnixTimeMilliseconds());
+		}
 
 		var idUrl = platformContentResolver?.Insert(eventsTableUri, eventToInsert);
 
@@ -366,15 +421,6 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public Task<string> CreateEvent(CalendarEvent calendarEvent)
-	{
-		return CreateEvent(calendarEvent.CalendarId, calendarEvent.Title,
-			calendarEvent.Description, calendarEvent.Location,
-			calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.IsAllDay,
-			calendarEvent.Reminders.ToArray());
-	}
-
-	/// <inheritdoc/>
 	public Task<string> CreateAllDayEvent(string calendarId, string title, string description,
 		string location, DateTimeOffset startDate, DateTimeOffset endDate)
 	{
@@ -383,83 +429,379 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task UpdateEvent(string eventId, string title, string description,
+	public Task UpdateEvent(string eventId, string title, string description,
 		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
-		Reminder[]? reminders = null)
+		Reminder[]? reminders = null) =>
+		UpdateEventCore(eventId, title, description, location, startDateTime, endDateTime,
+			isAllDay, reminders, null, RecurrenceScope.AllEvents, null);
+
+	/// <inheritdoc/>
+	public Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders, RecurrenceScope scope, DateTimeOffset? originalOccurrenceStart = null) =>
+		UpdateEventCore(eventId, title, description, location, startDateTime, endDateTime,
+			isAllDay, reminders, null, scope, originalOccurrenceStart);
+
+	/// <inheritdoc/>
+	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
+		UpdateEventCore(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate,
+			eventToUpdate.IsAllDay, eventToUpdate.Reminders.ToArray(), eventToUpdate.TimeZoneId,
+			RecurrenceScope.AllEvents, null);
+
+	/// <inheritdoc/>
+	public Task UpdateEvent(CalendarEvent eventToUpdate, RecurrenceScope scope) =>
+		UpdateEventCore(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
+			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate,
+			eventToUpdate.IsAllDay, eventToUpdate.Reminders.ToArray(), eventToUpdate.TimeZoneId,
+			scope, eventToUpdate.OriginalOccurrenceStart);
+
+	async Task UpdateEventCore(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders, string? timeZoneId, RecurrenceScope scope,
+		DateTimeOffset? originalOccurrenceStart)
 	{
 		await EnsureWriteCalendarPermission();
 
-		using var cursor = platformContentResolver.Query(
-			eventsTableUri, calendarColumns.ToArray(), null, null, null)
-			?? throw new CalendarStoreException("Error while querying events");
-
-		long platformEventId = 0;
-
-		if (!long.TryParse(eventId, out long virtualEventId))
+		if (!long.TryParse(eventId, out long platformEventId))
 		{
 			throw InvalidEvent(eventId);
 		}
 
-		while (cursor.MoveToNext())
+		var timeZone = isAllDay ? null : CalendarStore.ResolveEventTimeZone(timeZoneId);
+		(startDateTime, endDateTime) = CalendarStore.ResolveStoredTimes(
+			startDateTime, endDateTime, isAllDay, timeZone);
+
+		switch (scope)
 		{
-			long id = cursor.GetLong(cursor.GetColumnIndex(calendarColumns[0]));
-
-			if (id == virtualEventId)
-			{
-				platformEventId = cursor.GetLong(
-					cursor.GetColumnIndex(calendarColumns[0]));
-
+			case RecurrenceScope.AllEvents:
+				UpdateSeries(ResolveMasterId(platformEventId), title, description, location, startDateTime,
+					endDateTime, isAllDay, reminders, timeZone);
 				break;
-			}
-		}
-
-		SafeCloseCursor(cursor);
-
-		if (platformEventId <= 0)
-		{
-			throw new CalendarStoreException("Could not determine platform event ID.");
-		}
-
-		ContentValues eventToUpdate = new();
-		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtstart,
-			startDateTime.ToUnixTimeMilliseconds());
-
-		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtend,
-			endDateTime.ToUnixTimeMilliseconds());
-
-		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.AllDay,
-			isAllDay);
-
-		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Title,
-			title);
-
-		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Description,
-			description);
-
-		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.EventLocation,
-			location);
-
-		var updateCount = platformContentResolver?.Update(
-			ContentUris.WithAppendedId(eventsTableUri, platformEventId), eventToUpdate, null, null);
-
-		if (updateCount != 1)
-		{
-			throw new CalendarStoreException(
-				"There was an error updating the event.");
-		}
-
-		RemoveAllReminders(platformEventId);
-
-		if (reminders is not null)
-		{
-			AddReminders(platformEventId, startDateTime, reminders);
+			case RecurrenceScope.ThisEvent:
+				UpdateOccurrence(platformEventId, title, description, location, startDateTime,
+					endDateTime, isAllDay, reminders, RequireOccurrenceStart(originalOccurrenceStart));
+				break;
+			default:
+				throw new ArgumentOutOfRangeException(nameof(scope), scope,
+					"Unsupported recurrence scope.");
 		}
 	}
 
-	public Task UpdateEvent(CalendarEvent eventToUpdate) =>
-		UpdateEvent(eventToUpdate.Id, eventToUpdate.Title, eventToUpdate.Description,
-			eventToUpdate.Location, eventToUpdate.StartDate, eventToUpdate.EndDate,
-			eventToUpdate.IsAllDay, eventToUpdate.Reminders.ToArray());
+	void UpdateSeries(long eventId, string title, string description, string location,
+		DateTimeOffset start, DateTimeOffset end, bool isAllDay, Reminder[]? reminders,
+		TimeZoneInfo? timeZone)
+	{
+		var agenda = GetEventAgenda(eventId);
+
+		var eventToUpdate = new ContentValues();
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtstart, start.ToUnixTimeMilliseconds());
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.AllDay, isAllDay ? 1 : 0);
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Title, title);
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Description, description);
+		eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.EventLocation, location);
+
+		if (timeZone is not null)
+		{
+			eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.EventTimezone,
+				isAllDay ? "UTC" : timeZone.Id);
+		}
+
+		if (string.IsNullOrWhiteSpace(agenda.Rrule))
+		{
+			eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Dtend, end.ToUnixTimeMilliseconds());
+		}
+		else
+		{
+			// Recurring series store a nominal duration instead of DTEND.
+			eventToUpdate.Put(CalendarContract.Events.InterfaceConsts.Duration,
+				RecurrenceRuleParser.FormatDuration(
+					CalendarStore.ComputeDuration(start, end, isAllDay)));
+		}
+
+		var updateCount = platformContentResolver?.Update(
+			ContentUris.WithAppendedId(eventsTableUri, eventId), eventToUpdate, null, null);
+
+		if (updateCount != 1)
+		{
+			throw new CalendarStoreException("There was an error updating the event.");
+		}
+
+		RemoveAllReminders(eventId);
+
+		if (reminders is not null)
+		{
+			AddReminders(eventId, start, reminders);
+		}
+	}
+
+	void UpdateOccurrence(long eventId, string title, string description, string location,
+		DateTimeOffset start, DateTimeOffset end, bool isAllDay, Reminder[]? reminders,
+		DateTimeOffset originalOccurrenceStart)
+	{
+		var masterId = ResolveMasterId(eventId);
+		var master = GetEventAgenda(masterId);
+
+		// Android's provider only re-expands a series when applying an exception if the series
+		// has a sync id (CalendarInstancesHelper#getRelevantRecurrenceEntries), which
+		// locally-created calendars do not have. So exclude the original occurrence via EXDATE
+		// and add the moved occurrence as a standalone event instead.
+		ExcludeOccurrence(masterId, originalOccurrenceStart);
+
+		var movedEventId = InsertStandaloneEvent(masterId, master.CalendarId, title, description, location,
+			start, end, isAllDay, master.TimeZone, originalOccurrenceStart.ToUnixTimeMilliseconds());
+
+		ReplaceReminders(movedEventId, start, reminders);
+	}
+
+	long ResolveMasterId(long eventId)
+	{
+		var agenda = GetEventAgenda(eventId);
+
+		if (long.TryParse(agenda.OriginalId, out var masterId))
+		{
+			return masterId;
+		}
+
+		return TryParseDetachedMasterId(agenda.Uid2445, out var detachedMasterId)
+			? detachedMasterId
+			: eventId;
+	}
+
+	void ExcludeOccurrence(long masterId, DateTimeOffset occurrence)
+	{
+		var master = GetEventAgenda(masterId);
+
+		// Drop any existing exception row for this occurrence so the master stays the source.
+		var existingException = FindExceptionRowId(masterId, occurrence.ToUnixTimeMilliseconds());
+
+		if (existingException is long exceptionId)
+		{
+			platformContentResolver?.Delete(
+				ContentUris.WithAppendedId(eventsTableUri, exceptionId), null, null);
+		}
+
+		var detachedReplacement = FindDetachedReplacementId(
+			masterId, occurrence.ToUnixTimeMilliseconds());
+
+		if (detachedReplacement is long detachedId)
+		{
+			DeleteEventRow(detachedId, "There was an error replacing the occurrence.");
+		}
+
+		// The provider only re-expands the series when the update carries the recurrence
+		// fields (it bails out early if DTSTART is missing), so include them alongside EXDATE.
+		var values = new ContentValues();
+		values.Put(CalendarContract.Events.InterfaceConsts.Dtstart, master.Dtstart);
+		values.Put(CalendarContract.Events.InterfaceConsts.AllDay, master.AllDay ? 1 : 0);
+		values.Put(CalendarContract.Events.InterfaceConsts.EventTimezone, GetTimezoneName(master.TimeZone));
+
+		if (!string.IsNullOrEmpty(master.Rrule))
+		{
+			values.Put(CalendarContract.Events.InterfaceConsts.Rrule, master.Rrule);
+		}
+
+		if (!string.IsNullOrEmpty(master.Duration))
+		{
+			values.Put(CalendarContract.Events.InterfaceConsts.Duration, master.Duration);
+		}
+
+		values.Put(CalendarContract.Events.InterfaceConsts.Exdate,
+			AppendExDate(master.Exdate, occurrence));
+
+		var updateCount = platformContentResolver?.Update(
+			ContentUris.WithAppendedId(eventsTableUri, masterId), values, null, null);
+
+		if (updateCount != 1)
+		{
+			throw new CalendarStoreException("There was an error updating the occurrence.");
+		}
+	}
+
+	long InsertStandaloneEvent(long masterId, string calendarId, string title, string description, string location,
+		DateTimeOffset start, DateTimeOffset end, bool isAllDay, string? timeZone,
+		long originalInstanceMillis)
+	{
+		var values = new ContentValues();
+		values.Put(CalendarContract.Events.InterfaceConsts.CalendarId, calendarId);
+		values.Put(CalendarContract.Events.InterfaceConsts.Dtstart, start.ToUnixTimeMilliseconds());
+		values.Put(CalendarContract.Events.InterfaceConsts.Dtend, end.ToUnixTimeMilliseconds());
+		// Remember which occurrence this standalone event replaces. It is not a provider
+		// exception (we avoid those on local calendars), but it lets the read model report
+		// OriginalOccurrenceStart/IsDetached just like the other platforms.
+		values.Put(CalendarContract.Events.InterfaceConsts.OriginalInstanceTime, originalInstanceMillis);
+		values.Put(CalendarContract.Events.InterfaceConsts.Uid2445,
+			CreateDetachedUid(masterId, originalInstanceMillis));
+		values.Put(CalendarContract.Events.InterfaceConsts.AllDay, isAllDay ? 1 : 0);
+		values.Put(CalendarContract.Events.InterfaceConsts.EventTimezone,
+			isAllDay ? "UTC" : GetTimezoneName(timeZone));
+		values.Put(CalendarContract.Events.InterfaceConsts.Title, title);
+		values.Put(CalendarContract.Events.InterfaceConsts.Description, description);
+		values.Put(CalendarContract.Events.InterfaceConsts.EventLocation, location);
+
+		var idUrl = platformContentResolver?.Insert(eventsTableUri, values)
+			?? throw new CalendarStoreException("There was an error saving the occurrence.");
+
+		if (!long.TryParse(idUrl.LastPathSegment, out var savedId))
+		{
+			throw new CalendarStoreException("There was an error saving the occurrence.");
+		}
+
+		return savedId;
+	}
+
+	static string AppendExDate(string? existing, DateTimeOffset occurrence)
+	{
+		var entry = occurrence.UtcDateTime.ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
+
+		return string.IsNullOrWhiteSpace(existing) ? entry : $"{existing},{entry}";
+	}
+
+	void ReplaceReminders(long eventId, DateTimeOffset start, Reminder[]? reminders)
+	{
+		RemoveAllReminders(eventId);
+
+		if (reminders is not null)
+		{
+			AddReminders(eventId, start, reminders);
+		}
+	}
+
+	static DateTimeOffset RequireOccurrenceStart(DateTimeOffset? originalOccurrenceStart) =>
+		originalOccurrenceStart ?? throw new ArgumentException(
+			"The original occurrence start is required to target a single occurrence.",
+			nameof(originalOccurrenceStart));
+
+	static string GetTimezoneName(string? timeZone) =>
+		string.IsNullOrWhiteSpace(timeZone) ? TimeZoneInfo.Local.Id : timeZone;
+
+	(string CalendarId, long Dtstart, string? TimeZone, bool AllDay, string? Rrule,
+		string? OriginalId, string? Uid2445, string? Duration, string? Exdate)
+		GetEventAgenda(long eventId)
+	{
+		var selection = $"{CalendarContract.Events.InterfaceConsts.Id} = ?";
+
+		using var cursor = platformContentResolver.Query(eventsTableUri,
+			new[]
+			{
+				CalendarContract.Events.InterfaceConsts.CalendarId,
+				CalendarContract.Events.InterfaceConsts.Dtstart,
+				CalendarContract.Events.InterfaceConsts.EventTimezone,
+				CalendarContract.Events.InterfaceConsts.AllDay,
+				CalendarContract.Events.InterfaceConsts.Rrule,
+				CalendarContract.Events.InterfaceConsts.OriginalId,
+				CalendarContract.Events.InterfaceConsts.Uid2445,
+				CalendarContract.Events.InterfaceConsts.Duration,
+				CalendarContract.Events.InterfaceConsts.Exdate,
+			},
+			selection, new[] { eventId.ToString() }, null)
+			?? throw new CalendarStoreException("Error while querying events");
+
+		if (cursor.Count <= 0)
+		{
+			throw InvalidEvent(eventId.ToString());
+		}
+
+		cursor.MoveToNext();
+
+		string? ReadString(string column)
+		{
+			var index = cursor.GetColumnIndexOrThrow(column);
+			return cursor.IsNull(index) ? null : cursor.GetString(index);
+		}
+
+		var calendarId = ReadString(CalendarContract.Events.InterfaceConsts.CalendarId) ?? string.Empty;
+		var dtstart = cursor.GetLong(cursor.GetColumnIndexOrThrow(
+			CalendarContract.Events.InterfaceConsts.Dtstart));
+		var timezone = ReadString(CalendarContract.Events.InterfaceConsts.EventTimezone);
+		var allDay = cursor.GetInt(cursor.GetColumnIndexOrThrow(
+			CalendarContract.Events.InterfaceConsts.AllDay)) != 0;
+		var rrule = ReadString(CalendarContract.Events.InterfaceConsts.Rrule);
+		var originalId = ReadString(CalendarContract.Events.InterfaceConsts.OriginalId);
+		var uid2445 = ReadString(CalendarContract.Events.InterfaceConsts.Uid2445);
+		var duration = ReadString(CalendarContract.Events.InterfaceConsts.Duration);
+		var exdate = ReadString(CalendarContract.Events.InterfaceConsts.Exdate);
+
+		return (calendarId, dtstart, timezone, allDay, rrule, originalId,
+			uid2445, duration, exdate);
+	}
+
+	static string CreateDetachedUid(long masterId, long originalMillis) =>
+		$"{detachedUidPrefix}{masterId.ToString(CultureInfo.InvariantCulture)}:" +
+		$"{originalMillis.ToString(CultureInfo.InvariantCulture)}";
+
+	static bool TryParseDetachedMasterId(string? uid, out long masterId)
+	{
+		masterId = default;
+
+		if (string.IsNullOrEmpty(uid) || !uid.StartsWith(detachedUidPrefix, StringComparison.Ordinal))
+		{
+			return false;
+		}
+
+		var separator = uid.IndexOf(':', detachedUidPrefix.Length);
+		return separator > detachedUidPrefix.Length
+			&& long.TryParse(uid.AsSpan(detachedUidPrefix.Length,
+				separator - detachedUidPrefix.Length), NumberStyles.None,
+				CultureInfo.InvariantCulture, out masterId);
+	}
+
+	List<long> GetDetachedEventIds(long masterId)
+	{
+		var selection = $"{CalendarContract.Events.InterfaceConsts.Uid2445} LIKE ?";
+		var ids = new List<long>();
+
+		using var cursor = platformContentResolver.Query(eventsTableUri,
+			new[] { CalendarContract.Events.InterfaceConsts.Id }, selection,
+			new[] { $"{detachedUidPrefix}{masterId.ToString(CultureInfo.InvariantCulture)}:%" }, null);
+
+		if (cursor is null)
+		{
+			return ids;
+		}
+
+		while (cursor.MoveToNext())
+		{
+			ids.Add(cursor.GetLong(cursor.GetColumnIndexOrThrow(
+				CalendarContract.Events.InterfaceConsts.Id)));
+		}
+
+		return ids;
+	}
+
+	long? FindDetachedReplacementId(long masterId, long originalMillis)
+	{
+		var selection = $"{CalendarContract.Events.InterfaceConsts.Uid2445} = ?";
+
+		using var cursor = platformContentResolver.Query(eventsTableUri,
+			new[] { CalendarContract.Events.InterfaceConsts.Id }, selection,
+			new[] { CreateDetachedUid(masterId, originalMillis) }, null);
+
+		return cursor is not null && cursor.MoveToFirst()
+			? cursor.GetLong(cursor.GetColumnIndexOrThrow(
+				CalendarContract.Events.InterfaceConsts.Id))
+			: null;
+	}
+
+	long? FindExceptionRowId(long masterId, long originalMillis)
+	{
+		var selection =
+			$"{CalendarContract.Events.InterfaceConsts.OriginalId} = ? AND " +
+			$"{CalendarContract.Events.InterfaceConsts.OriginalInstanceTime} = ?";
+
+		using var cursor = platformContentResolver.Query(eventsTableUri,
+			new[] { CalendarContract.Events.InterfaceConsts.Id }, selection,
+			new[] { masterId.ToString(), originalMillis.ToString() }, null)
+			?? throw new CalendarStoreException("Error while querying events");
+
+		if (cursor.Count <= 0)
+		{
+			return null;
+		}
+
+		cursor.MoveToNext();
+		return cursor.GetLong(cursor.GetColumnIndexOrThrow(CalendarContract.Events.InterfaceConsts.Id));
+	}
 
 	void AddReminders(long eventId, DateTimeOffset eventStartDateTime, Reminder[]? reminders)
 	{
@@ -503,11 +845,15 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	List<Reminder> GetAllEventReminders(long eventId)
 	{
-		// Query to fetch all reminders for the event
+		return ToReminders(GetEventStartTime(eventId), GetEventReminderOffsets(eventId));
+	}
+
+	List<int> GetEventReminderOffsets(long eventId)
+	{
 		var selection = $"{CalendarContract.Reminders.InterfaceConsts.EventId} = ?";
 		var selectionArgs = new[] { eventId.ToString() };
 
-		var reminderTimes = new List<Reminder>();
+		var reminderOffsets = new List<int>();
 
 		using var cursor = platformContentResolver?.Query(
 			remindersTableUri,
@@ -515,25 +861,24 @@ partial class CalendarStoreImplementation : ICalendarStore
 			selection,
 			selectionArgs,
 			null);
-		int reminderMinutes = 0;
 		if (cursor is not null && cursor.MoveToFirst())
 		{
-			// Retrieve the event start time
-			var eventStartTime = GetEventStartTime(eventId);
-
 			do
 			{
-				reminderMinutes = cursor.GetInt(cursor.GetColumnIndexOrThrow(CalendarContract.Reminders.InterfaceConsts.Minutes));
-				Reminder reminder = new(eventStartTime.AddMinutes(-reminderMinutes));
-				reminderTimes.Add(reminder);
+				reminderOffsets.Add(cursor.GetInt(cursor.GetColumnIndexOrThrow(
+					CalendarContract.Reminders.InterfaceConsts.Minutes)));
 			}
 			while (cursor.MoveToNext());
 
 			SafeCloseCursor(cursor);
 		}
 
-		return reminderTimes;
+		return reminderOffsets;
 	}
+
+	static List<Reminder> ToReminders(DateTimeOffset eventStart, IEnumerable<int> minuteOffsets) =>
+		minuteOffsets.Select(minutes => new Reminder(eventStart.AddMinutes(-minutes))).ToList();
+
 	DateTimeOffset GetEventStartTime(long eventId)
 	{
 		var selection = $"{CalendarContract.Events.InterfaceConsts.Id} = ?";
@@ -573,10 +918,25 @@ partial class CalendarStoreImplementation : ICalendarStore
 	}
 
 	/// <inheritdoc/>
-	public async Task DeleteEvent(string eventId)
-	{
-		await EnsureWriteCalendarPermission();
+	public Task DeleteEvent(string eventId) =>
+		DeleteEventCore(eventId, RecurrenceScope.AllEvents, null);
 
+	/// <inheritdoc/>
+	public Task DeleteEvent(string eventId, RecurrenceScope scope,
+		DateTimeOffset? originalOccurrenceStart = null) =>
+		DeleteEventCore(eventId, scope, originalOccurrenceStart);
+
+	/// <inheritdoc/>
+	public Task DeleteEvent(CalendarEvent eventToDelete) =>
+		DeleteEventCore(eventToDelete.Id, RecurrenceScope.AllEvents, null);
+
+	/// <inheritdoc/>
+	public Task DeleteEvent(CalendarEvent eventToDelete, RecurrenceScope scope) =>
+		DeleteEventCore(eventToDelete.Id, scope, eventToDelete.OriginalOccurrenceStart);
+
+	async Task DeleteEventCore(string eventId, RecurrenceScope scope,
+		DateTimeOffset? originalOccurrenceStart)
+	{
 		// Android ids are always integers
 		if (string.IsNullOrEmpty(eventId) ||
 			!long.TryParse(eventId, out long platformEventId))
@@ -584,23 +944,37 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw InvalidEvent(eventId);
 		}
 
-		ContentValues eventToRemove = new();
-		eventToRemove.Put(
-			CalendarContract.Events.InterfaceConsts.Id, platformEventId);
+		await EnsureWriteCalendarPermission();
 
+		if (scope == RecurrenceScope.AllEvents)
+		{
+			var seriesMasterId = ResolveMasterId(platformEventId);
+
+			foreach (var detachedId in GetDetachedEventIds(seriesMasterId))
+			{
+				DeleteEventRow(detachedId, "There was an error deleting a detached occurrence.");
+			}
+
+			DeleteEventRow(seriesMasterId, "There was an error deleting the event.");
+			return;
+		}
+
+		var occurrenceStart = RequireOccurrenceStart(originalOccurrenceStart);
+		var masterId = ResolveMasterId(platformEventId);
+
+		ExcludeOccurrence(masterId, occurrenceStart);
+	}
+
+	void DeleteEventRow(long eventId, string errorMessage)
+	{
 		var deleteCount = platformContentResolver?.Delete(
-			ContentUris.WithAppendedId(eventsTableUri, platformEventId), null, null);
+			ContentUris.WithAppendedId(eventsTableUri, eventId), null, null);
 
 		if (deleteCount != 1)
 		{
-			throw new CalendarStoreException(
-				"There was an error deleting the event.");
+			throw new CalendarStoreException(errorMessage);
 		}
 	}
-
-	/// <inheritdoc/>
-	public Task DeleteEvent(CalendarEvent eventToDelete) =>
-		DeleteEvent(eventToDelete.Id);
 
 	static async Task EnsureWriteCalendarPermission()
 	{
@@ -735,24 +1109,21 @@ partial class CalendarStoreImplementation : ICalendarStore
 		var timezone = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventTimezone));
 		var allDay = cursor.GetInt(projection.IndexOf(CalendarContract.Events.InterfaceConsts.AllDay)) != 0;
 		var start = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtstart)));
-		var end = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtend)));
+		var end = GetEventEnd(cursor, projection, start);
 
-		DateTimeOffset SafeConvertTime(DateTimeOffset time, string? tz)
-		{
-			try
-			{
-				return tz is null ? time : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(time, tz);
-			}
-			catch (TimeZoneNotFoundException)
-			{
-				return time; // Fallback if timezone is invalid
-			}
-		}
+		var rrule = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Rrule));
+		var originalId = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.OriginalId));
+		var originalInstanceTime = GetNullableLong(cursor, projection.IndexOf(
+			CalendarContract.Events.InterfaceConsts.OriginalInstanceTime));
+
 		var EventIDString = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty;
 		if (!long.TryParse(EventIDString, out var eventId))
 		{
 			throw new CalendarStoreException($"Invalid Event ID: {EventIDString}");
 		}
+
+		var timeZone = CalendarStore.ResolveTimeZone(timezone);
+
 		return new(EventIDString,
 			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.CalendarId)) ?? string.Empty,
 			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Title)) ?? string.Empty)
@@ -762,13 +1133,63 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Location = cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.EventLocation)) ?? string.Empty,
 			IsAllDay = allDay,
-			StartDate = SafeConvertTime(start, timezone),
-			EndDate = SafeConvertTime(end, timezone),
+			StartDate = CalendarStore.FromUnixTimeMilliseconds(start.ToUnixTimeMilliseconds(), timeZone),
+			EndDate = CalendarStore.FromUnixTimeMilliseconds(end.ToUnixTimeMilliseconds(), timeZone),
+			TimeZoneId = allDay ? null : timezone,
+			Recurrence = ParseRecurrence(rrule, allDay, timezone),
+			IsDetached = !string.IsNullOrEmpty(originalId) || originalInstanceTime is not null,
+			OriginalOccurrenceStart = originalInstanceTime is long original
+				? CalendarStore.FromUnixTimeMilliseconds(original, timeZone)
+				: null,
 			EventColor = GetEventColor(cursor, projection),
 			Attendees = GetAttendees(cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.Id)) ?? string.Empty).ToList(),
 			Reminders = GetAllEventReminders(eventId),
 		};
+	}
+
+	static DateTimeOffset GetEventEnd(ICursor cursor, List<string> projection, DateTimeOffset start)
+	{
+		var endIndex = projection.IndexOf(CalendarContract.Events.InterfaceConsts.Dtend);
+
+		if (endIndex >= 0 && !cursor.IsNull(endIndex))
+		{
+			var end = cursor.GetLong(endIndex);
+			if (end > 0)
+			{
+				return DateTimeOffset.FromUnixTimeMilliseconds(end);
+			}
+		}
+
+		var durationIndex = projection.IndexOf(CalendarContract.Events.InterfaceConsts.Duration);
+		if (durationIndex >= 0 && !cursor.IsNull(durationIndex)
+			&& RecurrenceRuleParser.TryParseDuration(cursor.GetString(durationIndex), out var duration))
+		{
+			return start.Add(duration);
+		}
+
+		return start;
+	}
+
+	static long? GetNullableLong(ICursor cursor, int index)
+	{
+		if (index < 0 || cursor.IsNull(index))
+		{
+			return null;
+		}
+
+		return cursor.GetLong(index);
+	}
+
+	static CalendarRecurrence? ParseRecurrence(string? rrule, bool allDay, string? timezone)
+	{
+		if (string.IsNullOrWhiteSpace(rrule))
+		{
+			return null;
+		}
+
+		var anchor = allDay ? TimeZoneInfo.Utc : CalendarStore.ResolveTimeZone(timezone);
+		return RecurrenceRuleParser.TryParse(rrule, anchor, out var recurrence) ? recurrence : null;
 	}
 
 	static Color? GetEventColor(ICursor cursor, List<string> projection)
@@ -793,11 +1214,11 @@ partial class CalendarStoreImplementation : ICalendarStore
 		// Cache attendees and reminders by EventId to avoid redundant queries
 		// for recurring events (which share the same EventId across occurrences).
 		var attendeesCache = new Dictionary<string, List<CalendarEventAttendee>>();
-		var remindersCache = new Dictionary<long, List<Reminder>>();
+		var reminderOffsetsCache = new Dictionary<long, List<int>>();
 
 		while (cur.MoveToNext())
 		{
-			yield return ToEventFromInstance(cur, projection, attendeesCache, remindersCache);
+			yield return ToEventFromInstance(cur, projection, attendeesCache, reminderOffsetsCache);
 		}
 
 		SafeCloseCursor(cur);
@@ -805,17 +1226,15 @@ partial class CalendarStoreImplementation : ICalendarStore
 
 	CalendarEvent ToEventFromInstance(ICursor cursor, List<string> projection,
 		Dictionary<string, List<CalendarEventAttendee>> attendeesCache,
-		Dictionary<long, List<Reminder>> remindersCache)
+		Dictionary<long, List<int>> reminderOffsetsCache)
 	{
 		var timezone = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.EventTimezone));
 		var allDay = cursor.GetInt(projection.IndexOf(CalendarContract.Events.InterfaceConsts.AllDay)) != 0;
 
 		// Use Instances.Begin/End which reflect the actual occurrence times
 		// (including recurring event expansions and externally synced changes)
-		var start = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(
-			projection.IndexOf(CalendarContract.Instances.Begin)));
-		var end = DateTimeOffset.FromUnixTimeMilliseconds(cursor.GetLong(
-			projection.IndexOf(CalendarContract.Instances.End)));
+		var startMillis = cursor.GetLong(projection.IndexOf(CalendarContract.Instances.Begin));
+		var endMillis = cursor.GetLong(projection.IndexOf(CalendarContract.Instances.End));
 
 		var eventIdString = cursor.GetString(projection.IndexOf(
 			CalendarContract.Instances.EventId)) ?? string.Empty;
@@ -825,17 +1244,13 @@ partial class CalendarStoreImplementation : ICalendarStore
 			throw new CalendarStoreException($"Invalid Event ID: {eventIdString}");
 		}
 
-		DateTimeOffset SafeConvertTime(DateTimeOffset time, string? tz)
-		{
-			try
-			{
-				return tz is null ? time : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(time, tz);
-			}
-			catch (TimeZoneNotFoundException)
-			{
-				return time;
-			}
-		}
+		var rrule = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.Rrule));
+		var originalId = cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.OriginalId));
+		var originalInstanceTime = GetNullableLong(cursor, projection.IndexOf(
+			CalendarContract.Events.InterfaceConsts.OriginalInstanceTime));
+
+		var timeZone = CalendarStore.ResolveTimeZone(timezone);
+		var instanceStart = CalendarStore.FromUnixTimeMilliseconds(startMillis, timeZone);
 
 		return new(eventIdString,
 			cursor.GetString(projection.IndexOf(CalendarContract.Events.InterfaceConsts.CalendarId)) ?? string.Empty,
@@ -846,13 +1261,18 @@ partial class CalendarStoreImplementation : ICalendarStore
 			Location = cursor.GetString(projection.IndexOf(
 				CalendarContract.Events.InterfaceConsts.EventLocation)) ?? string.Empty,
 			IsAllDay = allDay,
-			StartDate = SafeConvertTime(start, timezone),
-			EndDate = SafeConvertTime(end, timezone),
+			StartDate = instanceStart,
+			EndDate = CalendarStore.FromUnixTimeMilliseconds(endMillis, timeZone),
+			TimeZoneId = allDay ? null : timezone,
+			Recurrence = ParseRecurrence(rrule, allDay, timezone),
+			IsDetached = !string.IsNullOrEmpty(originalId) || originalInstanceTime is not null,
+			OriginalOccurrenceStart = CalendarStore.FromUnixTimeMilliseconds(
+				originalInstanceTime ?? startMillis, timeZone),
 			EventColor = GetEventColor(cursor, projection),
 			Attendees = CalendarStore.GetOrAdd(attendeesCache, eventIdString,
 				id => GetAttendees(id).ToList()),
-			Reminders = CalendarStore.GetOrAdd(remindersCache, eventId,
-				id => GetAllEventReminders(id)),
+			Reminders = ToReminders(instanceStart, CalendarStore.GetOrAdd(
+				reminderOffsetsCache, eventId, id => GetEventReminderOffsets(id))),
 		};
 	}
 

@@ -97,6 +97,16 @@ All code uses a single namespace: `Plugin.Maui.CalendarStore`
 - **Only 1 reminder supported per event** (platform limitation)
 - `SourceDisplayName` may be empty for local calendars
 
+### Recurrence
+
+- Cross-platform model: `CalendarRecurrence` (rule) and `RecurrenceScope` (operation scope, in `CalendarRecurrence.shared.cs`).
+- `RecurrenceRuleParser.shared.cs` converts rules to/from iCalendar `RRULE` and parses RFC 2445 `DURATION`. It is pure C# and unit-tested.
+- Recurring series are **wall-clock** anchored: the time-of-day of `CalendarEvent.StartDate` repeats in `CalendarEvent.TimeZoneId` (device-local when `null`). `UNTIL` is serialized in UTC.
+- Android stores recurring events with `RRULE` + `DURATION` (no `DTEND`). Single-occurrence edits use `EXDATE` on the master plus (for modified occurrences) a standalone replacement event rather than provider exception rows: `CalendarProvider` matches exceptions via `ORIGINAL_SYNC_ID` (see `CalendarInstancesHelper#performInstanceExpansion`), and the local `ORIGINAL_ID` path is incomplete (`getRelevantRecurrenceEntries` still selects the master by `_id`), so exceptions on locally-created calendars are not reliably re-expanded and `EXDATE` is the reliable mechanism. The replacement writes `ORIGINAL_INSTANCE_TIME` with **only** that column (never `ORIGINAL_ID`/`ORIGINAL_SYNC_ID`), so the provider treats it as an ordinary event; the library reads it back to report `OriginalOccurrenceStart`/`IsDetached`.
+- iOS/macOS uses `EKRecurrenceRule`; a single occurrence is located by matching `EKEvent.OccurrenceDate` and saved/removed with the corresponding `EKSpan`.
+- Windows uses `AppointmentRecurrence`; single occurrences use `GetAppointmentInstanceAsync`/`DeleteAppointmentInstanceAsync`, and there is no time zone for non-recurring appointments.
+- The existing (non-scope) `UpdateEvent`/`DeleteEvent` overloads apply to the **whole series**.
+
 ## Testing
 
 When making changes:
@@ -106,6 +116,28 @@ When making changes:
 4. Implement on all platforms (android, macios, windows) and add a `NotImplementedException` stub in `.net.cs`
 5. Update the sample app to demonstrate the new feature
 6. Update `README.md` if the change affects the public API
+7. Add or update platform behaviour tests in `tests/Plugin.Maui.CalendarStore.DeviceTests`
+
+### Unit tests
+
+`tests/Plugin.Maui.CalendarStore.Tests` covers shared/platform-independent logic
+(recurrence parsing, time-zone helpers, the static facade):
+
+```
+dotnet test tests/Plugin.Maui.CalendarStore.Tests/Plugin.Maui.CalendarStore.Tests.csproj
+```
+
+### Device tests
+
+`tests/Plugin.Maui.CalendarStore.DeviceTests` is a [DeviceRunners](https://mattleibow.github.io/DeviceRunners/)
+MAUI app that exercises the real platform `CalendarStore` implementations (calendars
+and recurring-event CRUD, including single-occurrence exceptions). It requires calendar
+permission, which CI pre-grants (see `.github/workflows/ci-device-tests.yml`).
+
+```
+dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-ios
+dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-android
+```
 
 ## Project Structure
 
@@ -122,9 +154,14 @@ src/Plugin.Maui.CalendarStore/          # Plugin library
   CalendarEvent.shared.cs               # Event model
   CalendarEventAttendee.shared.cs       # Attendee model
   Reminder.shared.cs                    # Reminder model
+  CalendarRecurrence.shared.cs          # Recurrence model (rule, frequency, scope)
+  RecurrenceRuleParser.shared.cs        # RRULE / RFC 2445 DURATION parse + serialize
 
 samples/Plugin.Maui.CalendarStore.Sample/  # Demo MAUI app
   CalendarsPage.xaml[.cs]               # Calendar listing
   EventsPage.xaml[.cs]                  # Event listing
   AddEventsPage.xaml[.cs]               # Event creation
+
+tests/Plugin.Maui.CalendarStore.Tests/         # Host unit tests (shared logic)
+tests/Plugin.Maui.CalendarStore.DeviceTests/   # DeviceRunners MAUI app (platform tests)
 ```

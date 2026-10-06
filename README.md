@@ -194,6 +194,10 @@ Retrieves a specific event from the calendar store on the device.
 
 Creates an event in the specified calendar with the provided information. Optionally, one or more reminders can be attached to the event (see [Reminders](#reminders)). Returns the ID of the newly created event.
 
+##### `string CreateEvent(string calendarId, string title, string description, string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay, Reminder[]? reminders, CalendarRecurrence? recurrence, string? timeZoneId = null)`
+
+Creates an event, optionally as a recurring series (see [Recurring events](#recurring-events)). When `recurrence` is provided the event repeats according to the rule. `timeZoneId` is the IANA time zone the series is anchored to and defaults to the device's local time zone. Returns the ID of the newly created event.
+
 ##### `string CreateEvent(CalendarEvent calendarEvent)`
 
 Creates an event based on the information in the `CalendarEvent` object. This is basically just a convenience method that calls `CreateEvent` with all the unpacked information from `calendarEvent`.
@@ -246,6 +250,87 @@ foreach (var reminder in calendarEvent.Reminders)
 
 > **Note:** On Windows, only a single reminder per event is supported. If multiple reminders are provided, only the first one will be used.
 
+#### Recurring events
+
+An event can repeat by supplying a `CalendarRecurrence`. It maps to `EKRecurrenceRule` on iOS/macOS, the `RRULE`/`DURATION` columns on Android, and `AppointmentRecurrence` on Windows.
+
+```csharp
+var start = new DateTimeOffset(2025, 6, 2, 9, 0, 0, TimeSpan.Zero); // Monday
+var end = start.AddHours(1);
+
+var recurrence = new CalendarRecurrence
+{
+    Frequency = RecurrenceFrequency.Weekly,
+    Interval = 1,
+    DaysOfWeek = { new(DayOfWeek.Monday), new(DayOfWeek.Wednesday) },
+    Count = 10, // or set Until instead
+};
+
+var eventId = await calendarStore.CreateEvent(
+    calendarId, "Standup", "Twice-weekly sync", "Meeting room",
+    start, end, recurrence: recurrence, timeZoneId: "America/New_York");
+```
+
+The rule is anchored to the **wall-clock** time of `start` in `timeZoneId`, so a 09:00 series stays at 09:00 local time across daylight saving changes. When `timeZoneId` is `null` the device's local time zone is used.
+
+Supported `CalendarRecurrence` members:
+
+| Member | Description |
+| ------ | ----------- |
+| `Frequency` | `Daily`, `Weekly`, `Monthly` or `Yearly`. |
+| `Interval` | How many frequency units between occurrences (default 1). |
+| `Count` / `Until` | When the series ends. These are mutually exclusive. |
+| `FirstDayOfWeek` | Day treated as the start of the week (iOS/macOS cannot set this). |
+| `DaysOfWeek` | Days of the week, optionally with an ordinal (e.g. `3` = third, `-1` = last). |
+| `DaysOfMonth` | Days of the month (1–31, negative counts from the end). |
+| `MonthsOfYear` | Months of the year (1–12). |
+| `WeeksOfYear` / `DaysOfYear` | Weeks (1–53) / days (1–366) of the year. |
+| `SetPositions` | Ordinal filter within the period (e.g. `-1` = last). |
+
+A rule can also be round-tripped to and from its iCalendar `RRULE` representation, which is useful when persisting or exchanging recurrence data:
+
+```csharp
+var rrule = recurrence.ToRRule(); // "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE"
+
+if (CalendarRecurrence.TryParse(rrule, out var parsed))
+{
+    // parsed holds the same rule
+}
+
+// Or use Parse, which throws FormatException for invalid input:
+var strictlyParsed = CalendarRecurrence.Parse("FREQ=DAILY;COUNT=5");
+```
+
+`TryParse`/`Parse` accept an optional `TimeZoneInfo` used to interpret non-UTC `UNTIL` values; when omitted the device's local time zone is used.
+
+When events are retrieved with `GetEvents`, recurring events are expanded into individual occurrences within the requested range. Each returned `CalendarEvent` exposes `IsRecurring`, `Recurrence`, `TimeZoneId`, `IsDetached`, and `OriginalOccurrenceStart` (the original slot of the occurrence).
+
+#### Exceptions (single occurrences)
+
+Use the scope-aware overloads to change or remove a single occurrence or the whole series:
+
+```csharp
+// Remove one occurrence identified by OriginalOccurrenceStart
+await calendarStore.DeleteEvent(occurrenceId, RecurrenceScope.ThisEvent,
+    occurrence.OriginalOccurrenceStart);
+
+// Move one occurrence of a series
+await calendarStore.UpdateEvent(occurrenceId, "Standup (moved)", "", "Meeting room",
+    newStart, newEnd, false, reminders: null,
+    scope: RecurrenceScope.ThisEvent,
+    originalOccurrenceStart: occurrence.OriginalOccurrenceStart);
+```
+
+`RecurrenceScope` values are `ThisEvent` and `AllEvents`. The existing parameter overloads of `UpdateEvent`/`DeleteEvent` apply to the **whole series**.
+
+> **Note:** The original occurrence start is required when targeting a single occurrence.
+>
+> **Android:** for calendars/events without a sync id, native `CalendarProvider` recurrence exceptions are not reliably expanded — its exception matching is built around `ORIGINAL_SYNC_ID`, and the local `ORIGINAL_ID` path is incomplete (`getRelevantRecurrenceEntries` still selects the master by `_id`). Single-occurrence edits therefore use `EXDATE` on the recurring master and, for modified occurrences, a standalone replacement event. The replacement stores the original occurrence time in `ORIGINAL_INSTANCE_TIME` (with neither `ORIGINAL_ID` nor `ORIGINAL_SYNC_ID`), so the provider treats it as an ordinary event while the library still exposes `OriginalOccurrenceStart`/`IsDetached`.
+
+#### Time zones
+
+Events expose a `TimeZoneId` (IANA identifier, or `null` for a floating/local event). For recurring events this is the anchor used to repeat the wall-clock time. On iOS/macOS the platform value is an `EKEvent.TimeZone`; on Windows the time zone is stored on the recurrence rule. Windows does not store a time zone for non-recurring appointments.
+
 ##### `DeleteEvent(string eventId)`
 
 Removes an event, specified by the unique identifier, from the device calendar.
@@ -254,6 +339,39 @@ Removes an event, specified by the unique identifier, from the device calendar.
 
 Removes an event from the device calendar.
 This is basically just a convenience method that calls `DeleteEvent` with `eventToDelete.Id`.
+
+## Testing
+
+### Unit tests
+
+Shared, platform-independent logic (recurrence parsing, time-zone helpers and the static facade) is covered by host tests:
+
+```bash
+dotnet test tests/Plugin.Maui.CalendarStore.Tests/Plugin.Maui.CalendarStore.Tests.csproj
+```
+
+### Device tests
+
+The platform implementations are validated on a real device or simulator with [DeviceRunners](https://mattleibow.github.io/DeviceRunners/). The test app in `tests/Plugin.Maui.CalendarStore.DeviceTests` exercises calendars and recurring-event CRUD, including single-occurrence exceptions.
+
+Calendar access is required, so grant the permission before running headlessly.
+
+iOS simulator:
+
+```bash
+xcrun simctl boot "iPhone 16"
+xcrun simctl privacy booted grant calendar com.jfversluis.pluginmauicalendarstore.devicetests
+dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-ios
+```
+
+Android emulator:
+
+```bash
+adb install -r -g <path-to-signed.apk>
+dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-android
+```
+
+The same runs are executed in CI by `.github/workflows/ci-device-tests.yml`.
 
 # Acknowledgements
 

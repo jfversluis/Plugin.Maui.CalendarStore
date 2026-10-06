@@ -30,19 +30,18 @@ public class WriteOnlyCalendar : Permissions.BasePlatformPermission
 
 		var eventStore = new EKEventStore();
 
-		Tuple<bool, NSError> results;
+		bool granted;
 
 		if (OperatingSystem.IsIOSVersionAtLeast(17, 0))
 		{
-			results = await eventStore.RequestWriteOnlyAccessToEventsAsync();
+			(granted, _) = await eventStore.RequestWriteOnlyAccessToEventsAsync();
 		}
 		else
 		{
-			results = await eventStore.RequestAccessAsync(EKEntityType.Event);
-
+			(granted, _) = await eventStore.RequestAccessAsync(EKEntityType.Event);
 		}
 
-		return results.Item1 ? PermissionStatus.Granted : PermissionStatus.Denied;
+		return granted ? PermissionStatus.Granted : PermissionStatus.Denied;
 	}
 }
 
@@ -72,19 +71,18 @@ public class FullAccessCalendar : Permissions.BasePlatformPermission
 
 		var eventStore = new EKEventStore();
 
-		Tuple<bool, NSError> results;
+		bool granted;
 
 		if (OperatingSystem.IsIOSVersionAtLeast(17, 0))
 		{
-			results = await eventStore.RequestFullAccessToEventsAsync();
+			(granted, _) = await eventStore.RequestFullAccessToEventsAsync();
 		}
 		else
 		{
-			results = await eventStore.RequestAccessAsync(EKEntityType.Event);
-
+			(granted, _) = await eventStore.RequestAccessAsync(EKEntityType.Event);
 		}
 
-		return results.Item1 ? PermissionStatus.Granted : PermissionStatus.Denied;
+		return granted ? PermissionStatus.Granted : PermissionStatus.Denied;
 	}
 }
 
@@ -105,19 +103,18 @@ public class RemindersCalendar : Permissions.BasePlatformPermission
 
 		var eventStore = new EKEventStore();
 
-		Tuple<bool, NSError> results;
+		bool granted;
 
 		if (OperatingSystem.IsIOSVersionAtLeast(17, 0))
 		{
-			results = await eventStore.RequestFullAccessToRemindersAsync();
+			(granted, _) = await eventStore.RequestFullAccessToRemindersAsync();
 		}
 		else
 		{
-			results = await eventStore.RequestAccessAsync(EKEntityType.Reminder);
-
+			(granted, _) = await eventStore.RequestAccessAsync(EKEntityType.Reminder);
 		}
 
-		return results.Item1 ? PermissionStatus.Granted : PermissionStatus.Denied;
+		return granted ? PermissionStatus.Granted : PermissionStatus.Denied;
 	}
 }
 

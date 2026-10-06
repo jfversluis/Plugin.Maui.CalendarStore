@@ -1,0 +1,209 @@
+name: Device Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    branches: [ "main", "update/net10" ]
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  device-tests-ios:
+    name: Device Tests (iOS Simulator)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # Workload set 10.0.401 is the last one whose .NET for iOS (26.5.10318)
+      # supports Xcode 26.6, which the macos-26 image provides. The newer
+      # 10.0.401.1 set requires Xcode 27 and fails here.
+      # See https://github.com/dotnet/macios/releases.
+      - name: Install MAUI workload
+        run: dotnet workload install maui --version 10.0.401
+
+      - name: Select Xcode
+        run: |
+          # Select a real versioned Xcode bundle rather than the /Applications/Xcode.app
+          # symlink: the ACTool task cannot resolve `actool` when the active Xcode is a
+          # symlink (dotnet/macios#21762).
+          REAL=$(ls -d /Applications/Xcode_*.app 2>/dev/null \
+            | while read -r x; do [ -L "$x" ] || echo "$x"; done \
+            | sort -V | tail -1)
+          if [ -z "$REAL" ]; then REAL=/Applications/Xcode.app; fi
+          sudo xcode-select -s "$REAL/Contents/Developer"
+          xcode-select -p
+          xcodebuild -version
+          # The .NET iOS 26.x SDK resolves `actool` through the iOS platform tools; make
+          # sure they are installed for the selected Xcode (dotnet/macios#24314, #25098).
+          # `downloadPlatform` can transiently fail with "Unable to connect to simulator"
+          # while CoreSimulatorService starts up, so retry and restart the service.
+          for attempt in 1 2 3 4 5; do
+            if xcodebuild -downloadPlatform iOS; then
+              break
+            fi
+            echo "xcodebuild -downloadPlatform iOS failed (attempt $attempt); restarting CoreSimulatorService and retrying..."
+            sudo killall -9 com.apple.CoreSimulator.CoreSimulatorService 2>/dev/null || true
+            sleep 15
+          done
+
+      - name: Boot iOS simulator
+        run: |
+          # CoreSimulatorService may still be starting up; wait until simctl responds.
+          for attempt in $(seq 1 30); do
+            if xcrun simctl list devices available -j > /tmp/devices.json 2>/dev/null \
+              && jq -e '.devices' /tmp/devices.json > /dev/null 2>&1; then
+              break
+            fi
+            echo "simctl is not ready (attempt $attempt); retrying..."
+            sleep 5
+          done
+
+          UDID=$(jq -r '[.devices | to_entries[].value[] | select(.isAvailable == true and (.name | startswith("iPhone")))][0].udid // empty' /tmp/devices.json)
+          if [ -z "$UDID" ]; then
+            echo "No available iPhone simulator found."
+            xcrun simctl list devices available || true
+            exit 1
+          fi
+          echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
+
+          BOOTED=0
+          for attempt in 1 2 3; do
+            xcrun simctl boot "$UDID" 2>/dev/null || true
+            if xcrun simctl bootstatus "$UDID" -b; then
+              BOOTED=1
+              break
+            fi
+            echo "Simulator failed to boot (attempt $attempt); resetting and retrying..."
+            xcrun simctl shutdown "$UDID" 2>/dev/null || true
+            sudo killall -9 com.apple.CoreSimulator.CoreSimulatorService 2>/dev/null || true
+            sleep 10
+          done
+
+          if [ "$BOOTED" != "1" ]; then
+            echo "Simulator $UDID did not boot."
+            exit 1
+          fi
+
+      # DeviceRunners installs and launches the app during `dotnet test`, but the OS
+      # calendar permission dialog cannot be dismissed headlessly. Build and install
+      # once, pre-grant calendar access, then run the tests (permissions persist across
+      # the reinstall performed by `dotnet test`).
+      - name: Build and pre-grant calendar access
+        run: |
+          dotnet build tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-ios
+          APP=$(find tests/Plugin.Maui.CalendarStore.DeviceTests/bin -type d -name '*.app' | head -1)
+          xcrun simctl install "$SIMULATOR_UDID" "$APP"
+          xcrun simctl privacy "$SIMULATOR_UDID" grant calendar com.jfversluis.pluginmauicalendarstore.devicetests
+
+      - name: Run device tests
+        run: |
+          RESULTS=tests/Plugin.Maui.CalendarStore.DeviceTests/test-results
+          mkdir -p "$RESULTS"
+
+          set +e
+          dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj \
+            -f net10.0-ios --no-build --no-restore \
+            -p:DeviceRunnersDevice=$SIMULATOR_UDID -p:DeviceRunnersConnectionTimeout=300 \
+            --logger "trx;LogFileName=ios-device-tests.trx" 2>&1 \
+            | tee "$RESULTS/ios-device-test-attempt-1.log"
+          STATUS=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$STATUS" -eq 0 ]; then
+            exit 0
+          fi
+
+          # The hosted simulator occasionally launches the app without establishing
+          # DeviceRunners' TCP connection. Retry only that infrastructure failure;
+          # ordinary test failures remain failures on the first attempt.
+          if ! grep -Eq "TCP listener timed out|No test results received" \
+            "$RESULTS/ios-device-test-attempt-1.log"; then
+            exit "$STATUS"
+          fi
+
+          echo "DeviceRunners did not connect; restarting the simulator and retrying once."
+          xcrun simctl shutdown "$SIMULATOR_UDID" || true
+          xcrun simctl boot "$SIMULATOR_UDID"
+          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+
+          APP=$(find tests/Plugin.Maui.CalendarStore.DeviceTests/bin -type d -name '*.app' | head -1)
+          xcrun simctl install "$SIMULATOR_UDID" "$APP"
+          xcrun simctl privacy "$SIMULATOR_UDID" grant calendar \
+            com.jfversluis.pluginmauicalendarstore.devicetests
+
+          set +e
+          dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj \
+            -f net10.0-ios --no-build --no-restore \
+            -p:DeviceRunnersDevice=$SIMULATOR_UDID -p:DeviceRunnersConnectionTimeout=300 \
+            --logger "trx;LogFileName=ios-device-tests.trx" 2>&1 \
+            | tee "$RESULTS/ios-device-test-attempt-2.log"
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          exit "$STATUS"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-test-results-ios
+          path: |
+            **/*.trx
+            tests/Plugin.Maui.CalendarStore.DeviceTests/test-results/**
+
+  device-tests-android:
+    name: Device Tests (Android Emulator)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android
+
+      # Without KVM access the emulator falls back to software emulation
+      # (-accel off) and never finishes booting within the timeout.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run device tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-audio -no-boot-anim
+          disable-animations: true
+          # NOTE: this action runs each line in its own `sh -c`, so keep the whole script on a
+          # single (YAML-folded) line; otherwise variables and `if` blocks don't survive.
+          script: >-
+            dotnet build tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-android -p:TargetFrameworks=net10.0-android -t:SignAndroidPackage ;
+            APK=$(find tests/Plugin.Maui.CalendarStore.DeviceTests/bin -name '*.apk' | head -1) ;
+            echo "Found APK: '$APK'" ;
+            if [ -n "$APK" ]; then adb install -r -g "$APK"; fi ;
+            ( for i in $(seq 1 300); do adb shell pm grant com.jfversluis.pluginmauicalendarstore.devicetests android.permission.READ_CALENDAR 2>/dev/null; adb shell pm grant com.jfversluis.pluginmauicalendarstore.devicetests android.permission.WRITE_CALENDAR 2>/dev/null; sleep 2; done ) &
+            dotnet test tests/Plugin.Maui.CalendarStore.DeviceTests/Plugin.Maui.CalendarStore.DeviceTests.csproj -f net10.0-android -p:TargetFrameworks=net10.0-android -p:DeviceRunnersConnectionTimeout=300 --logger "trx;LogFileName=android-device-tests.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-test-results-android
+          path: |
+            **/*.trx
+            tests/Plugin.Maui.CalendarStore.DeviceTests/test-results/**

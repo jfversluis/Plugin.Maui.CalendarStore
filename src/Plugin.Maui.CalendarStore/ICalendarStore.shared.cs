@@ -111,6 +111,35 @@ public interface ICalendarStore
 		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay = false, Reminder[]? reminders = null);
 
 	/// <summary>
+	/// Creates a new event with the provided information in the specified calendar,
+	/// optionally as part of a recurring series.
+	/// </summary>
+	/// <param name="calendarId">The unique identifier of the calendar to add the newly created event to.</param>
+	/// <param name="title">The title of the event.</param>
+	/// <param name="description">The description of the event.</param>
+	/// <param name="location">The location of the event.</param>
+	/// <param name="startDateTime">The start date and time for the event.</param>
+	/// <param name="endDateTime">The end date and time for the event.</param>
+	/// <param name="isAllDay">Indicates whether or not this event should be marked as an all-day event.</param>
+	/// <param name="reminders">
+	/// <para>Reminders for this event.</para>
+	/// <para>Note: on Windows only 1 reminder is supported. Only the first reminder in the collection will be used.</para>
+	/// </param>
+	/// <param name="recurrence">The recurrence rule, or <see langword="null"/> for a single occurrence.</param>
+	/// <param name="timeZoneId">
+	/// The IANA time zone the recurring series is anchored to, or <see langword="null"/> to use the
+	/// device's local time zone. The wall-clock time of <paramref name="startDateTime"/> is repeated
+	/// in this time zone.
+	/// </param>
+	/// <returns>The unique identifier of the newly created event.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the calendar corresponding with the value in <paramref name="calendarId"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	Task<string> CreateEvent(string calendarId, string title, string description, string location,
+		DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders, CalendarRecurrence? recurrence, string? timeZoneId = null);
+
+	/// <summary>
 	/// Creates a new event based on the provided <paramref name="calendarEvent"/> object.
 	/// </summary>
 	/// <param name="calendarEvent">The event object with the details to save to the calendar specified in this object.</param>
@@ -171,6 +200,50 @@ public interface ICalendarStore
 	Task UpdateEvent(CalendarEvent eventToUpdate);
 
 	/// <summary>
+	/// Updates an existing event, applying the change to all events or a single
+	/// occurrence of a recurring series.
+	/// </summary>
+	/// <param name="eventId">The unique identifier of the event to update.</param>
+	/// <param name="title">The updated title for the event.</param>
+	/// <param name="description">The updated description for the event.</param>
+	/// <param name="location">The updated location for the event.</param>
+	/// <param name="startDateTime">The updated start date and time for the event.</param>
+	/// <param name="endDateTime">The updated end date and time for the event.</param>
+	/// <param name="isAllDay">The updated value that indicates whether or not this event should be marked as an all-day event.</param>
+	/// <param name="reminders">
+	/// <para>Reminders for this event.</para>
+	/// <para>Note: on Windows only 1 reminder is supported. Only the first reminder in the collection will be used.</para>
+	/// </param>
+	/// <param name="scope">Which occurrences the change should apply to.</param>
+	/// <param name="originalOccurrenceStart">
+	/// The original start date and time of the occurrence to update. Required when
+	/// <paramref name="scope"/> is <see cref="RecurrenceScope.ThisEvent"/>.
+	/// </param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event corresponding with the value in <paramref name="eventId"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	Task UpdateEvent(string eventId, string title, string description,
+		string location, DateTimeOffset startDateTime, DateTimeOffset endDateTime, bool isAllDay,
+		Reminder[]? reminders, RecurrenceScope scope, DateTimeOffset? originalOccurrenceStart = null);
+
+	/// <summary>
+	/// Updates an event, applying the change to all events or a single occurrence
+	/// of a recurring series.
+	/// </summary>
+	/// <param name="eventToUpdate">The event object with the details to update the existing event with.</param>
+	/// <param name="scope">Which occurrences the change should apply to.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <remarks>
+	/// When <paramref name="scope"/> targets a single occurrence, the occurrence is
+	/// identified by <see cref="CalendarEvent.OriginalOccurrenceStart"/>.
+	/// </remarks>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event identifier corresponding with the value in <paramref name="eventToUpdate"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	Task UpdateEvent(CalendarEvent eventToUpdate, RecurrenceScope scope);
+
+	/// <summary>
 	/// Deletes an event, specified by its unique ID, from the device calendar.
 	/// </summary>
 	/// <param name="eventId">The unique identifier of the event to be deleted.</param>
@@ -189,4 +262,34 @@ public interface ICalendarStore
 	/// <exception cref="ArgumentException">Thrown when the event identifier corresponding with the value in <paramref name="eventToDelete"/> cannot be found.</exception>
 	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
 	Task DeleteEvent(CalendarEvent eventToDelete);
+
+	/// <summary>
+	/// Deletes an event, or a single occurrence of a recurring series, from the device calendar.
+	/// </summary>
+	/// <param name="eventId">The unique identifier of the event to be deleted.</param>
+	/// <param name="scope">Which occurrences the deletion should apply to.</param>
+	/// <param name="originalOccurrenceStart">
+	/// The original start date and time of the occurrence to delete. Required when
+	/// <paramref name="scope"/> is <see cref="RecurrenceScope.ThisEvent"/>.
+	/// </param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event corresponding with the value in <paramref name="eventId"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	Task DeleteEvent(string eventId, RecurrenceScope scope, DateTimeOffset? originalOccurrenceStart = null);
+
+	/// <summary>
+	/// Deletes an event, or a single occurrence of a recurring series, from the device calendar.
+	/// </summary>
+	/// <param name="eventToDelete">The event object that is to be deleted.</param>
+	/// <param name="scope">Which occurrences the deletion should apply to.</param>
+	/// <returns>A <see cref="Task"/> object with the current status of the asynchronous operation.</returns>
+	/// <remarks>
+	/// When <paramref name="scope"/> targets a single occurrence, the occurrence is
+	/// identified by <see cref="CalendarEvent.OriginalOccurrenceStart"/>.
+	/// </remarks>
+	/// <exception cref="PermissionException">Thrown when the permission to access the calendar is not granted.</exception>
+	/// <exception cref="ArgumentException">Thrown when the event identifier corresponding with the value in <paramref name="eventToDelete"/> cannot be found.</exception>
+	/// <exception cref="CalendarStore.CalendarStoreException">Thrown for a variety of reasons, the exception will hold more information.</exception>
+	Task DeleteEvent(CalendarEvent eventToDelete, RecurrenceScope scope);
 }
